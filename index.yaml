@@ -2,6 +2,20 @@ apiVersion: v1
 entries:
   kdl-server:
   - apiVersion: v2
+    appVersion: v0.2.0
+    created: "2021-03-17T17:49:18.083303321Z"
+    dependencies:
+    - name: science-toolkit
+      repository: https://konstellation-io.github.io/science-toolkit/helm-chart/
+      version: 1.0.213
+    description: KDL server
+    digest: 399d0271d0257f059b4088e6d8852e761ca3366547051ee8c9ac908ad85b0813
+    name: kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.2.0/kdl-server-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     appVersion: v0.1.0
     created: "2021-03-05T10:04:59.934415463Z"
     dependencies:
