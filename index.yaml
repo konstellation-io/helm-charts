@@ -2,6 +2,20 @@ apiVersion: v1
 entries:
   kdl-server:
   - apiVersion: v2
+    appVersion: v0.13.0
+    created: "2021-10-06T09:16:51.426979243Z"
+    dependencies:
+    - name: minio
+      repository: https://helm.min.io/
+      version: 8.0.10
+    description: KDL server
+    digest: 9221dc14f625c9245fbc9d8777acf7e2ddd9c669bb8b283ef082483ee5cc19f1
+    name: kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.0/kdl-server-0.13.0.tgz
+    version: 0.13.0
+  - apiVersion: v2
     appVersion: v0.12.0
     created: "2021-07-22T11:16:03.074928019Z"
     dependencies:
