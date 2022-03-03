@@ -3,6 +3,23 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
+    created: "2022-03-03T09:52:20.45207413Z"
+    dependencies:
+    - name: minio
+      repository: https://charts.min.io/
+      version: 3.2.0
+    - name: enterprise-gateway
+      repository: https://charts.spot.io
+      version: 2.5.0
+    description: KDL server
+    digest: 98f079688ebca9af68a46b084a7ef0dffe918eeacb72a3846e71b4ef3c7795f6
+    name: kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.15/kdl-server-1.0.15.tgz
+    version: 1.0.15
+  - apiVersion: v2
+    appVersion: undefined.undefined.NaN
     created: "2022-03-03T08:51:14.334529879Z"
     dependencies:
     - name: minio
@@ -547,4 +564,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-v0.0.0/kdl-server-v0.0.0.tgz
     version: v0.0.0
-generated: "2022-03-03T08:51:14.334911583Z"
+generated: "2022-03-03T09:52:20.452486136Z"
