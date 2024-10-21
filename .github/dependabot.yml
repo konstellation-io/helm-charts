@@ -3,22 +3,8 @@ updates:
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-  labels:
-    - enhancement
-    - dependency-management
-    - devops-team
-- package-ecosystem: gomod
-  directories:
-    - "/app/api"
-    - "/cleaner"
-    - "/gitea-oauth2-setup"
-    - "/repo-cloner"
-  schedule:
     interval: monthly
   open-pull-requests-limit: 10
   labels:
-    - enhancement
-    - dependency-management
-    - develop-team
+  - enhancement
+  - dependency-management

@@ -1,0 +1,21 @@
+name: "[GitHub] Auto-assign"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: 'devops auto-assign'
+        uses: kentaro-m/auto-assign-action@v2.0.0
+        with:
+          repo-token: ${{ secrets.PAT }}
+          configuration-path: '.github/devops_auto_assign.yml'

@@ -1,0 +1,14 @@
+{
+    "name": "kdl-server",
+    "release": {
+        "branches": [
+            "main"
+        ],
+        "plugins": [
+            "@semantic-release/release-notes-generator",
+            "@semantic-release/github"
+        ],
+        "repositoryUrl": "https://github.com/konstellation-io/helm-charts.git"
+    },
+    "version": "1.0.0"
+}
