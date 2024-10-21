@@ -8,7 +8,7 @@ require (
 	github.com/drone/drone-go v1.5.0
 	github.com/go-co-op/gocron v1.1.0
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/gosimple/slug v1.9.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/konstellation-io/kre/libs/simplelogger v0.0.0-20210210145319-3480f96217e8
