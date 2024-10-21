@@ -50,7 +50,7 @@ jobs:
             ./app/ui/test-report.xml
 
       - name: UI Run e2e tests
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         with:
           install: true
           working-directory: ./app/ui
