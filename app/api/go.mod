@@ -9,7 +9,7 @@ require (
 	github.com/go-co-op/gocron v1.1.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/golang/mock v1.5.0
-	github.com/gosimple/slug v1.9.0
+	github.com/gosimple/slug v1.14.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/konstellation-io/kre/libs/simplelogger v0.0.0-20210210145319-3480f96217e8
 	github.com/minio/minio-go/v7 v7.0.49
@@ -50,6 +50,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
@@ -70,7 +71,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
