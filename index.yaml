@@ -13,7 +13,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-6.0.1/kdl-server-6.0.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.0.1/kdl-server-6.0.1.tgz
     version: 6.0.1
   - apiVersion: v2
     appVersion: 1.35.0
@@ -27,7 +27,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-6.0.0/kdl-server-6.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.0.0/kdl-server-6.0.0.tgz
     version: 6.0.0
   - apiVersion: v2
     appVersion: 1.25.0
@@ -44,7 +44,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-5.0.1/kdl-server-5.0.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-5.0.1/kdl-server-5.0.1.tgz
     version: 5.0.1
   - apiVersion: v2
     appVersion: 1.25.0
@@ -61,7 +61,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-5.0.0/kdl-server-5.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-5.0.0/kdl-server-5.0.0.tgz
     version: 5.0.0
   - apiVersion: v2
     appVersion: 1.19.1
@@ -78,7 +78,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.1.3/kdl-server-4.1.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.1.3/kdl-server-4.1.3.tgz
     version: 4.1.3
   - apiVersion: v2
     appVersion: 1.19.0
@@ -95,7 +95,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.1.2/kdl-server-4.1.2.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.1.2/kdl-server-4.1.2.tgz
     version: 4.1.2
   - apiVersion: v2
     appVersion: 1.19.0
@@ -112,7 +112,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.1.1/kdl-server-4.1.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.1.1/kdl-server-4.1.1.tgz
     version: 4.1.1
   - apiVersion: v2
     appVersion: 1.19.0
@@ -129,7 +129,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.1.0/kdl-server-4.1.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.1.0/kdl-server-4.1.0.tgz
     version: 4.1.0
   - apiVersion: v2
     appVersion: 1.17.0
@@ -146,7 +146,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.0.3/kdl-server-4.0.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.0.3/kdl-server-4.0.3.tgz
     version: 4.0.3
   - apiVersion: v2
     appVersion: 1.17.0
@@ -163,7 +163,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.0.2/kdl-server-4.0.2.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.0.2/kdl-server-4.0.2.tgz
     version: 4.0.2
   - apiVersion: v2
     appVersion: 1.17.0
@@ -180,7 +180,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-4.0.0/kdl-server-4.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-4.0.0/kdl-server-4.0.0.tgz
     version: 4.0.0
   - apiVersion: v2
     appVersion: 1.17.0
@@ -197,7 +197,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-3.0.1/kdl-server-3.0.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-3.0.1/kdl-server-3.0.1.tgz
     version: 3.0.1
   - apiVersion: v2
     appVersion: 1.17.0
@@ -214,7 +214,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-3.0.0/kdl-server-3.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-3.0.0/kdl-server-3.0.0.tgz
     version: 3.0.0
   - apiVersion: v2
     appVersion: 1.14.0
@@ -231,7 +231,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.1.0/kdl-server-2.1.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.1.0/kdl-server-2.1.0.tgz
     version: 2.1.0
   - apiVersion: v2
     appVersion: 1.13.1
@@ -248,7 +248,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.21/kdl-server-2.0.21.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.21/kdl-server-2.0.21.tgz
     version: 2.0.21
   - apiVersion: v2
     appVersion: 1.13.1
@@ -265,7 +265,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.20/kdl-server-2.0.20.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.20/kdl-server-2.0.20.tgz
     version: 2.0.20
   - apiVersion: v2
     appVersion: 1.13.1
@@ -282,7 +282,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.18/kdl-server-2.0.18.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.18/kdl-server-2.0.18.tgz
     version: 2.0.18
   - apiVersion: v2
     appVersion: 1.13.1
@@ -299,7 +299,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.17/kdl-server-2.0.17.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.17/kdl-server-2.0.17.tgz
     version: 2.0.17
   - apiVersion: v2
     appVersion: 1.13.1
@@ -316,7 +316,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.16/kdl-server-2.0.16.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.16/kdl-server-2.0.16.tgz
     version: 2.0.16
   - apiVersion: v2
     appVersion: 1.13.1
@@ -333,7 +333,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.15/kdl-server-2.0.15.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.15/kdl-server-2.0.15.tgz
     version: 2.0.15
   - apiVersion: v2
     appVersion: 1.13.1
@@ -350,7 +350,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.13/kdl-server-2.0.13.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.13/kdl-server-2.0.13.tgz
     version: 2.0.13
   - apiVersion: v2
     appVersion: 1.13.1
@@ -367,7 +367,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.11/kdl-server-2.0.11.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.11/kdl-server-2.0.11.tgz
     version: 2.0.11
   - apiVersion: v2
     appVersion: 1.13.1
@@ -384,7 +384,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.10/kdl-server-2.0.10.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.10/kdl-server-2.0.10.tgz
     version: 2.0.10
   - apiVersion: v2
     appVersion: 1.10.1
@@ -401,7 +401,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.9/kdl-server-2.0.9.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.9/kdl-server-2.0.9.tgz
     version: 2.0.9
   - apiVersion: v2
     appVersion: 1.10.1
@@ -418,7 +418,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.8/kdl-server-2.0.8.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.8/kdl-server-2.0.8.tgz
     version: 2.0.8
   - apiVersion: v2
     appVersion: 1.10.1
@@ -435,7 +435,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.7/kdl-server-2.0.7.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.7/kdl-server-2.0.7.tgz
     version: 2.0.7
   - apiVersion: v2
     appVersion: 1.10.0
@@ -452,7 +452,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.6/kdl-server-2.0.6.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.6/kdl-server-2.0.6.tgz
     version: 2.0.6
   - apiVersion: v2
     appVersion: 1.10.0
@@ -469,7 +469,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.5/kdl-server-2.0.5.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.5/kdl-server-2.0.5.tgz
     version: 2.0.5
   - apiVersion: v2
     appVersion: 1.10.0
@@ -486,7 +486,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.3/kdl-server-2.0.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.3/kdl-server-2.0.3.tgz
     version: 2.0.3
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -503,7 +503,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.2/kdl-server-2.0.2.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.2/kdl-server-2.0.2.tgz
     version: 2.0.2
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -520,7 +520,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.1/kdl-server-2.0.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.1/kdl-server-2.0.1.tgz
     version: 2.0.1
   - apiVersion: v2
     appVersion: 1.10.0
@@ -537,7 +537,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-2.0.0/kdl-server-2.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-2.0.0/kdl-server-2.0.0.tgz
     version: 2.0.0
   - apiVersion: v2
     appVersion: 1.4.2
@@ -554,7 +554,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.16/kdl-server-1.0.16.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.16/kdl-server-1.0.16.tgz
     version: 1.0.16
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -571,7 +571,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.15/kdl-server-1.0.15.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.15/kdl-server-1.0.15.tgz
     version: 1.0.15
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -588,7 +588,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.14/kdl-server-1.0.14.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.14/kdl-server-1.0.14.tgz
     version: 1.0.14
   - apiVersion: v2
     appVersion: 1.4.1
@@ -605,7 +605,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.13/kdl-server-1.0.13.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.13/kdl-server-1.0.13.tgz
     version: 1.0.13
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -622,7 +622,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.12/kdl-server-1.0.12.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.12/kdl-server-1.0.12.tgz
     version: 1.0.12
   - apiVersion: v2
     appVersion: undefined.undefined.NaN
@@ -639,7 +639,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.11/kdl-server-1.0.11.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.11/kdl-server-1.0.11.tgz
     version: 1.0.11
   - apiVersion: v2
     appVersion: 1.4.1
@@ -656,7 +656,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.10/kdl-server-1.0.10.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.10/kdl-server-1.0.10.tgz
     version: 1.0.10
   - apiVersion: v2
     appVersion: 1.4.1
@@ -673,7 +673,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.9/kdl-server-1.0.9.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.9/kdl-server-1.0.9.tgz
     version: 1.0.9
   - apiVersion: v2
     appVersion: 1.4.1
@@ -690,7 +690,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.8/kdl-server-1.0.8.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.8/kdl-server-1.0.8.tgz
     version: 1.0.8
   - apiVersion: v2
     appVersion: 1.4.1
@@ -707,7 +707,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.7/kdl-server-1.0.7.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.7/kdl-server-1.0.7.tgz
     version: 1.0.7
   - apiVersion: v2
     appVersion: 1.4.1
@@ -724,7 +724,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.6/kdl-server-1.0.6.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.6/kdl-server-1.0.6.tgz
     version: 1.0.6
   - apiVersion: v2
     appVersion: 1.4.1
@@ -741,7 +741,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.4/kdl-server-1.0.4.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.4/kdl-server-1.0.4.tgz
     version: 1.0.4
   - apiVersion: v2
     appVersion: 1.4.1
@@ -758,7 +758,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.3/kdl-server-1.0.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.3/kdl-server-1.0.3.tgz
     version: 1.0.3
   - apiVersion: v2
     appVersion: 1.4.1
@@ -775,7 +775,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.2/kdl-server-1.0.2.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.2/kdl-server-1.0.2.tgz
     version: 1.0.2
   - apiVersion: v2
     appVersion: 1.4.1
@@ -792,7 +792,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.1/kdl-server-1.0.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.1/kdl-server-1.0.1.tgz
     version: 1.0.1
   - apiVersion: v2
     appVersion: 1.4.0
@@ -809,7 +809,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-1.0.0/kdl-server-1.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-1.0.0/kdl-server-1.0.0.tgz
     version: 1.0.0
   - apiVersion: v2
     appVersion: 0.0.0
@@ -823,7 +823,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-v0.14.3/kdl-server-v0.14.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-v0.14.3/kdl-server-v0.14.3.tgz
     version: v0.14.3
   - apiVersion: v2
     appVersion: v0.14.0
@@ -837,7 +837,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.14.0/kdl-server-0.14.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.14.0/kdl-server-0.14.0.tgz
     version: 0.14.0
   - apiVersion: v2
     appVersion: v0.13.5
@@ -851,7 +851,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.5/kdl-server-0.13.5.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.5/kdl-server-0.13.5.tgz
     version: 0.13.5
   - apiVersion: v2
     appVersion: v0.13.4
@@ -865,7 +865,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.4/kdl-server-0.13.4.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.4/kdl-server-0.13.4.tgz
     version: 0.13.4
   - apiVersion: v2
     appVersion: v0.13.3
@@ -879,7 +879,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.3/kdl-server-0.13.3.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.3/kdl-server-0.13.3.tgz
     version: 0.13.3
   - apiVersion: v2
     appVersion: v0.13.2
@@ -893,7 +893,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.2/kdl-server-0.13.2.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.2/kdl-server-0.13.2.tgz
     version: 0.13.2
   - apiVersion: v2
     appVersion: v0.13.1
@@ -907,7 +907,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.1/kdl-server-0.13.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.1/kdl-server-0.13.1.tgz
     version: 0.13.1
   - apiVersion: v2
     appVersion: v0.13.0
@@ -921,7 +921,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.13.0/kdl-server-0.13.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.13.0/kdl-server-0.13.0.tgz
     version: 0.13.0
   - apiVersion: v2
     appVersion: v0.12.0
@@ -935,7 +935,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.12.0/kdl-server-0.12.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.12.0/kdl-server-0.12.0.tgz
     version: 0.12.0
   - apiVersion: v2
     appVersion: v0.11.0
@@ -949,7 +949,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.11.0/kdl-server-0.11.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.11.0/kdl-server-0.11.0.tgz
     version: 0.11.0
   - apiVersion: v2
     appVersion: v0.10.0
@@ -963,7 +963,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.10.0/kdl-server-0.10.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.10.0/kdl-server-0.10.0.tgz
     version: 0.10.0
   - apiVersion: v2
     appVersion: v0.9.1
@@ -977,7 +977,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.9.1/kdl-server-0.9.1.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.9.1/kdl-server-0.9.1.tgz
     version: 0.9.1
   - apiVersion: v2
     appVersion: v0.9.0
@@ -991,7 +991,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.9.0/kdl-server-0.9.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.9.0/kdl-server-0.9.0.tgz
     version: 0.9.0
   - apiVersion: v2
     appVersion: v0.8.0
@@ -1005,7 +1005,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.8.0/kdl-server-0.8.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.8.0/kdl-server-0.8.0.tgz
     version: 0.8.0
   - apiVersion: v2
     appVersion: v0.7.0
@@ -1019,7 +1019,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.7.0/kdl-server-0.7.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.7.0/kdl-server-0.7.0.tgz
     version: 0.7.0
   - apiVersion: v2
     appVersion: v0.6.0
@@ -1033,7 +1033,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.6.0/kdl-server-0.6.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.6.0/kdl-server-0.6.0.tgz
     version: 0.6.0
   - apiVersion: v2
     appVersion: v0.5.0
@@ -1047,7 +1047,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.5.0/kdl-server-0.5.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.5.0/kdl-server-0.5.0.tgz
     version: 0.5.0
   - apiVersion: v2
     appVersion: v0.4.0
@@ -1061,7 +1061,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.4.0/kdl-server-0.4.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.4.0/kdl-server-0.4.0.tgz
     version: 0.4.0
   - apiVersion: v2
     appVersion: v0.3.0
@@ -1075,7 +1075,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.3.0/kdl-server-0.3.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.3.0/kdl-server-0.3.0.tgz
     version: 0.3.0
   - apiVersion: v2
     appVersion: v0.2.0
@@ -1089,7 +1089,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-0.2.0/kdl-server-0.2.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-0.2.0/kdl-server-0.2.0.tgz
     version: 0.2.0
   - apiVersion: v2
     appVersion: v0.1.0
@@ -1103,7 +1103,7 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-v0.1.0/kdl-server-v0.1.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-v0.1.0/kdl-server-v0.1.0.tgz
     version: v0.1.0
   - apiVersion: v2
     appVersion: v0.0.0
@@ -1117,6 +1117,6 @@ entries:
     name: kdl-server
     type: application
     urls:
-    - https://github.com/konstellation-io/kdl-server/releases/download/kdl-server-v0.0.0/kdl-server-v0.0.0.tgz
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-v0.0.0/kdl-server-v0.0.0.tgz
     version: v0.0.0
 generated: "2023-04-27T12:06:54.172236271Z"
