@@ -27,6 +27,14 @@ This install all the Kubernetes components associated with the chart and creates
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
+## Install Helm chart (OCI mode)
+
+Charts are also available in OCI format. The list of available charts can be found [here](https://github.com/konstellation-io/helm-charts/pkgs/container/helm-charts%2Fkdl-server).
+
+```console
+helm install [RELEASE_NAME] oci://ghcr.io/konstellation-io/helm-charts/kdl-server --version=[version]
+```
+
 ## Uninstall Helm chart
 
 ```console
