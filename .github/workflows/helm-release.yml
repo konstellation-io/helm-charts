@@ -44,7 +44,7 @@ jobs:
           charts_dir: charts
           config: .github/cr.yaml
         env:
-          CR_TOKEN: "${{ secrets.PAT }}"
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true
 
       - name: Login in to the Container registry
@@ -52,7 +52,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT }}
+          password: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3

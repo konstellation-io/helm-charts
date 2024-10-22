@@ -17,5 +17,5 @@ jobs:
       - name: 'devops auto-assign'
         uses: kentaro-m/auto-assign-action@v2.0.0
         with:
-          repo-token: ${{ secrets.PAT }}
+          repo-token: ${{ secrets.PAT_GITHUB }}
           configuration-path: '.github/devops_auto_assign.yml'
