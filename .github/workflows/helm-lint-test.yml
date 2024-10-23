@@ -37,7 +37,7 @@ jobs:
 
       - name: Run ct lint
         if: steps.list-changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
-        run: ct lint --config .github/ct.yaml
+        run: ct lint --config .github/ct.yaml --lint-conf .github/helmlintconf.yaml
 
       - name: Create kind cluster
         if: steps.list-changed.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
