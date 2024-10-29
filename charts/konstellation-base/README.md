@@ -55,7 +55,7 @@ Go to [examples](./examples) directory to see some examples of how to use this c
 # local chart
 helm template test . -f examples/XX-example.yaml
 
-# local chart
+# remote chart
 helm template test konstellation-io/konstellation-base -f examples/XX-example.yaml
 ```
 
