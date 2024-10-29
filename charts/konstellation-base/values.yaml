@@ -90,6 +90,18 @@ initContainers: []
   #   image: busybox
   #   command: ['sh', '-c', 'echo "Hello, World!"']
 
+# -- Configure args
+# </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+args: []
+  # - -c
+  # - echo "Hello, World!"
+
+# -- Configure command
+# </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+command: []
+  # - echo
+  # - "Hello, World!"
+
 # -- Kubernetes service to expose Pod
 # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
