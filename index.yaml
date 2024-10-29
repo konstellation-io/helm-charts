@@ -1162,6 +1162,24 @@ entries:
   konstellation-base:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-10-29T15:15:40.653012122Z"
+    description: A Helm chart to deploy konstellation-base for Kubernetes
+    digest: 75eb127a8c7fcc703b2d7b751b5ba6146fcd2c4bcd8e39a912ef6c3b23c867a0
+    home: https://github.com/konstellation-io/helm-charts/tree/main/charts/konstellation-base
+    keywords:
+    - konstellation
+    - chart
+    - template
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    name: konstellation-base
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.1/konstellation-base-1.0.1.tgz
+    version: 1.0.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-10-29T13:41:52.063725154Z"
     description: A Helm chart to deploy konstellation-base for Kubernetes
     digest: 01b7ea9540276daa506ff5f6e2ad09736fcd01c0a101fcdbc02a30e24787ee2d
@@ -1178,4 +1196,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2024-10-29T13:41:52.063943101Z"
+generated: "2024-10-29T15:15:40.653191127Z"
