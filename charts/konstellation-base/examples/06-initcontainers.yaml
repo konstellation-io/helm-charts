@@ -1,0 +1,7 @@
+initContainers:
+  - name: init-my-service
+    image: busybox
+    command:
+      - "sh"
+      - "-c"
+      - "echo Initializing Service"

@@ -1,0 +1,10 @@
+service:
+  extraPorts:
+  - name: metrics
+    port: 9080
+    targetPort: 5000
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s

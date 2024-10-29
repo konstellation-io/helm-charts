@@ -1,0 +1,15 @@
+persistentVolume:
+  enabled: true
+  accessModes:
+    - ReadWriteMany
+  size: 50Gi
+  storageClass: "gp3"
+
+volumeMounts:
+  - name: data
+    mountPath: /etc/data
+
+volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: <my-release>-data

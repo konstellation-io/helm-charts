@@ -1,0 +1,18 @@
+{{ if .Values.testConnection.enable }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "konstellation-base.fullname" . }}-test-connection"
+  labels:
+    {{- include "konstellation-base.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      image: "{{ .Values.testConnection.repository }}:{{ .Values.testConnection.tag | default "latest" }}"
+      command: ['wget']
+      args: ['{{ include "konstellation-base.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
+{{ end }}

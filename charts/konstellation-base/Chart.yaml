@@ -1,0 +1,14 @@
+apiVersion: v2
+name: konstellation-base
+description: A Helm chart to deploy konstellation-base for Kubernetes
+type: application
+maintainers:
+  - name: ialejandro
+    email: ivan.alejandro@intelygenz.com
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/konstellation-io/helm-charts/tree/main/charts/konstellation-base
+keywords:
+  - konstellation
+  - chart
+  - template
