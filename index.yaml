@@ -1159,4 +1159,23 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-v0.0.0/kdl-server-v0.0.0.tgz
     version: v0.0.0
-generated: "2024-10-29T10:27:17.615074424Z"
+  konstellation-base:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2024-10-29T13:41:52.063725154Z"
+    description: A Helm chart to deploy konstellation-base for Kubernetes
+    digest: 01b7ea9540276daa506ff5f6e2ad09736fcd01c0a101fcdbc02a30e24787ee2d
+    home: https://github.com/konstellation-io/helm-charts/tree/main/charts/konstellation-base
+    keywords:
+    - konstellation
+    - chart
+    - template
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    name: konstellation-base
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
+    version: 1.0.0
+generated: "2024-10-29T13:41:52.063943101Z"
