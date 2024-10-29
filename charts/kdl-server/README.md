@@ -35,6 +35,14 @@ This install all the Kubernetes components associated with the chart and creates
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
+## Install Helm chart (OCI mode)
+
+Charts are also available in OCI format. The list of available charts can be found [here](https://github.com/konstellation-io/helm-charts/pkgs/container/helm-charts%2Fkdl-server).
+
+```console
+helm install [RELEASE_NAME] oci://ghcr.io/konstellation-io/helm-charts/kdl-server --version=[version]
+```
+
 ## Uninstall Helm chart
 
 ```console
@@ -48,7 +56,26 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 > [!IMPORTANT]
-> Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+> Upgrading an existing Release to a new major version (`v0.15.X` -> ``v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+
+### From `6.0.1` to `6.0.2`
+
+Changes in values:
+
+* `konstellation/mlflow` -> `konstellation/kdl-mlflow`
+* `konstellation/repo-cloner` -> `konstellation/kdl-repo-cloner`
+* `konstellation/vscode` -> `konstellation/kdl-vscode`
+* `konstellation/project-operator` -> `konstellation/kdl-project-operator`
+* `konstellation/gitea-oauth2-setup` -> `konstellation/kdl-gitea-oauth2-setup`
+* `konstellation/drone-authorizer` -> `konstellation/kdl-drone-authorizer`
+* `konstellation/cleaner` -> `konstellation/kdl-cleaner`
+
+Bump versions:
+
+* `konstellation/kdl-server`: from `1.35.0` -> `1.38.0`
+* `konstellation/kdl-repo-cloner`: from `0.15.0` -> `0.18.0`
+
+CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.0.2)
 
 ### From `5.X` to `6.X`
 
@@ -236,8 +263,8 @@ helm show values konstellation-io/kdl-server
 | backup.ttlSecondsAfterFinished | string | `""` | Limits the lifetime of a Job that has finished execution (either Complete or Failed). |
 | cleaner.enabled | bool | `false` | Whether to enable cleaner cronjob |
 | cleaner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| cleaner.image.repository | string | `"konstellation/cleaner"` | The image repository |
-| cleaner.image.tag | string | `"0.15.0"` | The image tag |
+| cleaner.image.repository | string | `"konstellation/kdl-cleaner"` | The image repository |
+| cleaner.image.tag | string | `"0.16.0"` | The image tag |
 | cleaner.schedule | string | `"0 1 * * 0"` | Celaner cronjob schedule |
 | cleaner.threshold | int | `5` | The minimun age of files to be removed |
 | cleaner.trashPath | string | `"/shared-storage/.trash"` | The name of the trash path |
@@ -256,7 +283,7 @@ helm show values konstellation-io/kdl-server
 | drone.storage.storageClassName | string | `"standard"` | The Storage ClassName |
 | drone.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | droneAuthorizer.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| droneAuthorizer.image.repository | string | `"konstellation/drone-authorizer"` | The image repository |
+| droneAuthorizer.image.repository | string | `"konstellation/kdl-drone-authorizer"` | The image repository |
 | droneAuthorizer.image.tag | string | `"0.16.0"` | The image tag |
 | droneRunner.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
 | droneRunner.debug | string | `"true"` | Sets DRONE_DEBUG environment variable |
@@ -287,9 +314,8 @@ helm show values konstellation-io/kdl-server
 | gitea.storage.storageClassName | string | `"standard"` | Storage class name |
 | gitea.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | giteaOauth2Setup.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| giteaOauth2Setup.image.repository | string | `"konstellation/gitea-oauth2-setup"` | The image repository |
-| giteaOauth2Setup.image.tag | string | `"0.17.0"` | The image tag |
-| global | object | `{"domain":"kdl.local","ingress":{"tls":{"caSecret":{},"enabled":true,"secretName":null}},"mongodb":{"connectionString":{"secretKey":"","secretName":""}},"serverName":"local-server"}` | Global section contains configuration options that are applied to all services |
+| giteaOauth2Setup.image.repository | string | `"konstellation/kdl-gitea-oauth2-setup"` | The image repository |
+| giteaOauth2Setup.image.tag | string | `"0.16.0"` | The image tag |
 | global.domain | string | `"kdl.local"` | The DNS domain name that will serve the application |
 | global.ingress.tls.caSecret | object | `{}` | A secret containing the the CA cert is needed in order to use a self-signed certificate. Check [values.yaml](./values.yaml) for usage details. |
 | global.ingress.tls.enabled | bool | `true` | Whether to enable TLS |
@@ -355,12 +381,12 @@ helm show values konstellation-io/kdl-server
 | projectOperator.kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` | Image repository |
 | projectOperator.kubeRbacProxy.image.tag | string | `"v0.8.0"` | Image tag |
 | projectOperator.manager.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.manager.image.repository | string | `"konstellation/project-operator"` | The image repository |
+| projectOperator.manager.image.repository | string | `"konstellation/kdl-project-operator"` | The image repository |
 | projectOperator.manager.image.tag | string | `"0.19.0"` | The image tag |
 | projectOperator.manager.resources | object | `{}` | Resource requests and limits for primary projectOperator container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
 | projectOperator.mlflow.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
 | projectOperator.mlflow.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.mlflow.image.repository | string | `"konstellation/mlflow"` | The image repository |
+| projectOperator.mlflow.image.repository | string | `"konstellation/kdl-mlflow"` | The image repository |
 | projectOperator.mlflow.image.tag | string | `"v0.13.5"` | The image tag |
 | projectOperator.mlflow.ingress.annotations | object | `{}` | Ingress annotations |
 | projectOperator.mlflow.ingress.className | string | `"nginx"` | The ingress class name |
@@ -376,7 +402,7 @@ helm show values konstellation-io/kdl-server
 | sharedVolume.storageClassName | string | `"standard"` | Storage class to use for persistence |
 | userToolsOperator.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
 | userToolsOperator.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.image.repository | string | `"konstellation/user-tools-operator"` | The image repository |
+| userToolsOperator.image.repository | string | `"konstellation/kdl-user-tools-operator"` | The image repository |
 | userToolsOperator.image.tag | string | `"0.29.0"` | The image tag |
 | userToolsOperator.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
 | userToolsOperator.ingress.className | string | `"nginx"` | The ingress class name |
@@ -388,13 +414,13 @@ helm show values konstellation-io/kdl-server
 | userToolsOperator.oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` | The image repository |
 | userToolsOperator.oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` | The image tag |
 | userToolsOperator.repoCloner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.repoCloner.image.repository | string | `"konstellation/repo-cloner"` | The image repository |
-| userToolsOperator.repoCloner.image.tag | string | `"0.17.0"` | The image tag |
+| userToolsOperator.repoCloner.image.repository | string | `"konstellation/kdl-repo-cloner"` | The image repository |
+| userToolsOperator.repoCloner.image.tag | string | `"0.18.0"` | The image tag |
 | userToolsOperator.storage.size | string | `"10Gi"` | The storage size for the persistent volume claim |
 | userToolsOperator.storage.storageClassName | string | `"standard"` | Storage class to use for persistence |
 | userToolsOperator.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
 | userToolsOperator.vscode.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.vscode.image.repository | string | `"konstellation/vscode"` | The image repository |
+| userToolsOperator.vscode.image.repository | string | `"konstellation/kdl-vscode"` | The image repository |
 | userToolsOperator.vscode.image.tag | string | `"v0.15.0"` | The image tag |
 | userToolsOperator.vscodeRuntime.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
 | userToolsOperator.vscodeRuntime.image.repository | string | `"konstellation/kdl-py"` | The image repository |
