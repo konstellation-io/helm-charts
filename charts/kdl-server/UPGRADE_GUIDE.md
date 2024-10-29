@@ -1,5 +1,24 @@
 > [!IMPORTANT]
-> Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+> Upgrading an existing Release to a new major version (`v0.15.X` -> ``v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+
+### From `6.0.1` to `6.0.2`
+
+Changes in values:
+
+* `konstellation/mlflow` -> `konstellation/kdl-mlflow`
+* `konstellation/repo-cloner` -> `konstellation/kdl-repo-cloner`
+* `konstellation/vscode` -> `konstellation/kdl-vscode`
+* `konstellation/project-operator` -> `konstellation/kdl-project-operator`
+* `konstellation/gitea-oauth2-setup` -> `konstellation/kdl-gitea-oauth2-setup`
+* `konstellation/drone-authorizer` -> `konstellation/kdl-drone-authorizer`
+* `konstellation/cleaner` -> `konstellation/kdl-cleaner`
+
+Bump versions:
+
+* `konstellation/kdl-server`: from `1.35.0` -> `1.38.0`
+* `konstellation/kdl-repo-cloner`: from `0.15.0` -> `0.18.0`
+
+CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.0.2)
 
 ### From `5.X` to `6.X`
 

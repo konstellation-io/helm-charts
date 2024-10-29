@@ -4,7 +4,7 @@ This repository contains Helm charts for deploying Konstellation services.
 
 | Chart | Description | Version | App Version |
 |-------|-------------|---------|-------------|
-| [kdl-server](charts/kdl-server) | Konstellation Development Lifecycle Server | 6.0.1 | 1.35.0 |
+| [kdl-server](charts/kdl-server) | Konstellation Development Lifecycle Server | 6.0.2 | 1.38.0 |
 
 ## Usage
 

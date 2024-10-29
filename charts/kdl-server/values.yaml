@@ -102,7 +102,7 @@ cleaner:
   threshold: 5 # minimun age of files to be removed
   image:
     # -- The image repository
-    repository: konstellation/cleaner
+    repository: konstellation/kdl-cleaner
     # -- The image tag
     tag: 0.16.0
     # -- The image pull policy
@@ -169,7 +169,7 @@ drone:
 droneAuthorizer:
   image:
     # -- The image repository
-    repository: konstellation/drone-authorizer
+    repository: konstellation/kdl-drone-authorizer
     # -- The image tag
     tag: 0.16.0
     # -- The image pull policy
@@ -270,7 +270,7 @@ gitea:
 giteaOauth2Setup:
   image:
     # -- The image repository
-    repository: konstellation/gitea-oauth2-setup
+    repository: konstellation/kdl-gitea-oauth2-setup
     # -- The image tag
     tag: 0.16.0
     # -- The image pull policy
@@ -326,7 +326,7 @@ kdlServer:
     # -- The image repository
     repository: konstellation/kdl-server
     # -- The image tag
-    tag: 1.35.0
+    tag: 1.38.0
     # -- The image pull policy
     pullPolicy: IfNotPresent
   ingress:
@@ -461,7 +461,7 @@ projectOperator:
   manager:
     image:
       # -- The image repository
-      repository: konstellation/project-operator
+      repository: konstellation/kdl-project-operator
       # -- The image tag
       tag: 0.19.0
       # -- The image pull policy
@@ -501,7 +501,7 @@ projectOperator:
   mlflow:
     image:
       # -- The image repository
-      repository: konstellation/mlflow
+      repository: konstellation/kdl-mlflow
       # -- The image tag
       tag: v0.13.5
       # -- The image pull policy
@@ -558,7 +558,7 @@ sharedVolume:
 userToolsOperator:
   image:
     # -- The image repository
-    repository: konstellation/user-tools-operator
+    repository: konstellation/kdl-user-tools-operator
     # -- The image tag
     tag: 0.29.0
     # -- The image pull policy
@@ -583,15 +583,15 @@ userToolsOperator:
   repoCloner:
     image:
       # -- The image repository
-      repository: konstellation/repo-cloner
+      repository: konstellation/kdl-repo-cloner
       # -- The image tag
-      tag: 0.15.0
+      tag: 0.18.0
       # -- The image pull policy
       pullPolicy: IfNotPresent
   vscode:
     image:
       # -- The image repository
-      repository: konstellation/vscode
+      repository: konstellation/kdl-vscode
       # -- The image tag
       tag: v0.15.0
       # -- The image pull policy
@@ -627,8 +627,8 @@ userToolsOperator:
       # nginx.ingress.kubernetes.io/configuration-snippet: |
       #   more_set_headers "Content-Security-Policy: frame-ancestors 'self' https://kdlapp.kdl.local";
 
-      ## If enabled, users will be able to download a kubeconfig file, so they can attach an external terminal/IDE to
-      ## the vscodeRuntime running inside KST.
+  ## If enabled, users will be able to download a kubeconfig file, so they can attach an external terminal/IDE to
+  ## the vscodeRuntime running inside KST.
   kubeconfig:
     # -- Whether to enable kubeconfig for using with VSCode remote development. Ref: https://code.visualstudio.com/docs/remote/remote-overview
     enabled: false
