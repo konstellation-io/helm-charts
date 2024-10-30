@@ -6,7 +6,11 @@ on:
     branches:
       - main
     paths:
-      - "charts/**"
+      - 'charts/**/*.yaml'
+      - 'charts/**/*.yml'
+      - 'charts/**/*.tpl'
+      - 'charts/**/*.txt'
+      - '!charts/**/examples/*.yaml'
 
 jobs:
   release:
