@@ -2,7 +2,7 @@ apiVersion: v2
 type: application
 name: kdl-server
 description: A Helm chart to deploy KDL server
-version: 6.0.2
+version: 6.0.3-rc.1
 appVersion: 1.38.0
 sources:
   - https://github.com/konstellation-io/kdl-server
@@ -21,3 +21,8 @@ dependencies:
   - name: minio
     version: "3.2.0"
     repository: "https://charts.min.io/"
+  - name: oauth2-proxy
+    alias: oauth2proxy
+    version: 7.7.28
+    repository: oci://ghcr.io/oauth2-proxy/charts
+    condition: oauth2proxy.enabled

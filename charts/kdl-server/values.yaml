@@ -416,6 +416,8 @@ minio:
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
 
+# TODO: legacy, remove in future versions
+# OAuth2-Proxy legacy to configure user authentication
 oauth2Proxy:
   image:
     # -- The image repository
@@ -427,6 +429,26 @@ oauth2Proxy:
   config:
     # -- The seed string for secure cookies. Ref: https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview
     cookieSecret: "mycookiesecret16"
+
+# -- OAuth2-Proxy subchart deployment
+# </br> Ref: https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml
+oauth2proxy:
+  # -- Enable or disable OAuth2-Proxy subchart
+  enabled: true
+
+  # OAuth client ID
+  clientID: "XXXXXXX"
+  # OAuth client secret
+  clientSecret: "XXXXXXXX"
+  # Create a new secret with the following command
+  # openssl rand -base64 32 | head -c 32 | base64
+  # Use an existing secret for OAuth2 credentials (see secret.yaml for required fields)
+  # Example:
+  # existingSecret: secret
+  cookieSecret: "XXXXXXXX"
+  # The name of the cookie that oauth2-proxy will create
+  # If left empty, it will default to the release name
+  cookieName: ""
 
 postgres:
   image:
