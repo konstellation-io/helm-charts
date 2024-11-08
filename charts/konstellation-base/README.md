@@ -2,6 +2,21 @@
 
 A Helm chart to deploy konstellation-base for Kubernetes
 
+## Description
+
+`konstellation-base` Helm chart is designed to facilitate the deployment of applications that lack their own Helm charts or have deprecated ones. It also serves as a foundation for deploying custom-developed applications.
+
+* **Replica management**: configure the number of replicas for your service to ensure scalability and reliability.
+* **Image configuration**: specify repository, tag and pull policy to control the application's container image.
+* **Service account management**: option to create and configure a Kubernetes `serviceaccount`, including setting `annotations` and specifying whether to automatically mount api credentials.
+* **Environment variables**: define environment variables directly or source them from existing Kubernetes `Secrets` or `ConfigMaps`.
+* **Probes and lifecycle hooks**: set up `liveness`, `readiness` and `startup probes` to monitor the application's health and define lifecycle hooks for graceful startup and shutdown processes.
+* **Resource management**: allocate `cpu` and `memory` resources, set up `autoscaling` based on utilization metrics and define `pod disruption budgets` to maintain application availability during maintenance events.
+* **Storage configuration**: manage persistent storage needs by configuring `PVC`, specifying access modes, storage classes and other relevant parameters.
+* **Networking and exposure**: configure Kubernetes services to expose your application, with options for service types like `ClusterIP`, `NodePort` or `LoadBalancer`. Additionally, set up `Ingress` resources to manage external access to the application.
+* **Security contexts**: define security contexts at both the pod and container levels to enforce security policies, such as running containers as non-root users or setting read-only root filesystems.
+* **Node scheduling**: control pod placement using `node selectors`, `tolerations`, `affinities` and `topology spread constraints` to optimize resource utilization and maintain high availability.
+
 ## Maintainers
 
 | Name | Email | Url |
@@ -11,6 +26,7 @@ A Helm chart to deploy konstellation-base for Kubernetes
 ## Prerequisites
 
 * Helm 3+
+* Kubernetes 1.24+
 
 ## Add repository
 
@@ -110,7 +126,7 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | startupProbe | object | `{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure startupProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
 | startupProbeCustom | object | `{}` | Custom startupProbe |
 | terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
-| testConnection | object | `{"enable":false,"repository":"busybox","tag":""}` | Enable or disable test connection |
+| testConnection | object | `{"enabled":false,"repository":"busybox","tag":""}` | Enable or disable test connection |
 | tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
 | volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |

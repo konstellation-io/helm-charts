@@ -40,7 +40,7 @@ serviceAccount:
 # -- Enable or disable test connection
 testConnection:
   # Specifies whether a test connection should be created
-  enable: false
+  enabled: false
   # The repository of the image
   repository: busybox
   # Overrides the image tag whose default is the chart appVersion
