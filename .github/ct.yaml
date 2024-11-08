@@ -1,7 +1,5 @@
 # See https://github.com/helm/chart-testing#configuration
 chart-dirs: charts
-chart-repos:
-- minio=https://charts.min.io/
 check-version-increment: true
 debug: false
 remote: origin
