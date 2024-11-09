@@ -22,10 +22,12 @@ nameOverride: ""
 # -- String to fully override konstellation-base.fullname template
 fullnameOverride: ""
 
-# -- Global Docker registry secret names as an array
+# -- Docker registry secret names as an array
 imagePullSecrets: []
+  # - name: my-secret-name
 
 # -- Enable creation of ServiceAccount
+# </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -47,7 +49,6 @@ testConnection:
   tag: ""
 
 # -- Environment variables to configure application
-# </br> Ref: https://docs.konstellation-base.io/latest/deployment/configuration/#platform
 env: {}
   # MY_VARIABLE: value
 
@@ -62,6 +63,14 @@ envFromConfigMap: {}
   # MY_VARIABLE:
   #  name: <name-configmap>
   #  key: key
+
+# -- Variables from files managed by you
+# </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+envFromFiles: {}
+  # - secretRef:
+  #     name: <name-secret>
+  # - configMapRef:
+  #     name: <name-configmap>
 
 # -- Secrets values to create credentials and reference by envFromSecrets
 # Generate Secret with following name: <release-name>-<name>
@@ -109,6 +118,8 @@ service:
   type: ClusterIP
   # -- Kubernetes Service port
   port: 80
+  # -- Kubernetes Service health check path
+  # healthPath: ""
   # -- NodePort port (only when type is NodePort)
   # nodePort: 32000
   # -- Pod expose port
@@ -118,6 +129,38 @@ service:
   # - name: metrics
   #   port: 9080
   #   targetPort: 9080
+
+# -- NetworkPolicy configuration
+# </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+networkPolicy:
+  # -- Enable or disable NetworkPolicy
+  enabled: false
+  # -- Policy types
+  policyTypes: []
+    # - Ingress
+    # - Egress
+  ingress: []
+    # - from:
+    #   - ipBlock:
+    #       cidr: 172.17.0.0/16
+    #       except:
+    #       - 172.17.1.0/24
+    #   - namespaceSelector:
+    #       matchLabels:
+    #         project: myproject
+    #   - podSelector:
+    #       matchLabels:
+    #         role: frontend
+    #   ports:
+    #   - protocol: TCP
+    #     port: 6379
+  egress: []
+    # - to:
+    #   - ipBlock:
+    #       cidr: 10.0.0.0/24
+    #   ports:
+    #   - protocol: TCP
+    #     port: 5978
 
 # -- Configure lifecycle hooks
 # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
@@ -248,10 +291,6 @@ ingress:
 # -- Resources limits and requested
 # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'
   # limits:
   #   cpu: 100m
   #   memory: 128Mi

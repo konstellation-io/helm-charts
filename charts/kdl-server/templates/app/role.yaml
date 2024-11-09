@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-server
+  labels:
+    {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
+rules:
+  # configmaps and secrets
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    - secrets
+    - serviceaccounts
+    - pods
+    verbs:
+    - '*'
+  # CRDs
+  - apiGroups:
+    - "project.konstellation.io"
+    - "kdl.konstellation.io"
+    resources:
+    - "kdlprojects"
+    - "usertools"
+    verbs:
+    - '*'

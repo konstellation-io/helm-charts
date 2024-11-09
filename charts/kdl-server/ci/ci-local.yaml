@@ -1,0 +1,261 @@
+global:
+  serverName: "local-server"
+  domain: test.localhost
+
+  ingress:
+    tls:
+      enabled: true
+      secretName: test.localhost-tls-secret
+
+image:
+  repository: konstellation/kdl-server
+
+env:
+  KDL_ADMIN_EMAIL: "test@test.com"
+  KDL_ADMIN_USERNAME: kdladmin
+  KDL_SERVER_MONGODB_URI: "mongodb://kdl:123456@mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256"
+  KDL_SERVER_PORT: "8080"
+  MINIO_ACCESS_KEY: "minio"
+  MINIO_ENDPOINT: "minio:9000"
+  MINIO_SECRET_KEY: "minio123"
+  SERVER_URL: https://kdlapp.test.localhost
+
+readyChecker:
+  enabled: true
+  services:
+  - name: mongodb
+    port: 27017
+  - name: keycloak
+    port: 80
+  - name: oauth2proxy
+    port: 80
+
+service:
+  type: ClusterIP
+  port: 80
+
+keycloak:
+  enabled: true
+
+  fullnameOverride: keycloak
+
+  image:
+    repository: keycloak/keycloak
+    tag: "26.0"
+
+  service:
+    healthPath: /realms/master
+    targetPort: 8080
+
+  ingress:
+    enabled: true
+    className: public
+    annotations:
+      nginx.org/proxy-buffer-size: "128k"
+      nginx.org/proxy-buffers: "8 256k"
+      cert-manager.io/cluster-issuer: selfsigned-clusterissuer
+    hosts:
+    - host: keycloak.test.localhost
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+    tls:
+      - secretName: keycloak-kdl-tls
+        hosts:
+        - keycloak.test.localhost
+
+  serviceAccount:
+    create: true
+
+  livenessProbe:
+    enabled: false
+
+  readinessProbe:
+    enabled: false
+    httpGet:
+      path: /realms/master
+
+  command:
+  - "/opt/keycloak/bin/kc.sh"
+  - "start"
+  - "--verbose"
+  - "--import-realm"
+
+  env:
+    KC_DB_PASSWORD: keycloak
+    KC_DB_URL: jdbc:postgresql://postgresql:5432/keycloak
+    KC_DB_USERNAME: keycloak
+    KC_DB: postgres
+    KC_HEALTH_ENABLED: true
+    KC_HOSTNAME: keycloak.test.localhost
+    KC_HTTP_ENABLED: true
+    KC_METRICS_ENABLED: true
+    KC_PROXY_HEADERS: xforwarded
+    KC_BOOTSTRAP_ADMIN_USERNAME: kdladmin
+    KC_BOOTSTRAP_ADMIN_PASSWORD: kdladmin
+    KC_PROXY: edge
+
+  volumes:
+    - name: keycloak-initial-realm
+      configMap:
+        name: keycloak-initial-realm
+
+  volumeMounts:
+    - name: keycloak-initial-realm
+      mountPath: /opt/keycloak/data/import/initial-realm.json
+      subPath: initial-realm.json
+      readOnly: true
+
+knowledgeGalaxy:
+  enabled: false
+
+minio:
+  enabled: true
+
+  fullnameOverride: minio
+  nameOverride: minio
+
+  mode: standalone
+
+  ingress:
+    enabled: true
+    ingressClassName: public
+    annotations:
+      cert-manager.io/cluster-issuer: selfsigned-clusterissuer
+      nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+    path: /
+    hosts:
+      - minio.test.localhost
+    tls:
+      - secretName: minio-tls
+        hosts:
+        - minio.test.localhost
+
+  consoleIngress:
+    enabled: true
+    ingressClassName: public
+    annotations:
+      cert-manager.io/cluster-issuer: selfsigned-clusterissuer
+      nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+    path: /
+    hosts:
+      - minio-console.test.localhost
+    tls:
+      - secretName: minio-console-tls
+        hosts:
+        - minio-console.test.localhost
+
+  rootUser: minio
+  rootPassword: minio123
+
+  persistence:
+    enabled: false
+
+  resources:
+    requests:
+      memory: 1Gi
+
+mongodb:
+  enabled: true
+
+  fullnameOverride: mongodb
+  nameOverride: mongodb
+
+  image:
+    tag: 7.0.15
+
+  architecture: standalone
+
+  auth:
+    rootUser: admin
+    rootPassword: "123456"
+    usernames:
+    - kdl
+    passwords:
+    - 123456
+    databases:
+    - kdl
+
+  persistence:
+    enabled: false
+
+oauth2proxy:
+  enabled: true
+
+  ingress:
+    enabled: true
+    className: public
+    path: /
+    pathType: ImplementationSpecific
+    hosts:
+      - kdlapp.test.localhost
+
+  httpScheme: http
+
+  image:
+    tag: "v7.7.1-amd64"
+
+  config:
+    clientID: proxy
+    clientSecret: proxy654321
+    cookieSecret: mycookiesecret16
+
+    configFile: |-
+      upstreams=["http://kdl-local-server:80/", "http://127.0.0.1:9000/mlflow/", "http://127.0.0.1:9000/filebrowser/", "http://127.0.0.1:9000/kg/"]
+      cookie_domains=["kdlapp.test.localhost", "keycloak.test.localhost"]
+      cookie_samesite="lax"
+      cookie_secure=true
+      email_domains="*"
+      errors_to_info_log=true
+      http_address="https://kdlapp.test.localhost/"
+      oidc_issuer_url="https://keycloak.test.localhost/realms/kdl"
+      pass_user_headers=true
+      provider="keycloak-oidc"
+      redirect_url="https://kdlapp.test.localhost/oauth2/callback"
+      set_xauthrequest=true
+      skip_auth_routes="/config.json"
+      skip_provider_button=true
+      ssl_insecure_skip_verify=true
+      whitelist_domains=["kdlapp.test.localhost"]
+
+  extraContainers:
+    - name: project-proxy
+      image: nginx:alpine
+      ports:
+        - containerPort: 9000
+      volumeMounts:
+        - name: project-proxy-nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+
+  extraVolumes:
+    - name: project-proxy-nginx-config
+      configMap:
+        name: project-proxy-nginx-config
+
+postgresql:
+  enabled: true
+
+  fullnameOverride: postgresql
+  nameOverride: postgresql
+
+  replicaCount: 1
+
+  auth:
+    postgresPassword: postgres
+    username: keycloak
+    password: keycloak
+    database: "keycloak"
+
+  primary:
+    persistence:
+      enabled: false
+
+projectOperator:
+  enabled: false
+
+sharedVolume:
+  enabled: false
+
+userToolsOperator:
+  enabled: false

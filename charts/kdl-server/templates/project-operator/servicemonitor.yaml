@@ -1,0 +1,24 @@
+{{- if .Values.projectOperator.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-server
+  labels:
+    {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kdl-server.selectorKdlServerLabels" . | nindent 8 }}
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.projectOperator.serviceMonitor.interval | quote }}
+    scrapeTimeout: {{ .Values.projectOperator.serviceMonitor.scrapeTimeout | quote }}
+    {{- if .Values.projectOperator.serviceMonitor.metricRelabelings }}
+    metricRelabelings:
+    {{- toYaml .Values.projectOperator.serviceMonitor.metricRelabelings | nindent 4 }}
+    {{- end }}
+    {{- if .Values.projectOperator.serviceMonitor.relabelings }}
+    relabelings:
+    {{- toYaml .Values.projectOperator.serviceMonitor.relabelings | nindent 4 }}
+    {{- end }}
+{{- end }}

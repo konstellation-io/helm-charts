@@ -1,0 +1,17 @@
+sources:
+  kdl-server:
+    kind: dockerimage
+    spec:
+      image: konstellation/kdl-server
+      architecture: linux/amd64
+      versionFilter:
+        kind: semver
+conditions: {}
+targets:
+  kdl-server:
+    name: bump chart appversion
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.appVersion
+    sourceid: kdl-server

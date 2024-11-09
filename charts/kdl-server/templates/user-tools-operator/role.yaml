@@ -1,7 +1,10 @@
+{{ if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: user-tools-operator
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -84,3 +87,4 @@ rules:
   - patch
   - update
   - watch
+{{- end }}

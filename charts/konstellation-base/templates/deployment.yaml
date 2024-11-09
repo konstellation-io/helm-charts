@@ -104,6 +104,10 @@ spec:
             timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
             {{- end }}
           {{- end }}
+          {{- if .Values.envFromFiles }}
+          envFrom:
+            {{- tpl (toYaml .Values.envFromFiles) . | nindent 12 }}
+          {{- end }}
           env:
           # Variables from secrets have precedence
           {{- $envList := dict -}}
@@ -120,7 +124,6 @@ spec:
           {{- end }}
           {{- end }}
           # Variables from configmap have precedence
-          {{- $envList := dict -}}
           {{- if .Values.envFromConfigMap }}
           {{- range $key, $value := .Values.envFromConfigMap }}
           {{- if not (hasKey $envList $key) }}

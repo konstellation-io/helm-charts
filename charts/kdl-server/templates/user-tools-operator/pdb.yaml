@@ -1,0 +1,18 @@
+{{- if and .Values.userToolsOperator.enabled .Values.userToolsOperator.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kdl-server.selectorUserToolsOperatorLabels" . | nindent 6 }}
+  {{- if .Values.userToolsOperator.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.userToolsOperator.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.userToolsOperator.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.userToolsOperator.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+{{- end }}

@@ -10,7 +10,6 @@ metadata:
 spec:
   containers:
     - name: wget
-      image: busybox
       image: "{{ .Values.testConnection.repository }}:{{ .Values.testConnection.tag | default "latest" }}"
       command: ['wget']
       args: ['{{ include "konstellation-base.fullname" . }}:{{ .Values.service.port }}']

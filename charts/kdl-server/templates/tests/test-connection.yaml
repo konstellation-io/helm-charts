@@ -1,0 +1,17 @@
+{{ if .Values.testConnection.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "kdl-server.fullname" . }}-test-connection"
+  labels:
+    {{- include "kdl-server.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: "{{ .Values.testConnection.repository }}:{{ .Values.testConnection.tag | default "latest" }}"
+      command: ['wget']
+      args: ['{{ include "kdl-server.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
+{{ end }}

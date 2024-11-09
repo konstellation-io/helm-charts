@@ -4,6 +4,10 @@ This document provides guidelines for contributing to the *helm-charts* project.
 
 ## How can I contribute?
 
+### How-to add new helm chart?
+
+* Read the following [guide](./docs/add-helm-chart.md)
+
 ### Did you find a bug?
 
 * **Ensure the bug has not already been reported** by searching on GitHub under [Issues](https://github.com/konstellation-io/helm-charts/issues).

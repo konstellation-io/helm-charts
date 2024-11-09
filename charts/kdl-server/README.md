@@ -7,16 +7,23 @@ A Helm chart to deploy KDL server
 | Name | Email | Url |
 | ---- | ------ | --- |
 | ialejandro | <ivan.alejandro@intelygenz.com> |  |
+| alpiquero | <angelluis.piquero@intelygenz.com> |  |
+| danielchg | <daniel.chavero@intelygenz.com> |  |
 
 ## Prerequisites
 
 * Helm 3+
+* Kubernetes 1.24+
 
 ## Requirements
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.min.io/ | minio | 3.2.0 |
+| https://charts.min.io | minio | 3.2.0 |
+| oci://ghcr.io/konstellation-io/helm-charts | keycloak(konstellation-base) | 1.1.2 |
+| oci://ghcr.io/oauth2-proxy/charts | oauth2proxy(oauth2-proxy) | 7.7.28 |
+| oci://registry-1.docker.io/bitnamicharts | mongodb | 16.2.1 |
+| oci://registry-1.docker.io/bitnamicharts | postgresql | 15.5.38 |
 
 ## Add repository
 
@@ -242,186 +249,236 @@ helm show values konstellation-io/kdl-server
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| backup.activeDeadlineSeconds | int | `3600` | Sets the activeDeadlineSeconds param for the backup cronjob. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup |
-| backup.backoffLimit | int | `3` | Sets the backoffLimit param for the backup cronjob. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy |
-| backup.concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy |
-| backup.enabled | bool | `false` | Whether to enable backup |
-| backup.extraVolumeMounts | list | `[]` | Extra volume mounts for backup pods |
-| backup.extraVolumes | list | `[]` | Extra volumes for backup pods |
-| backup.failedJobsHistoryLimit | int | `1` | The number of failed finished jobs to retain. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
-| backup.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
-| backup.image.repository | string | `"konstellation/kdl-backup"` | Image repository |
-| backup.image.tag | string | `"0.23.0"` | Image tag |
-| backup.name | string | `"backup-gitea"` | Name of the backup cronjob |
-| backup.resources | object | `{"limits":{"cpu":"100m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"100Mi"}}` | Resource requests and limits for backup container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
-| backup.s3.awsAccessKeyID | string | `"aws-access-key-id"` | AWS Access Key ID for acceding backup bucket |
-| backup.s3.awsSecretAccessKey | string | `"aws-secret-access-key"` | AWS Secret Access Key for acceding backup bucket |
-| backup.s3.bucketName | string | `"s3-bucket-name"` | The S3 bucket that will store all backups |
-| backup.schedule | string | `"0 1 * * 0"` | Backup cronjob schedule |
-| backup.startingDeadlineSeconds | int | `60` | Optional deadline in seconds for starting the job if it misses scheduled time for any reason. Missed jobs executions will be counted as failed ones. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#job-creation |
-| backup.successfulJobsHistoryLimit | int | `0` | The number of successful finished jobs to retain. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
-| backup.ttlSecondsAfterFinished | string | `""` | Limits the lifetime of a Job that has finished execution (either Complete or Failed). |
+| affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| args | list | `[]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
+| cleaner | object | `{"activeDeadlineSeconds":86400,"backoffLimit":3,"concurrencyPolicy":"Forbid","enabled":false,"failedJobsHistoryLimit":5,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-cleaner","tag":"0.16.0"},"imagePullSecrets":[],"resources":{},"schedule":"0 1 * * 0","startingDeadlineSeconds":60,"successfulJobsHistoryLimit":2,"threshold":5,"trashPath":"/shared-storage/.trash","volumeMounts":[],"volumes":[]}` | Cleaner job configuration |
+| cleaner.activeDeadlineSeconds | int | `86400` | Specifies the duration in seconds relative to the start time that the job may be active before the system tries to terminate it. ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup |
+| cleaner.backoffLimit | int | `3` | Specifies the number of retries before marking a job as failed. ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy |
+| cleaner.concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy |
 | cleaner.enabled | bool | `false` | Whether to enable cleaner cronjob |
-| cleaner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| cleaner.image.repository | string | `"konstellation/kdl-cleaner"` | The image repository |
-| cleaner.image.tag | string | `"0.16.0"` | The image tag |
-| cleaner.schedule | string | `"0 1 * * 0"` | Celaner cronjob schedule |
+| cleaner.failedJobsHistoryLimit | int | `5` | Specifies the maximum number of failed finished jobs to retain. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
+| cleaner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-cleaner","tag":"0.16.0"}` | Image registry The image configuration for the base service |
+| cleaner.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
+| cleaner.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| cleaner.schedule | string | `"0 1 * * 0"` | Schedule for the cleaner cronjob example: every sunday at 1:00 AM |
+| cleaner.startingDeadlineSeconds | int | `60` | Optional deadline in seconds for starting the job if it misses its scheduled time for any reason. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-job-limitations |
+| cleaner.successfulJobsHistoryLimit | int | `2` | Specifies the maximum number of successful finished jobs to retain. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
 | cleaner.threshold | int | `5` | The minimun age of files to be removed |
 | cleaner.trashPath | string | `"/shared-storage/.trash"` | The name of the trash path |
-| drone.adminToken | string | `"7GSipOV0wJZQioZNBxaw3AotHV1tA4K4"` | Drone Server admin token |
-| drone.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| drone.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| drone.image.repository | string | `"drone/drone"` | The image repository |
-| drone.image.tag | string | `"1.10.1"` | The image tag |
-| drone.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"100m"}` | Ingress annotations |
-| drone.ingress.className | string | `"nginx"` | The ingress class name |
-| drone.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| drone.nodeSelector | object | `{}` |  |
-| drone.rpcSecret | string | `"runner-shared-secret"` | Drone RPC secret for allowing Drone runners to authentiticate the RPC connection to the server |
-| drone.runnerCapacity | int | `5` | The max number of concurrent jobs that a Drone runner can run |
-| drone.storage.size | string | `"10Gi"` | Storage size |
-| drone.storage.storageClassName | string | `"standard"` | The Storage ClassName |
-| drone.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| droneAuthorizer.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| droneAuthorizer.image.repository | string | `"konstellation/kdl-drone-authorizer"` | The image repository |
-| droneAuthorizer.image.tag | string | `"0.16.0"` | The image tag |
-| droneRunner.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| droneRunner.debug | string | `"true"` | Sets DRONE_DEBUG environment variable |
-| droneRunner.droneRunnerEnviron | string | `""` | Configures the DRONE_RUNNER_ENVIRON environment variable. Ref: https://docs.drone.io/runner/kubernetes/configuration/reference/drone-runner-environ/ |
-| droneRunner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| droneRunner.image.repository | string | `"drone/drone-runner-kube"` | The image repository |
-| droneRunner.image.tag | string | `"1.0.0-beta.6"` | The image tag |
-| droneRunner.nodeSelector | object | `{}` |  |
-| droneRunner.pluginSecret | string | `"my-secret"` | Provides the secret token used to authenticate http requests to the Kubernetes Secrets Extension endpoint |
-| droneRunner.serviceAccountJob.annotations | object | `{}` | If `.Values.droneRunner.serviceAccountJob.create` is set to `true`, sets annotations to the service account |
-| droneRunner.serviceAccountJob.create | bool | `false` | If `.Values.droneRunner.serviceAccountJob.enabled` is set to `true`, creates the service account |
-| droneRunner.serviceAccountJob.enabled | bool | `false` | Whether to enable the service account for Drone job pods |
-| droneRunner.serviceAccountJob.name | string | `"drone-runner-job"` | The name of the Drone job service account |
-| droneRunner.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| droneRunner.trace | string | `"true"` | Sets DRONE_TRACE environment variable |
-| gitea.admin.email | string | `"test@test.com"` | Admin user email |
-| gitea.admin.password | string | `"123456"` | Admin password |
-| gitea.admin.username | string | `"kdladmin"` | Admin username |
-| gitea.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| gitea.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| gitea.image.repository | string | `"gitea/gitea"` | The image repository |
-| gitea.image.tag | string | `"1.14.4"` | The image tag |
-| gitea.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n"}` | Ingress annotations |
-| gitea.ingress.className | string | `"nginx"` | The ingress class name |
-| gitea.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| gitea.nodeSelector | object | `{}` |  |
-| gitea.storage.size | string | `"10Gi"` | Storage size |
-| gitea.storage.storageClassName | string | `"standard"` | Storage class name |
-| gitea.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| giteaOauth2Setup.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| giteaOauth2Setup.image.repository | string | `"konstellation/kdl-gitea-oauth2-setup"` | The image repository |
-| giteaOauth2Setup.image.tag | string | `"0.16.0"` | The image tag |
+| cleaner.volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |
+| cleaner.volumes | list | `[]` | Additional volumes on the output Deployment definition </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/ </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume |
+| command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| env | object | `{}` | Environment variables to configure application |
+| envFromConfigMap | object | `{}` | Variables from configMap |
+| envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
+| envFromSecrets | object | `{}` | Variables from secrets |
+| extraContainers | list | `[]` | Configure extra containers |
+| fullnameOverride | string | `""` | String to fully override kdl-server.fullname template |
 | global.domain | string | `"kdl.local"` | The DNS domain name that will serve the application |
-| global.ingress.tls.caSecret | object | `{}` | A secret containing the the CA cert is needed in order to use a self-signed certificate. Check [values.yaml](./values.yaml) for usage details. |
-| global.ingress.tls.enabled | bool | `true` | Whether to enable TLS |
-| global.ingress.tls.secretName | string | If not defined, for each chart component that uses an ingress, an autogenerated secret name based on the `.Values.global.domain` and the component name will be used. Example: for gitea `kdl.local-gitea-tls` will be used | The name of the TLS secret to use for all ingresses. Specific component ingress secret names take precedence over this. |
-| global.mongodb.connectionString.secretKey | string | `""` | The name of the secret key that contains the MongoDB connection string. |
-| global.mongodb.connectionString.secretName | string | `""` | The name of the secret that contains a key with the MongoDB connection string. |
+| global.env | object | `{}` | Environment variables to configure application |
+| global.envFromConfigMap | object | `{}` | Variables from configMap |
+| global.envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
+| global.envFromSecrets | object | `{}` | Variables from secrets |
+| global.httpSchema | string | `"http"` | HTTP(S) enabled |
+| global.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
+| global.imageRegistry | string | `""` | Specifies the registry to pull images from. Leave empty for the default registry |
+| global.ingress.tls.enabled | bool | `false` |  |
+| global.ingress.tls.secretName | string | `""` |  |
 | global.serverName | string | `"local-server"` | KDL Server instance name |
-| kdlServer.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| kdlServer.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| kdlServer.image.repository | string | `"konstellation/kdl-server"` | The image repository |
-| kdlServer.image.tag | string | `"1.38.0"` | The image tag |
-| kdlServer.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m","nginx.ingress.kubernetes.io/proxy-connect-timeout":"3600","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600"}` | Ingress annotations |
-| kdlServer.ingress.className | string | `"nginx"` | The ingress class name |
-| kdlServer.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| kdlServer.nodeSelector | object | `{}` |  |
-| kdlServer.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| knowledgeGalaxy.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
+| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.38.0"}` | Image registry The image configuration for the base service |
+| imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
+| ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"chart-example.local","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}],"tls":[]}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
+| initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
+| keycloak | object | `{"command":[],"enabled":true,"env":{},"fullnameOverride":"keycloak","image":{"repository":"keycloak/keycloak","tag":"26.0"},"ingress":{"annotations":{},"className":"","enabled":true,"hosts":[{"host":"keycloak.mydomain.com","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}]},"livenessProbe":{"enabled":true},"readinessProbe":{"enabled":true,"httpGet":{"path":"/realms/master"}},"service":{"healthPath":"/realms/master","targetPort":8080},"serviceAccount":{"create":true}}` | Keycloak subchart deployment </br> Ref: https://github.com/konstellation-io/helm-charts/blob/kdl-server-1.0.2/charts/kdl-server/values.yaml |
+| keycloak.enabled | bool | `true` | Enable or disable Keycloak subchart |
+| knowledgeGalaxy | object | `{"affinity":{},"args":[],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"config":{"descriptionMinWords":50,"logLevel":"INFO","numberOfOutputs":1000,"workers":1},"enabled":false,"env":{},"envFromConfigMap":{},"envFromFiles":{},"envFromSecrets":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/knowledge-galaxy","tag":"v1.2.1"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"livenessProbe":{"enabled":false,"failureThreshold":3,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5},"livenessProbeCustom":{},"networkPolicy":{"egress":[],"enabled":false,"ingress":[],"policyTypes":[]},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"readinessProbe":{"enabled":false,"failureThreshold":3,"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1},"readinessProbeCustom":{},"resources":{},"secrets":{},"securityContext":{},"service":{"port":80,"targetPort":8080,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"startupProbe":{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5},"startupProbeCustom":{},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[],"volumeMounts":[],"volumes":[]}` | knowledge-galaxy deployment </br> Ref: https://github.com/konstellation-io/knowledge-galaxy |
+| knowledgeGalaxy.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| knowledgeGalaxy.args | list | `[]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| knowledgeGalaxy.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
+| knowledgeGalaxy.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| knowledgeGalaxy.config | object | `{"descriptionMinWords":50,"logLevel":"INFO","numberOfOutputs":1000,"workers":1}` | Configuration TODO: legacy backard compatibility, remove in future versions |
 | knowledgeGalaxy.config.descriptionMinWords | int | `50` | Minimum number of words to use for project description |
 | knowledgeGalaxy.config.logLevel | string | `"INFO"` | Log level |
 | knowledgeGalaxy.config.numberOfOutputs | int | `1000` | Number of outputs that the recommender returns |
 | knowledgeGalaxy.config.workers | int | `1` | Number of threads for the server |
 | knowledgeGalaxy.enabled | bool | `false` | Whether to enable Knowledge Galaxy |
-| knowledgeGalaxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| knowledgeGalaxy.image.repository | string | `"konstellation/knowledge-galaxy"` | The image repository |
-| knowledgeGalaxy.image.tag | string | `"v1.2.1"` | The image tag |
-| knowledgeGalaxy.nodeSelector | object | `{}` |  |
-| knowledgeGalaxy.serviceaccount.annotations | object | `{}` | The service account annotations |
-| knowledgeGalaxy.serviceaccount.enabled | bool | `true` | Whether to create a service account |
-| knowledgeGalaxy.serviceaccount.imagePullSecrets | list | `[]` | Reference to one or more secrets to be used when pulling images. Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ |
-| knowledgeGalaxy.serviceaccount.name | string | knowledge-galaxy | The name of the service account to use |
-| knowledgeGalaxy.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| minio | object | Check [values.yaml](./values.yaml) | MinIO chart's values. Check MinIO chart's [documentation](https://github.com/minio/minio/tree/master/helm/minio) for more info about values |
-| minio.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| minio.consoleIngress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| minio.consoleIngress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| minio.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| minio.ingress.className | string | `"nginx"` | The ingress class name |
-| minio.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| minio.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| minio.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| oauth2Proxy.config.cookieSecret | string | `"mycookiesecret16"` | The seed string for secure cookies. Ref: https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview |
-| oauth2Proxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` | The image repository |
-| oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` | The image tag |
-| postgres.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| postgres.dbName | string | `"gitea"` | The name of the Postgres database for Gitea |
-| postgres.dbPassword | string | `"test"` | The password for the Gitea's database |
-| postgres.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| postgres.image.repository | string | `"postgres"` | The image repository |
-| postgres.image.tag | float | `12.1` | The image tag |
-| postgres.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| postgres.storage.size | string | `"10Gi"` | The storage size for the persistent volume claim |
-| postgres.storage.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| postgres.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| projectOperator.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.filebrowser.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.filebrowser.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.filebrowser.image.repository | string | `"filebrowser/filebrowser"` | The image repository |
-| projectOperator.filebrowser.image.tag | string | `"v2"` | The image tag |
-| projectOperator.filebrowser.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.filebrowser.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| projectOperator.kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
-| projectOperator.kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` | Image repository |
-| projectOperator.kubeRbacProxy.image.tag | string | `"v0.8.0"` | Image tag |
-| projectOperator.manager.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.manager.image.repository | string | `"konstellation/kdl-project-operator"` | The image repository |
-| projectOperator.manager.image.tag | string | `"0.19.0"` | The image tag |
-| projectOperator.manager.resources | object | `{}` | Resource requests and limits for primary projectOperator container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
-| projectOperator.mlflow.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.mlflow.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.mlflow.image.repository | string | `"konstellation/kdl-mlflow"` | The image repository |
-| projectOperator.mlflow.image.tag | string | `"v0.13.5"` | The image tag |
-| projectOperator.mlflow.ingress.annotations | object | `{}` | Ingress annotations |
-| projectOperator.mlflow.ingress.className | string | `"nginx"` | The ingress class name |
+| knowledgeGalaxy.env | object | `{}` | Environment variables to configure application Ref: https://github.com/konstellation-io/knowledge-galaxy?tab=readme-ov-file#environment-variables |
+| knowledgeGalaxy.envFromConfigMap | object | `{}` | Variables from configMap |
+| knowledgeGalaxy.envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
+| knowledgeGalaxy.envFromSecrets | object | `{}` | Variables from secrets |
+| knowledgeGalaxy.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/knowledge-galaxy","tag":"v1.2.1"}` | Image registry The image configuration for the base service |
+| knowledgeGalaxy.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
+| knowledgeGalaxy.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
+| knowledgeGalaxy.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
+| knowledgeGalaxy.livenessProbe | object | `{"enabled":false,"failureThreshold":3,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure liveness checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| knowledgeGalaxy.livenessProbeCustom | object | `{}` | Custom livenessProbe |
+| knowledgeGalaxy.networkPolicy | object | `{"egress":[],"enabled":false,"ingress":[],"policyTypes":[]}` | NetworkPolicy configuration </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/ |
+| knowledgeGalaxy.networkPolicy.enabled | bool | `false` | Enable or disable NetworkPolicy |
+| knowledgeGalaxy.networkPolicy.policyTypes | list | `[]` | Policy types |
+| knowledgeGalaxy.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| knowledgeGalaxy.podAnnotations | object | `{}` | Configure annotations on Pods |
+| knowledgeGalaxy.podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
+| knowledgeGalaxy.podLabels | object | `{}` | Configure labels on Pods |
+| knowledgeGalaxy.podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| knowledgeGalaxy.readinessProbe | object | `{"enabled":false,"failureThreshold":3,"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1}` | Configure readinessProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| knowledgeGalaxy.readinessProbeCustom | object | `{}` | Custom readinessProbe |
+| knowledgeGalaxy.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| knowledgeGalaxy.secrets | object | `{}` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
+| knowledgeGalaxy.securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| knowledgeGalaxy.service | object | `{"port":80,"targetPort":8080,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
+| knowledgeGalaxy.service.port | int | `80` | Kubernetes Service port |
+| knowledgeGalaxy.service.targetPort | int | `8080` | Pod expose port |
+| knowledgeGalaxy.service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
+| knowledgeGalaxy.serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
+| knowledgeGalaxy.startupProbe | object | `{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure startupProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| knowledgeGalaxy.startupProbeCustom | object | `{}` | Custom startupProbe |
+| knowledgeGalaxy.terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
+| knowledgeGalaxy.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| knowledgeGalaxy.topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
+| knowledgeGalaxy.volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |
+| knowledgeGalaxy.volumes | list | `[]` | Additional volumes on the output Deployment definition </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/ </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume |
+| lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
+| livenessProbe | object | `{"enabled":false,"failureThreshold":3,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure liveness checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| livenessProbeCustom | object | `{}` | Custom livenessProbe |
+| minio | object | `{"enabled":true,"mode":"standalone","persistence":{"enabled":false},"rootPassword":"ChangeMe","rootUser":"ChangeMe"}` | MinIO subchart deployment </br> Ref: https://github.com/minio/minio/blob/RELEASE.2021-10-13T00-23-17Z/helm/minio/values.yaml TODO: pending to remove legacy minio |
+| minio.enabled | bool | `true` | Enable or disable MinIO subchart |
+| mongodb | object | `{"architecture":"standalone","auth":{"rootPassword":"ChangeMe","rootUser":"ChangeMe"},"enabled":false,"persistence":{"enabled":false}}` | MongoDB subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml |
+| mongodb.enabled | bool | `false` | Enable or disable MongoDB subchart |
+| nameOverride | string | `""` | String to partially override kdl-server.fullname template (will maintain the release name) |
+| networkPolicy | object | `{"egress":[],"enabled":false,"ingress":[],"policyTypes":[]}` | NetworkPolicy configuration </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/ |
+| networkPolicy.enabled | bool | `false` | Enable or disable NetworkPolicy |
+| networkPolicy.policyTypes | list | `[]` | Policy types |
+| nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| oauth2proxy | object | `{"clientID":"XXXXXXX","clientSecret":"XXXXXXXX","cookieName":"","cookieSecret":"XXXXXXXXXXXXXXXX","enabled":false,"extraContainers":[],"extraObjects":[],"extraVolumeMounts":[],"extraVolumes":[],"httpScheme":"http"}` | OAuth2-Proxy subchart deployment </br> Ref: https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml |
+| oauth2proxy.enabled | bool | `false` | Enable or disable OAuth2-Proxy subchart |
+| persistentVolume | object | `{"accessModes":["ReadWriteOnce"],"annotations":{},"enabled":false,"labels":{},"selector":{},"size":"8Gi","storageClass":"","volumeBindingMode":"","volumeName":""}` | Persistent Volume configuration </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
+| persistentVolume.accessModes | list | `["ReadWriteOnce"]` | Persistent Volume access modes Must match those of existing PV or dynamic provisioner </br> Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/ |
+| persistentVolume.annotations | object | `{}` | Persistent Volume annotations |
+| persistentVolume.enabled | bool | `false` | Enable or disable persistence |
+| persistentVolume.labels | object | `{}` | Persistent Volume labels |
+| persistentVolume.selector | object | `{}` | Persistent Volume Claim Selector Useful if Persistent Volumes have been provisioned in advance </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector |
+| persistentVolume.size | string | `"8Gi"` | Persistent Volume size |
+| persistentVolume.storageClass | string | `""` | Persistent Volume Storage Class If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
+| persistentVolume.volumeBindingMode | string | `""` | Persistent Volume Binding Mode If defined, volumeBindingMode: <volumeBindingMode> If undefined (the default) or set to null, no volumeBindingMode spec is set, choosing the default mode. |
+| persistentVolume.volumeName | string | `""` | Persistent Volume Name Useful if Persistent Volumes have been provisioned in advance and you want to use a specific one |
+| podAnnotations | object | `{}` | Configure annotations on Pods |
+| podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
+| podLabels | object | `{}` | Configure labels on Pods |
+| podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| postgresql | object | `{"auth":{"database":"kdl","password":"ChangeMe","username":"user"},"enabled":true,"primary":{"persistence":{"enabled":false}},"replicaCount":1}` | PostgreSQL subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml |
+| postgresql.enabled | bool | `true` | Enable or disable PostgreSQL subchart |
+| projectOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080","--leader-elect","--leader-election-id=project-operator"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"extraContainers":[{"args":["--secure-listen-address=0.0.0.0:8443","--upstream=http://127.0.0.1:8080/","--logtostderr=true","--v=10"],"image":"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0","imagePullPolicy":"IfNotPresent","name":"kube-rbac-proxy","ports":[{"containerPort":8443,"name":"https"}]}],"filebrowser":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"mlflow":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"port":80,"targetPort":8443,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
+| projectOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.args | list | `["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080","--leader-elect","--leader-election-id=project-operator"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| projectOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
+| projectOperator.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| projectOperator.enabled | bool | `true` | Enable or disable project-operator |
+| projectOperator.filebrowser | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]}` | filebrowser configuration |
+| projectOperator.filebrowser.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.filebrowser.image | object | `{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"}` | Image registry The image configuration for the base service |
+| projectOperator.filebrowser.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.filebrowser.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| projectOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"}` | Image registry The image configuration for the base service |
+| projectOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
+| projectOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
+| projectOperator.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
+| projectOperator.mlflow | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}}` | mlflow configuration |
+| projectOperator.mlflow.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.mlflow.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"}` | Image registry The image configuration for the base service |
+| projectOperator.mlflow.ingress | object | `{"annotations":{},"className":"nginx","tls":{"secretName":null}}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | projectOperator.mlflow.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| projectOperator.mlflow.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.mlflow.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| projectOperator.mlflow.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.mlflow.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | projectOperator.mlflow.volume.size | string | `"1Gi"` | The storage size for the persistent volume claim |
-| projectOperator.mlflow.volume.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| projectOperator.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| sharedVolume.name | string | `"received-data"` | The name of the shared volume |
-| sharedVolume.size | string | `"10Gi"` | The storage size for the persistent volume claim |
-| sharedVolume.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| userToolsOperator.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| userToolsOperator.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.image.repository | string | `"konstellation/kdl-user-tools-operator"` | The image repository |
-| userToolsOperator.image.tag | string | `"0.29.0"` | The image tag |
-| userToolsOperator.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| userToolsOperator.ingress.className | string | `"nginx"` | The ingress class name |
+| projectOperator.mlflow.volume.storageClassName | string | `""` | Storage class to use for persistence |
+| projectOperator.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.podAnnotations | object | `{}` | Configure annotations on Pods |
+| projectOperator.podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
+| projectOperator.podLabels | object | `{}` | Configure labels on Pods |
+| projectOperator.podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| projectOperator.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| projectOperator.securityContext | object | `{"allowPrivilegeEscalation":false,"runAsNonRoot":true}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| projectOperator.service | object | `{"port":80,"targetPort":8443,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
+| projectOperator.service.port | int | `80` | Kubernetes Service port |
+| projectOperator.service.targetPort | int | `8443` | Pod expose port |
+| projectOperator.service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
+| projectOperator.serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
+| projectOperator.serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |
+| projectOperator.serviceMonitor.enabled | bool | `false` | Enable or disable |
+| projectOperator.terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
+| projectOperator.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| projectOperator.topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
+| rbac | object | `{"create":true}` | Creation of resources RBAC </br> Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/ |
+| readinessProbe | object | `{"enabled":false,"failureThreshold":3,"initialDelaySeconds":10,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":1}` | Configure readinessProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| readinessProbeCustom | object | `{}` | Custom readinessProbe |
+| readyChecker | object | `{"enabled":false,"pullPolicy":"IfNotPresent","repository":"busybox","retries":30,"services":[{"name":"mongodb","port":27017},{"name":"keycloak","port":8080},{"name":"minio","port":9000},{"name":"oauth2proxy","port":80}],"tag":"latest","timeout":5}` | Check if dependencies are ready |
+| readyChecker.enabled | bool | `false` | Enable or disable ready-checker |
+| readyChecker.pullPolicy | string | `"IfNotPresent"` | Pull policy for the image |
+| readyChecker.repository | string | `"busybox"` | Repository of the image |
+| readyChecker.retries | int | `30` | Number of retries before giving up |
+| readyChecker.services | list | `[{"name":"mongodb","port":27017},{"name":"keycloak","port":8080},{"name":"minio","port":9000},{"name":"oauth2proxy","port":80}]` | List services |
+| readyChecker.tag | string | `"latest"` | Overrides the image tag |
+| readyChecker.timeout | int | `5` | Timeout for each check |
+| resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| secrets | object | `{}` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
+| securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| service | object | `{"port":80,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
+| service.port | int | `80` | Kubernetes Service port |
+| service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
+| serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
+| serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |
+| serviceMonitor.enabled | bool | `false` | Enable or disable |
+| sharedVolume | object | `{"accessModes":["ReadWriteMany"],"annotations":{},"enabled":false,"labels":{},"selector":{},"size":"10Gi","storageClass":"","volumeBindingMode":"","volumeName":""}` | Shared Volume configuration Mount volume to share data between components </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
+| sharedVolume.accessModes | list | `["ReadWriteMany"]` | Persistent Volume access modes Must match those of existing PV or dynamic provisioner </br> Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/ |
+| sharedVolume.annotations | object | `{}` | Persistent Volume annotations |
+| sharedVolume.enabled | bool | `false` | Enable or disable persistence |
+| sharedVolume.labels | object | `{}` | Persistent Volume labels |
+| sharedVolume.selector | object | `{}` | Persistent Volume Claim Selector Useful if Persistent Volumes have been provisioned in advance </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector |
+| sharedVolume.size | string | `"10Gi"` | Persistent Volume size |
+| sharedVolume.storageClass | string | `""` | Persistent Volume Storage Class If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
+| sharedVolume.volumeBindingMode | string | `""` | Persistent Volume Binding Mode If defined, volumeBindingMode: <volumeBindingMode> If undefined (the default) or set to null, no volumeBindingMode spec is set, choosing the default mode. |
+| sharedVolume.volumeName | string | `""` | Persistent Volume Name Useful if Persistent Volumes have been provisioned in advance and you want to use a specific one |
+| startupProbe | object | `{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure startupProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |
+| startupProbeCustom | object | `{}` | Custom startupProbe |
+| terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
+| testConnection | object | `{"enabled":false,"repository":"busybox","tag":""}` | Enable or disable test connection |
+| tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
+| userToolsOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.30.0"},"imagePullSecrets":[],"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"},"className":"nginx","enabled":false,"tls":{"secretName":null}},"initContainers":[],"kubeconfig":{"enabled":false,"externalServerUrl":""},"lifecycle":{},"nodeSelector":{},"oauth2Proxy":{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"repoCloner":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}},"resources":{},"securityContext":{},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"storage":{"size":"10Gi","storageClassName":""},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[],"vscode":{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}},"vscodeRuntime":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}}` | User Tools Operator deployment ref: https://github.com/konstellation-io/kdl-server/tree/main/user-tools-operator |
+| userToolsOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| userToolsOperator.args | list | `["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| userToolsOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
+| userToolsOperator.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
+| userToolsOperator.enabled | bool | `true` | Enable or disable User Tools Operator deployment |
+| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.30.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | userToolsOperator.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| userToolsOperator.kubeconfig.enabled | bool | `false` | Whether to enable kubeconfig for using with VSCode remote development. Ref: https://code.visualstudio.com/docs/remote/remote-overview |
+| userToolsOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
+| userToolsOperator.kubeconfig.enabled | bool | `false` | Whether to enable kubeconfig for using with VSCode remote development. |
 | userToolsOperator.kubeconfig.externalServerUrl | string | `""` | The Kube API Server URL for using with VSCode remote development |
-| userToolsOperator.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| userToolsOperator.oauth2Proxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` | The image repository |
-| userToolsOperator.oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` | The image tag |
-| userToolsOperator.repoCloner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.repoCloner.image.repository | string | `"konstellation/kdl-repo-cloner"` | The image repository |
-| userToolsOperator.repoCloner.image.tag | string | `"0.18.0"` | The image tag |
+| userToolsOperator.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
+| userToolsOperator.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| userToolsOperator.oauth2Proxy | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}}` | oauth2-proxy configuration |
+| userToolsOperator.podAnnotations | object | `{}` | Configure annotations on Pods |
+| userToolsOperator.podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
+| userToolsOperator.podLabels | object | `{}` | Configure labels on Pods |
+| userToolsOperator.podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| userToolsOperator.repoCloner | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}}` | repocloner configuration The following components are managed by the manager container when `usertool` custom resources are detected |
+| userToolsOperator.repoCloner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| userToolsOperator.securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
+| userToolsOperator.serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
+| userToolsOperator.storage | object | `{"size":"10Gi","storageClassName":""}` | Storage configuration |
 | userToolsOperator.storage.size | string | `"10Gi"` | The storage size for the persistent volume claim |
-| userToolsOperator.storage.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| userToolsOperator.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| userToolsOperator.vscode.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.vscode.image.repository | string | `"konstellation/kdl-vscode"` | The image repository |
-| userToolsOperator.vscode.image.tag | string | `"v0.15.0"` | The image tag |
-| userToolsOperator.vscodeRuntime.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.vscodeRuntime.image.repository | string | `"konstellation/kdl-py"` | The image repository |
-| userToolsOperator.vscodeRuntime.image.tag | string | `"3.9"` | The image tag |
+| userToolsOperator.storage.storageClassName | string | `""` | Storage class to use for persistence |
+| userToolsOperator.terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
+| userToolsOperator.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| userToolsOperator.topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
+| userToolsOperator.vscode | object | `{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}}` | vscode configuration |
+| userToolsOperator.vscode.enabled | bool | `false` | Enable or disable vscode |
+| userToolsOperator.vscode.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.vscodeRuntime | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}` | vscodeRuntime configuration |
+| userToolsOperator.vscodeRuntime.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}` | Image registry The image configuration for the base service |
+| volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |
+| volumes | list | `[]` | Additional volumes on the output Deployment definition </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/ </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume |

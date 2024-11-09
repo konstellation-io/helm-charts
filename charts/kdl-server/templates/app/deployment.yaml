@@ -1,163 +1,270 @@
+{{- include "validate.server_environment" . }}
+
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kdl-server
+  name: {{ include "kdl-server.fullname" . }}-server
+  labels:
+    {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app: kdl-server
+      {{- include "kdl-server.selectorKdlServerLabels" . | nindent 6 }}
   template:
     metadata:
-      labels:
-        app: kdl-server
       annotations:
         checksum/kdl-config: {{ include (print $.Template.BasePath "/app/configmap.yaml") . | sha256sum }}
         checksum/kdl-secret: {{ include (print $.Template.BasePath "/app/secret.yaml") . | sha256sum }}
-        checksum/oauth2-config: {{ include (print $.Template.BasePath "/app/oauth2-proxy-configmap.yaml") . | sha256sum }}
-        checksum/oauth2-secret: {{ include (print $.Template.BasePath "/app/oauth2-secret.yaml") . | sha256sum }}
-        checksum/project-proxy-config: {{ include (print $.Template.BasePath "/app/project-proxy-nginx-config.yaml") . | sha256sum }}
-        checksum/gitea-oauth2-config: {{ include (print $.Template.BasePath "/common/gitea-oauth2-configmap.yaml") . | sha256sum }}
-        checksum/gitea-admin-secret: {{ include (print $.Template.BasePath "/common/gitea-admin-secret.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kdl-server.kdlServerLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kdl-server.kdlServerServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
-        - name: gitea-oauth2-setup
-          image: "{{ .Values.giteaOauth2Setup.image.repository }}:{{ .Values.giteaOauth2Setup.image.tag }}"
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          envFrom:
-            - secretRef:
-                name: gitea-admin
-            - secretRef:
-                name: kdl-server-oauth2
-            - configMapRef:
-                name: gitea-oauth2
-            - configMapRef:
-                name: kdl-server
-        - name: drone-authorizer
-          image: {{ .Values.droneAuthorizer.image.repository }}:{{ .Values.droneAuthorizer.image.tag }}
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: DRONE_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: DRONE_URL
-                  name: kdl-server
-            - name: DRONE_INTERNAL_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: DRONE_INTERNAL_URL
-                  name: kdl-server
-          envFrom:
-            - secretRef:
-                name: gitea-admin
+        {{- if .Values.readyChecker.enabled }}
+        {{- range $service := .Values.readyChecker.services }}
+        - name: ready-checker-{{ $service.name | replace "." "-" | trunc 63 | trimSuffix "-" }}
+          {{- if $.Values.global.imageRegistry }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.readyChecker.repository }}:{{ $.Values.readyChecker.tag }}"
+          {{- else }}
+          image: {{ $.Values.readyChecker.repository }}:{{ $.Values.readyChecker.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $.Values.readyChecker.pullPolicy }}
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              RETRY=0;
+              until [ $RETRY -eq {{ $.Values.readyChecker.retries }} ];
+              do
+                nc -zv {{ $service.name }} {{ $service.port }} && break;
+                echo "[$RETRY/{{ $.Values.readyChecker.retries }}] waiting service {{ $service.name }}:{{ $service.port }} is ready";
+                sleep {{ $.Values.readyChecker.timeout }};
+                RETRY=$(($RETRY + 1));
+              done
+        {{- end }}
+        {{- end }}
+        {{- with .Values.initContainers }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: kdl-app
-          image: {{ .Values.kdlServer.image.repository }}:{{ .Values.kdlServer.image.tag }}
-          imagePullPolicy: {{ .Values.kdlServer.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) }}
+              protocol: TCP
+            {{- range $port := .Values.service.extraPorts }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.targetPort }}
+              protocol: TCP
+            {{- end }}
           lifecycle:
-            postStart:
-              exec:
-                command:
-                  - "/bin/sh"
-                  - "-c"
-                  - "ssh-keyscan -H gitea >> /app/.ssh/known_hosts"
+            {{- with .Values.lifecycle }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.livenessProbeCustom }}
+            {{- toYaml .Values.livenessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.service.healthPath | default "/" | quote }}
+              port: {{ .Values.service.targetPort | default .Values.service.port }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.readinessProbeCustom }}
+            {{- toYaml .Values.readinessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.service.healthPath | default "/" | quote }}
+              port: {{ .Values.service.targetPort | default .Values.service.port }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.startupProbeCustom }}
+            {{- toYaml .Values.startupProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.service.healthPath | default "/" | quote }}
+              port: {{ .Values.service.targetPort | default .Values.service.port }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "kdl-server.fullname" . }}-server
+            {{- if .Values.envFromFiles }}
+            {{- tpl (toYaml .Values.envFromFiles) . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.global.envFromFiles }}
+            {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
+            {{- end }}
           env:
+            # TODO: keep legacy backward compatibility
             - name: SSH_KNOWN_HOSTS
               value: /app/.ssh/known_hosts
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: KDL_SERVER_MONGODB_URI
+            # Variables from secrets have precedence
+            {{- $envList := dict }}
+            {{- if .Values.envFromSecrets }}
+            {{- range $key, $value := .Values.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.global.mongodb.connectionString.secretName }}
-                  key: {{ .Values.global.mongodb.connectionString.secretKey }}
-          envFrom:
-            - configMapRef:
-                name: kdl-server
-            - configMapRef:
-                name: gitea-oauth2
-            - secretRef:
-                name: gitea-admin
-            - secretRef:
-                name: kdl-server
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables from configmap have precedence
+            {{- if .Values.envFromConfigMap }}
+            {{- range $key, $value := .Values.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Add Variables in plain text if they were not already added from secrets
+            {{- if .Values.env }}
+            {{- range $key, $value := .Values.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables global from secrets have precedence
+            {{- if .Values.global.envFromSecrets }}
+            {{- range $key, $value := .Values.global.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables global from configmap have precedence
+            {{- if .Values.global.envFromConfigMap }}
+            {{- range $key, $value := .Values.global.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables in plain text if they were not already added from secrets
+            {{- if .Values.global.env }}
+            {{- range $key, $value := .Values.global.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
           volumeMounts:
             - name: kdl-server
               mountPath: /public/config.json
               subPath: config.json
-          ports:
-            - containerPort: 3000
-        - name: oauth2-proxy
-          image: {{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}
-          imagePullPolicy: {{ .Values.oauth2Proxy.image.pullPolicy }}
-          args:
-            - "--config=/etc/oauth2_proxy.cfg"
-            - "--email-domain=*"
-            - "--upstream=http://127.0.0.1:8080/"
-            - "--upstream=http://127.0.0.1:9000/mlflow/"
-            - "--upstream=http://127.0.0.1:9000/filebrowser/"
-            - "--upstream=http://127.0.0.1:9000/kg/"
-            - "--pass-user-headers=true"
-            - "--skip-provider-button=true"
-            - "--skip-auth-route=/config.json"
-          env:
-            - name: OAUTH2_PROXY_HTTP_ADDRESS
-              value: "0.0.0.0:3000"
-
-            - name: OAUTH2_PROXY_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  # app generated secret
-                  name: kdl-server-oauth2-credentials
-                  key: OAUTH2_CLIENT_ID
-
-            - name: OAUTH2_PROXY_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  # app generated secret
-                  name: kdl-server-oauth2-credentials
-                  key: OAUTH2_CLIENT_SECRET
-
-          volumeMounts:
-            - name: oauth2-config
-              mountPath: /etc/oauth2_proxy.cfg
-              subPath: oauth2_proxy.cfg
-          ports:
-            - name: http
-              containerPort: 3000
-              protocol: TCP
-        - name: project-proxy
-          image: nginx:alpine
-          ports:
-            - containerPort: 9000
-          volumeMounts:
-            - name: project-proxy-nginx-config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-    {{- with .Values.kdlServer.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.kdlServer.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.kdlServer.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+            {{- with .Values.volumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.extraContainers }}
+          {{- toYaml .Values.extraContainers | nindent 8 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
-        - name: oauth2-config
-          configMap:
-            name: kdl-server-oauth2-proxy
         - name: kdl-server
           configMap:
-            name: kdl-server
-        - name: project-proxy-nginx-config
-          configMap:
-            name: project-proxy-nginx-config
+            name: {{ include "kdl-server.fullname" . }}-server
+      {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      {{- $_ := include "kdl-server.patchTopologySpreadConstraintsServer" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

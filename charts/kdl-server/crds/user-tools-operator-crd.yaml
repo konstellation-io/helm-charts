@@ -954,30 +954,12 @@ spec:
               serviceAccountName:
                 description: serviceAccount name to attach generated roles
                 type: string
-              giteaOauth2Setup:
-                type: object
-                properties:
-                  image:
-                    type: object
-                    properties:
-                      repository:
-                        description: image repository
-                        type: string
-                      tag:
-                        description: image tag
-                        type: string
-                      pullPolicy:
-                        description: image pull policy
-                        type: string
-                  giteaAdminSecret:
-                    description: the secret containing gitea admin user and password
-                    type: string
-                  giteaOauth2Configmap:
-                    description: the configmap containing the oauth2 config
-                    type: string
               vscode:
                 type: object
                 properties:
+                  enabled:
+                    type: boolean
+                    description: enable or disable vscode
                   image:
                     type: object
                     properties:

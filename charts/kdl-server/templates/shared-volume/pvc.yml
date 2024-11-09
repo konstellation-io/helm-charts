@@ -1,0 +1,42 @@
+{{- if .Values.sharedVolume.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if .Values.sharedVolume.name }}
+  name: {{ .Values.sharedVolume.name }}-claim
+  {{- else }}
+  name: {{ template "kdl-server.fullname" . }}-claim
+  {{- end }}
+  {{- if .Values.sharedVolume.annotations }}
+  annotations:
+{{ toYaml .Values.sharedVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    {{- include "kdl-server.labels" . | nindent 4 }}
+    {{- with .Values.sharedVolume.labels }}
+       {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+{{ toYaml .Values.sharedVolume.accessModes | indent 4 }}
+{{- if .Values.sharedVolume.storageClassName }}
+{{- if (eq "-" .Values.sharedVolume.storageClassName) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.sharedVolume.storageClassName }}"
+{{- end }}
+{{- end }}
+{{- if .Values.sharedVolume.volumeBindingMode }}
+  volumeBindingMode: "{{ .Values.sharedVolume.volumeBindingMode }}"
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.sharedVolume.size }}"
+{{- if .Values.sharedVolume.selector }}
+  selector:
+  {{- toYaml .Values.sharedVolume.selector | nindent 4 }}
+{{- end }}
+{{- if .Values.sharedVolume.volumeName }}
+  volumeName: "{{ .Values.sharedVolume.volumeName }}"
+{{- end }}
+{{- end }}
