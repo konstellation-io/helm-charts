@@ -84,12 +84,12 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
 | command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | configMaps | object | `{}` | ConfigMap values to create configuration files Generate ConfigMap with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/configmap/ |
-| env | object | `{}` | Environment variables to configure application </br> Ref: https://docs.konstellation-base.io/latest/deployment/configuration/#platform |
+| env | object | `{}` | Environment variables to configure application |
 | envFromConfigMap | object | `{}` | Variables from configMap |
 | envFromSecrets | object | `{}` | Variables from secrets |
 | fullnameOverride | string | `""` | String to fully override konstellation-base.fullname template |
 | image | object | `{"pullPolicy":"IfNotPresent","repository":"nginx","tag":""}` | Image registry The image configuration for the base service |
-| imagePullSecrets | list | `[]` | Global Docker registry secret names as an array |
+| imagePullSecrets | list | `[]` | Docker registry secret names as an array |
 | ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"chart-example.local","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}],"tls":[]}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
 | lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
@@ -120,7 +120,7 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | service | object | `{"port":80,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
 | service.port | int | `80` | Kubernetes Service port |
 | service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
-| serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount |
+| serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
 | serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |
 | serviceMonitor.enabled | bool | `false` | Enable or disable |
 | startupProbe | object | `{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure startupProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |

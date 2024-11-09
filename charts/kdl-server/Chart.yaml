@@ -19,10 +19,24 @@ keywords:
   - machine learning
 dependencies:
   - name: minio
-    version: "3.2.0"
-    repository: "https://charts.min.io/"
+    version: 14.8.1
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: minio.enabled
+  - name: mongodb
+    version: 16.2.1
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: mongodb.enabled
   - name: oauth2-proxy
     alias: oauth2proxy
     version: 7.7.28
     repository: oci://ghcr.io/oauth2-proxy/charts
     condition: oauth2proxy.enabled
+  - name: postgresql
+    version: 15.5.38
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: postgresql.enabled
+  - name: konstellation-base
+    alias: keycloak
+    version: 1.0.2
+    repository: oci://ghcr.io/konstellation-io/helm-charts
+    condition: keycloak.enabled

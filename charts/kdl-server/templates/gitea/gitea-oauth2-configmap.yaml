@@ -1,3 +1,4 @@
+{{- if .Values.gitea.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,3 +10,4 @@ data:
   GITEA_OAUTH2_AUTHORIZE_URL: {{ printf "%s://gitea.%s/login/oauth/authorize" ( include "http.protocol" . ) .Values.global.domain }}
   GITEA_OAUTH2_TOKEN_URL: {{ printf "%s://gitea.%s/login/oauth/access_token" ( include "http.protocol" . ) .Values.global.domain }}
   GITEA_OAUTH2_USERDATA_URL: {{ printf "%s://gitea.%s/api/v1/user" ( include "http.protocol" . ) .Values.global.domain }}
+{{- end }}

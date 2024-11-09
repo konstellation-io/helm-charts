@@ -1,3 +1,4 @@
+{{- if .Values.drone.enabled }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -18,8 +19,8 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/drone/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/drone/secret.yaml") . | sha256sum }}
         checksum/oauth2-secret: {{ include (print $.Template.BasePath "/drone/oauth2-secret.yaml") . | sha256sum }}
-        checksum/gitea-oauth2-config: {{ include (print $.Template.BasePath "/common/gitea-oauth2-configmap.yaml") . | sha256sum }}
-        checksum/gitea-admin-secret: {{ include (print $.Template.BasePath "/common/gitea-admin-secret.yaml") . | sha256sum }}
+        checksum/gitea-oauth2-config: {{ include (print $.Template.BasePath "/gitea/gitea-oauth2-configmap.yaml") . | sha256sum }}
+        checksum/gitea-admin-secret: {{ include (print $.Template.BasePath "/gitea/gitea-admin-secret.yaml") . | sha256sum }}
     spec:
       initContainers:
         - name: gitea-oauth2-setup
@@ -92,3 +93,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.drone.storage.size }}
+{{- end }}

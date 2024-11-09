@@ -11,12 +11,17 @@ A Helm chart to deploy KDL server
 ## Prerequisites
 
 * Helm 3+
+* Kubernetes 1.24+
 
 ## Requirements
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.min.io/ | minio | 3.2.0 |
+| oci://ghcr.io/konstellation-io/helm-charts | keycloak(konstellation-base) | 1.0.2 |
+| oci://ghcr.io/oauth2-proxy/charts | oauth2proxy(oauth2-proxy) | 7.7.28 |
+| oci://registry-1.docker.io/bitnamicharts | minio | 14.8.1 |
+| oci://registry-1.docker.io/bitnamicharts | mongodb | 16.2.1 |
+| oci://registry-1.docker.io/bitnamicharts | postgresql | 15.5.38 |
 
 ## Add repository
 
@@ -242,6 +247,7 @@ helm show values konstellation-io/kdl-server
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| backup | object | `{"activeDeadlineSeconds":3600,"backoffLimit":3,"concurrencyPolicy":"Forbid","enabled":false,"extraVolumeMounts":[],"extraVolumes":[],"failedJobsHistoryLimit":1,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-backup","tag":"0.23.0"},"name":"backup-gitea","resources":{"limits":{"cpu":"100m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"100Mi"}},"s3":{"awsAccessKeyID":"aws-access-key-id","awsSecretAccessKey":"aws-secret-access-key","bucketName":"s3-bucket-name"},"schedule":"0 1 * * 0","startingDeadlineSeconds":60,"successfulJobsHistoryLimit":0,"ttlSecondsAfterFinished":""}` | Backup job configuration |
 | backup.activeDeadlineSeconds | int | `3600` | Sets the activeDeadlineSeconds param for the backup cronjob. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup |
 | backup.backoffLimit | int | `3` | Sets the backoffLimit param for the backup cronjob. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy |
 | backup.concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy |
@@ -254,6 +260,7 @@ helm show values konstellation-io/kdl-server
 | backup.image.tag | string | `"0.23.0"` | Image tag |
 | backup.name | string | `"backup-gitea"` | Name of the backup cronjob |
 | backup.resources | object | `{"limits":{"cpu":"100m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"100Mi"}}` | Resource requests and limits for backup container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| backup.s3 | object | `{"awsAccessKeyID":"aws-access-key-id","awsSecretAccessKey":"aws-secret-access-key","bucketName":"s3-bucket-name"}` | AWS S3 Bucket configuration |
 | backup.s3.awsAccessKeyID | string | `"aws-access-key-id"` | AWS Access Key ID for acceding backup bucket |
 | backup.s3.awsSecretAccessKey | string | `"aws-secret-access-key"` | AWS Secret Access Key for acceding backup bucket |
 | backup.s3.bucketName | string | `"s3-bucket-name"` | The S3 bucket that will store all backups |
@@ -261,167 +268,144 @@ helm show values konstellation-io/kdl-server
 | backup.startingDeadlineSeconds | int | `60` | Optional deadline in seconds for starting the job if it misses scheduled time for any reason. Missed jobs executions will be counted as failed ones. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#job-creation |
 | backup.successfulJobsHistoryLimit | int | `0` | The number of successful finished jobs to retain. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
 | backup.ttlSecondsAfterFinished | string | `""` | Limits the lifetime of a Job that has finished execution (either Complete or Failed). |
+| cleaner | object | `{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-cleaner","tag":"0.16.0"},"schedule":"0 1 * * 0","threshold":5,"trashPath":"/shared-storage/.trash"}` | Cleaner job configuration |
 | cleaner.enabled | bool | `false` | Whether to enable cleaner cronjob |
-| cleaner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| cleaner.image.repository | string | `"konstellation/kdl-cleaner"` | The image repository |
-| cleaner.image.tag | string | `"0.16.0"` | The image tag |
 | cleaner.schedule | string | `"0 1 * * 0"` | Celaner cronjob schedule |
 | cleaner.threshold | int | `5` | The minimun age of files to be removed |
 | cleaner.trashPath | string | `"/shared-storage/.trash"` | The name of the trash path |
+| drone | object | `{"adminToken":"7GSipOV0wJZQioZNBxaw3AotHV1tA4K4","affinity":{},"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"drone/drone","tag":"1.10.1"},"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"100m"},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"rpcSecret":"runner-shared-secret","runnerCapacity":5,"storage":{"size":"10Gi","storageClassName":"standard"},"tolerations":[]}` | Drone deployment (DEPRECATION) Remove in future versions |
 | drone.adminToken | string | `"7GSipOV0wJZQioZNBxaw3AotHV1tA4K4"` | Drone Server admin token |
-| drone.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| drone.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| drone.image.repository | string | `"drone/drone"` | The image repository |
-| drone.image.tag | string | `"1.10.1"` | The image tag |
+| drone.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| drone.enabled | bool | `true` | Whether to enable Drone |
 | drone.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"100m"}` | Ingress annotations |
 | drone.ingress.className | string | `"nginx"` | The ingress class name |
 | drone.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| drone.nodeSelector | object | `{}` |  |
+| drone.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | drone.rpcSecret | string | `"runner-shared-secret"` | Drone RPC secret for allowing Drone runners to authentiticate the RPC connection to the server |
 | drone.runnerCapacity | int | `5` | The max number of concurrent jobs that a Drone runner can run |
 | drone.storage.size | string | `"10Gi"` | Storage size |
 | drone.storage.storageClassName | string | `"standard"` | The Storage ClassName |
-| drone.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| droneAuthorizer.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| droneAuthorizer.image.repository | string | `"konstellation/kdl-drone-authorizer"` | The image repository |
-| droneAuthorizer.image.tag | string | `"0.16.0"` | The image tag |
-| droneRunner.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
+| drone.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| droneAuthorizer | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-drone-authorizer","tag":"0.16.0"}}` | Drone Authorizer deployment (DEPRECATION) Remove in future versions |
+| droneRunner | object | `{"affinity":{},"debug":"true","droneRunnerEnviron":"","image":{"pullPolicy":"IfNotPresent","repository":"drone/drone-runner-kube","tag":"1.0.0-beta.6"},"nodeSelector":{},"pluginSecret":"my-secret","serviceAccountJob":{"annotations":{},"create":false,"enabled":false,"name":"drone-runner-job"},"tolerations":[],"trace":"true"}` | Drone Runner deployment (DEPRECATION) Remove in future versions |
+| droneRunner.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | droneRunner.debug | string | `"true"` | Sets DRONE_DEBUG environment variable |
 | droneRunner.droneRunnerEnviron | string | `""` | Configures the DRONE_RUNNER_ENVIRON environment variable. Ref: https://docs.drone.io/runner/kubernetes/configuration/reference/drone-runner-environ/ |
-| droneRunner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| droneRunner.image.repository | string | `"drone/drone-runner-kube"` | The image repository |
-| droneRunner.image.tag | string | `"1.0.0-beta.6"` | The image tag |
-| droneRunner.nodeSelector | object | `{}` |  |
+| droneRunner.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | droneRunner.pluginSecret | string | `"my-secret"` | Provides the secret token used to authenticate http requests to the Kubernetes Secrets Extension endpoint |
 | droneRunner.serviceAccountJob.annotations | object | `{}` | If `.Values.droneRunner.serviceAccountJob.create` is set to `true`, sets annotations to the service account |
 | droneRunner.serviceAccountJob.create | bool | `false` | If `.Values.droneRunner.serviceAccountJob.enabled` is set to `true`, creates the service account |
 | droneRunner.serviceAccountJob.enabled | bool | `false` | Whether to enable the service account for Drone job pods |
 | droneRunner.serviceAccountJob.name | string | `"drone-runner-job"` | The name of the Drone job service account |
-| droneRunner.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| droneRunner.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | droneRunner.trace | string | `"true"` | Sets DRONE_TRACE environment variable |
+| gitea | object | `{"admin":{"email":"test@test.com","password":"123456","username":"kdladmin"},"affinity":{},"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"gitea/gitea","tag":"1.14.4"},"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n"},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"storage":{"size":"10Gi","storageClassName":"standard"},"tolerations":[]}` | Gitea deployment (DEPRECATION) Remove in future versions |
 | gitea.admin.email | string | `"test@test.com"` | Admin user email |
 | gitea.admin.password | string | `"123456"` | Admin password |
 | gitea.admin.username | string | `"kdladmin"` | Admin username |
-| gitea.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| gitea.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| gitea.image.repository | string | `"gitea/gitea"` | The image repository |
-| gitea.image.tag | string | `"1.14.4"` | The image tag |
+| gitea.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| gitea.enabled | bool | `true` | Whether to enable Gitea |
 | gitea.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n"}` | Ingress annotations |
 | gitea.ingress.className | string | `"nginx"` | The ingress class name |
 | gitea.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| gitea.nodeSelector | object | `{}` |  |
+| gitea.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | gitea.storage.size | string | `"10Gi"` | Storage size |
 | gitea.storage.storageClassName | string | `"standard"` | Storage class name |
-| gitea.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| giteaOauth2Setup.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| giteaOauth2Setup.image.repository | string | `"konstellation/kdl-gitea-oauth2-setup"` | The image repository |
-| giteaOauth2Setup.image.tag | string | `"0.16.0"` | The image tag |
+| gitea.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| giteaOauth2Setup.image.pullPolicy | string | `"IfNotPresent"` |  |
+| giteaOauth2Setup.image.repository | string | `"konstellation/kdl-gitea-oauth2-setup"` |  |
+| giteaOauth2Setup.image.tag | string | `"0.16.0"` |  |
 | global.domain | string | `"kdl.local"` | The DNS domain name that will serve the application |
+| global.ingress | object | `{"tls":{"caSecret":{},"enabled":true,"secretName":null}}` | Ingress configuration |
 | global.ingress.tls.caSecret | object | `{}` | A secret containing the the CA cert is needed in order to use a self-signed certificate. Check [values.yaml](./values.yaml) for usage details. |
 | global.ingress.tls.enabled | bool | `true` | Whether to enable TLS |
 | global.ingress.tls.secretName | string | If not defined, for each chart component that uses an ingress, an autogenerated secret name based on the `.Values.global.domain` and the component name will be used. Example: for gitea `kdl.local-gitea-tls` will be used | The name of the TLS secret to use for all ingresses. Specific component ingress secret names take precedence over this. |
+| global.mongodb | DEPRECATION | `{"connectionString":{"secretKey":"","secretName":""}}` | Configure MongoDB string URI |
 | global.mongodb.connectionString.secretKey | string | `""` | The name of the secret key that contains the MongoDB connection string. |
 | global.mongodb.connectionString.secretName | string | `""` | The name of the secret that contains a key with the MongoDB connection string. |
 | global.serverName | string | `"local-server"` | KDL Server instance name |
-| kdlServer.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| kdlServer.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| kdlServer.image.repository | string | `"konstellation/kdl-server"` | The image repository |
-| kdlServer.image.tag | string | `"1.38.0"` | The image tag |
+| kdlServer | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.38.0"},"ingress":{"annotations":{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m","nginx.ingress.kubernetes.io/proxy-connect-timeout":"3600","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600"},"className":"","enabled":false,"tls":{"secretName":null}},"nodeSelector":{},"tolerations":[]}` | KDL Server deployment |
+| kdlServer.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| kdlServer.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.38.0"}` | Image registry The image configuration for the base service |
+| kdlServer.ingress | object | `{"annotations":{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m","nginx.ingress.kubernetes.io/proxy-connect-timeout":"3600","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600"},"className":"","enabled":false,"tls":{"secretName":null}}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | kdlServer.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m","nginx.ingress.kubernetes.io/proxy-connect-timeout":"3600","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600"}` | Ingress annotations |
-| kdlServer.ingress.className | string | `"nginx"` | The ingress class name |
 | kdlServer.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| kdlServer.nodeSelector | object | `{}` |  |
-| kdlServer.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| knowledgeGalaxy.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
+| kdlServer.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| kdlServer.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| keycloak | object | `{"command":[],"enabled":true,"env":{},"image":{"repository":"keycloak/keycloak","tag":"26.0"},"ingress":{"annotations":{},"className":"","enabled":true,"hosts":[{"host":"keycloak.mydomain.com","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}]},"livenessProbe":{"enabled":true},"readinessProbe":{"enabled":true,"httpGet":{"path":"/realms/master"}},"service":{"healthPath":"/realms/master","targetPort":8080},"serviceAccount":{"create":true}}` | Keycloak subchart deployment </br> Ref: https://github.com/konstellation-io/helm-charts/blob/konstellation-base-1.0.2/charts/konstellation-base/values.yaml |
+| keycloak.enabled | bool | `true` | Enable or disable Keycloak subchart |
+| knowledgeGalaxy | object | `{"affinity":{},"config":{"descriptionMinWords":50,"logLevel":"INFO","numberOfOutputs":1000,"workers":1},"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/knowledge-galaxy","tag":"v1.2.1"},"nodeSelector":{},"serviceaccount":{"annotations":{},"create":true,"imagePullSecrets":[],"name":""},"tolerations":[]}` | knowledge-galaxy deployment </br> Ref: https://github.com/konstellation-io/knowledge-galaxy |
+| knowledgeGalaxy.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| knowledgeGalaxy.config | object | `{"descriptionMinWords":50,"logLevel":"INFO","numberOfOutputs":1000,"workers":1}` | Configuration |
 | knowledgeGalaxy.config.descriptionMinWords | int | `50` | Minimum number of words to use for project description |
 | knowledgeGalaxy.config.logLevel | string | `"INFO"` | Log level |
 | knowledgeGalaxy.config.numberOfOutputs | int | `1000` | Number of outputs that the recommender returns |
 | knowledgeGalaxy.config.workers | int | `1` | Number of threads for the server |
 | knowledgeGalaxy.enabled | bool | `false` | Whether to enable Knowledge Galaxy |
-| knowledgeGalaxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| knowledgeGalaxy.image.repository | string | `"konstellation/knowledge-galaxy"` | The image repository |
-| knowledgeGalaxy.image.tag | string | `"v1.2.1"` | The image tag |
-| knowledgeGalaxy.nodeSelector | object | `{}` |  |
-| knowledgeGalaxy.serviceaccount.annotations | object | `{}` | The service account annotations |
-| knowledgeGalaxy.serviceaccount.enabled | bool | `true` | Whether to create a service account |
+| knowledgeGalaxy.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/knowledge-galaxy","tag":"v1.2.1"}` | Image registry The image configuration for the base service |
+| knowledgeGalaxy.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| knowledgeGalaxy.serviceaccount | object | `{"annotations":{},"create":true,"imagePullSecrets":[],"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
 | knowledgeGalaxy.serviceaccount.imagePullSecrets | list | `[]` | Reference to one or more secrets to be used when pulling images. Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ |
-| knowledgeGalaxy.serviceaccount.name | string | knowledge-galaxy | The name of the service account to use |
-| knowledgeGalaxy.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| minio | object | Check [values.yaml](./values.yaml) | MinIO chart's values. Check MinIO chart's [documentation](https://github.com/minio/minio/tree/master/helm/minio) for more info about values |
-| minio.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| minio.consoleIngress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| minio.consoleIngress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| minio.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| minio.ingress.className | string | `"nginx"` | The ingress class name |
-| minio.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| minio.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| minio.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| knowledgeGalaxy.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| minio | object | `{"auth":{"rootPassword":"ChangeMe","rootUser":"ChangeMe"},"enabled":true,"mode":"standalone","persistence":{"enabled":false}}` | MinIO subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/minio/values.yaml |
+| minio.enabled | bool | `true` | Enable or disable MinIO subchart |
+| mongodb | object | `{"architecture":"standalone","auth":{"rootPassword":"ChangeMe","rootUser":"ChangeMe"},"enabled":true,"persistence":{"enabled":false}}` | MongoDB subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml |
+| mongodb.enabled | bool | `true` | Enable or disable MongoDB subchart |
 | oauth2Proxy.config.cookieSecret | string | `"mycookiesecret16"` | The seed string for secure cookies. Ref: https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview |
-| oauth2Proxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` | The image repository |
-| oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` | The image tag |
-| postgres.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| postgres.dbName | string | `"gitea"` | The name of the Postgres database for Gitea |
-| postgres.dbPassword | string | `"test"` | The password for the Gitea's database |
-| postgres.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| postgres.image.repository | string | `"postgres"` | The image repository |
-| postgres.image.tag | float | `12.1` | The image tag |
-| postgres.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| postgres.storage.size | string | `"10Gi"` | The storage size for the persistent volume claim |
-| postgres.storage.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| postgres.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| projectOperator.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.filebrowser.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.filebrowser.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.filebrowser.image.repository | string | `"filebrowser/filebrowser"` | The image repository |
-| projectOperator.filebrowser.image.tag | string | `"v2"` | The image tag |
-| projectOperator.filebrowser.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.filebrowser.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| oauth2Proxy.customConfig | string | `nil` | The OAuth2-Proxy custom configuration file |
+| oauth2Proxy.image.pullPolicy | string | `"IfNotPresent"` |  |
+| oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` |  |
+| oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` |  |
+| oauth2proxy | object | `{"clientID":"XXXXXXX","clientSecret":"XXXXXXXX","cookieName":"","cookieSecret":"XXXXXXXX","enabled":false}` | OAuth2-Proxy subchart deployment </br> Ref: https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml |
+| oauth2proxy.enabled | bool | `false` | Enable or disable OAuth2-Proxy subchart |
+| postgres.dbName | string | `"gitea"` |  |
+| postgres.dbPassword | string | `"gitea"` |  |
+| postgresql | object | `{"auth":{"database":"kdl","password":"ChangeMe","username":"user"},"enabled":true,"primary":{"persistence":{"enabled":false}},"replicaCount":1}` | PostgreSQL subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml |
+| postgresql.enabled | bool | `true` | Enable or disable PostgreSQL subchart |
+| projectOperator | object | `{"affinity":{},"filebrowser":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]},"kubeRbacProxy":{"image":{"pullPolicy":"IfNotPresent","repository":"gcr.io/kubebuilder/kube-rbac-proxy","tag":"v0.8.0"}},"manager":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.19.0"}},"mlflow":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":"standard"}},"nodeSelector":{},"resources":{},"tolerations":[]}` | project-operator operator |
+| projectOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.filebrowser | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]}` | filebrowser configuration |
+| projectOperator.filebrowser.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.filebrowser.image | object | `{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"}` | Image registry The image configuration for the base service |
+| projectOperator.filebrowser.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.filebrowser.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| projectOperator.kubeRbacProxy | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"gcr.io/kubebuilder/kube-rbac-proxy","tag":"v0.8.0"}}` | kube-rbac-proxy container specs |
 | projectOperator.kubeRbacProxy.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | projectOperator.kubeRbacProxy.image.repository | string | `"gcr.io/kubebuilder/kube-rbac-proxy"` | Image repository |
 | projectOperator.kubeRbacProxy.image.tag | string | `"v0.8.0"` | Image tag |
-| projectOperator.manager.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.manager.image.repository | string | `"konstellation/kdl-project-operator"` | The image repository |
-| projectOperator.manager.image.tag | string | `"0.19.0"` | The image tag |
-| projectOperator.manager.resources | object | `{}` | Resource requests and limits for primary projectOperator container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
-| projectOperator.mlflow.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| projectOperator.mlflow.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| projectOperator.mlflow.image.repository | string | `"konstellation/kdl-mlflow"` | The image repository |
-| projectOperator.mlflow.image.tag | string | `"v0.13.5"` | The image tag |
-| projectOperator.mlflow.ingress.annotations | object | `{}` | Ingress annotations |
-| projectOperator.mlflow.ingress.className | string | `"nginx"` | The ingress class name |
+| projectOperator.manager | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.19.0"}}` | The image configuration for the manager container |
+| projectOperator.manager.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.19.0"}` | Image registry The image configuration for the base service |
+| projectOperator.mlflow | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":"standard"}}` | mlflow configuration |
+| projectOperator.mlflow.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| projectOperator.mlflow.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"}` | Image registry The image configuration for the base service |
+| projectOperator.mlflow.ingress | object | `{"annotations":{},"className":"nginx","tls":{"secretName":null}}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | projectOperator.mlflow.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| projectOperator.mlflow.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.mlflow.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| projectOperator.mlflow.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.mlflow.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | projectOperator.mlflow.volume.size | string | `"1Gi"` | The storage size for the persistent volume claim |
 | projectOperator.mlflow.volume.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| projectOperator.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| projectOperator.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
+| projectOperator.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| projectOperator.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
+| projectOperator.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| sharedVolume | object | `{"name":"received-data","size":"10Gi","storageClassName":"standard"}` | Mount volume to share data between components |
 | sharedVolume.name | string | `"received-data"` | The name of the shared volume |
 | sharedVolume.size | string | `"10Gi"` | The storage size for the persistent volume claim |
 | sharedVolume.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| userToolsOperator.affinity | object | `{}` | Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ |
-| userToolsOperator.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.image.repository | string | `"konstellation/kdl-user-tools-operator"` | The image repository |
-| userToolsOperator.image.tag | string | `"0.29.0"` | The image tag |
-| userToolsOperator.ingress.annotations | object | `{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"}` | Ingress annotations |
-| userToolsOperator.ingress.className | string | `"nginx"` | The ingress class name |
+| userToolsOperator | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.29.0"},"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"},"className":"nginx","enabled":false,"tls":{"secretName":null}},"kubeconfig":{"enabled":false,"externalServerUrl":""},"nodeSelector":{},"oauth2Proxy":{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}},"repoCloner":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}},"storage":{"size":"10Gi","storageClassName":"standard"},"tolerations":[],"vscode":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}},"vscodeRuntime":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}}` | User Tools Operator deployment |
+| userToolsOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
+| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.29.0"}` | Image registry The image configuration for the base service |
 | userToolsOperator.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
-| userToolsOperator.kubeconfig.enabled | bool | `false` | Whether to enable kubeconfig for using with VSCode remote development. Ref: https://code.visualstudio.com/docs/remote/remote-overview |
+| userToolsOperator.kubeconfig.enabled | bool | `false` | Whether to enable kubeconfig for using with VSCode remote development. |
 | userToolsOperator.kubeconfig.externalServerUrl | string | `""` | The Kube API Server URL for using with VSCode remote development |
-| userToolsOperator.nodeSelector | object | `{}` | Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/ |
-| userToolsOperator.oauth2Proxy.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.oauth2Proxy.image.repository | string | `"quay.io/oauth2-proxy/oauth2-proxy"` | The image repository |
-| userToolsOperator.oauth2Proxy.image.tag | string | `"v7.0.1-amd64"` | The image tag |
-| userToolsOperator.repoCloner.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.repoCloner.image.repository | string | `"konstellation/kdl-repo-cloner"` | The image repository |
-| userToolsOperator.repoCloner.image.tag | string | `"0.18.0"` | The image tag |
+| userToolsOperator.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
+| userToolsOperator.oauth2Proxy | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}}` | oauth2-proxy configuration |
+| userToolsOperator.repoCloner | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}}` | repocloner configuration The following components are managed by the manager container when `usertool` custom resources are detected |
+| userToolsOperator.repoCloner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.storage | object | `{"size":"10Gi","storageClassName":"standard"}` | Storage configuration |
 | userToolsOperator.storage.size | string | `"10Gi"` | The storage size for the persistent volume claim |
 | userToolsOperator.storage.storageClassName | string | `"standard"` | Storage class to use for persistence |
-| userToolsOperator.tolerations | list | `[]` | If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/ |
-| userToolsOperator.vscode.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.vscode.image.repository | string | `"konstellation/kdl-vscode"` | The image repository |
-| userToolsOperator.vscode.image.tag | string | `"v0.15.0"` | The image tag |
-| userToolsOperator.vscodeRuntime.image.pullPolicy | string | `"IfNotPresent"` | The image pull policy |
-| userToolsOperator.vscodeRuntime.image.repository | string | `"konstellation/kdl-py"` | The image repository |
-| userToolsOperator.vscodeRuntime.image.tag | string | `"3.9"` | The image tag |
+| userToolsOperator.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
+| userToolsOperator.vscode | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}}` | vscode configuration |
+| userToolsOperator.vscode.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.vscodeRuntime | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}` | vscodeRuntime configuration |
+| userToolsOperator.vscodeRuntime.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}` | Image registry The image configuration for the base service |

@@ -1,3 +1,4 @@
+{{- if .Values.drone.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -18,3 +19,4 @@ data:
   {{- if .Values.droneRunner.serviceAccountJob.enabled }}
   DRONE_SERVICE_ACCOUNT_DEFAULT: {{ .Values.droneRunner.serviceAccountJob.name }}
   {{- end }}
+{{- end }}

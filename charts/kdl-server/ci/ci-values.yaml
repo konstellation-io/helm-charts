@@ -1,3 +1,4 @@
+# WIP: This file is a work in progress and is not yet functional
 # Default values for kdl-server
 # This is a YAML-formatted file
 # Declare variables to be passed into your templates
@@ -7,8 +8,6 @@ global:
   serverName: "local-server"
   # -- The DNS domain name that will serve the application
   domain: kdl.local
-
-  # -- Ingress configuration
   ingress:
     tls:
       # -- Whether to enable TLS
@@ -22,8 +21,6 @@ global:
       # caSecret:
       #   name: kdl-ca-cert
       #   certFilename: ca.crt
-
-  # -- (DEPRECATION) Configure MongoDB string URI
   mongodb:
     connectionString:
       # -- The name of the secret that contains a key with the MongoDB connection string.
@@ -31,7 +28,6 @@ global:
       # -- The name of the secret key that contains the MongoDB connection string.
       secretKey: ""
 
-# -- Backup job configuration
 backup:
   # -- Whether to enable backup
   enabled: false
@@ -42,10 +38,10 @@ backup:
   image:
     # -- Image repository
     repository: konstellation/kdl-backup
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
     # -- Image tag
     tag: 0.23.0
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
 
   # -- Specifies how to treat concurrent executions of a Job. Ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy
   concurrencyPolicy: Forbid
@@ -68,7 +64,6 @@ backup:
   # -- Limits the lifetime of a Job that has finished execution (either Complete or Failed).
   ttlSecondsAfterFinished: ""
 
-  # -- AWS S3 Bucket configuration
   s3:
     # -- AWS Access Key ID for acceding backup bucket
     awsAccessKeyID: aws-access-key-id
@@ -101,7 +96,6 @@ backup:
   #       path: /backup
   #       type: Directory
 
-# -- Cleaner job configuration
 cleaner:
   # -- Whether to enable cleaner cronjob
   enabled: false
@@ -112,25 +106,25 @@ cleaner:
   # -- The minimun age of files to be removed
   threshold: 5 # minimun age of files to be removed
   image:
-    # The repository of the image
+    # -- The image repository
     repository: konstellation/kdl-cleaner
-    # The image tag
+    # -- The image tag
     tag: 0.16.0
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
 
 # -- Drone deployment
-# (DEPRECATION) Remove in future versions
+# TODO: Remove in future versions
 drone:
   # -- Whether to enable Drone
-  enabled: true
+  enabled: false
 
   image:
-    # The repository of the image
+    # -- The image repository
     repository: drone/drone
-    # The image tag
+    # -- The image tag
     tag: 1.10.1
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
   storage:
     # -- Storage size
@@ -173,38 +167,35 @@ drone:
       #   more_set_headers "Content-Security-Policy: frame-ancestors 'self' https://kdlapp.kdl.local";
       # cert-manager.io/issuer: your-issuer
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+      # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
 
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
 # -- Drone Authorizer deployment
-# (DEPRECATION) Remove in future versions
+# TODO: Remove in future versions
 droneAuthorizer:
   image:
-    # The repository of the image
+    # -- The image repository
     repository: konstellation/kdl-drone-authorizer
-    # The image tag
+    # -- The image tag
     tag: 0.16.0
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
 
 # -- Drone Runner deployment
-# (DEPRECATION) Remove in future versions
+# TODO: Remove in future versions
 droneRunner:
   image:
-    # The repository of the image
+    # -- The image repository
     repository: drone/drone-runner-kube
-    # The image tag
+    # -- The image tag
     tag: 1.0.0-beta.6
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
 
   # -- Sets DRONE_DEBUG environment variable
@@ -232,20 +223,16 @@ droneRunner:
     annotations: {}
     #  eks.amazonaws.com/role-arn: "arn:aws:iam::1234567890:role/myrole"
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
 
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
 # -- Gitea deployment
-# (DEPRECATION) Remove in future versions
 gitea:
   # -- Whether to enable Gitea
   enabled: true
@@ -258,11 +245,11 @@ gitea:
     # -- Admin user email
     email: test@test.com
   image:
-    # The repository of the image
+    # -- The image repository
     repository: gitea/gitea
-    # The image tag
+    # -- The image tag
     tag: 1.14.4
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
   storage:
     # -- Storage size
@@ -289,113 +276,34 @@ gitea:
       # nginx.ingress.kubernetes.io/configuration-snippet: |
       #   more_set_headers "Content-Security-Policy: frame-ancestors 'self' https://kdlapp.kdl.local";
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+      # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
+
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
 
 giteaOauth2Setup:
   image:
-    # The repository of the image
+    # -- The image repository
     repository: konstellation/kdl-gitea-oauth2-setup
-    # The image tag
+    # -- The image tag
     tag: 0.16.0
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
 
-# -- Keycloak subchart deployment
-# </br> Ref: https://github.com/konstellation-io/helm-charts/blob/konstellation-base-1.0.2/charts/konstellation-base/values.yaml
-keycloak:
-  # -- Enable or disable Keycloak subchart
-  enabled: true
-
-  # Image registry
-  # The image configuration for the base service
-  image:
-    repository: keycloak/keycloak
-    tag: "26.0"
-
-  # Kubernetes service to expose Pod
-  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
-  service:
-    healthPath: /realms/master
-    targetPort: 8080
-
-  # Ingress configuration to expose app
-  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
-  ingress:
-    enabled: true
-    className: ""
-    annotations: {}
-      # nginx.org/proxy-buffer-size: "128k"
-      # nginx.org/proxy-buffers: "8 256k"
-    hosts:
-    - host: keycloak.mydomain.com
-      paths:
-      - path: /
-        pathType: ImplementationSpecific
-
-  # Enable creation of ServiceAccount
-  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
-  serviceAccount:
-    create: true
-
-  # Configure liveness checker
-  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
-  livenessProbe:
-    enabled: true
-
-  # Configure readinessProbe checker
-  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
-  readinessProbe:
-    enabled: true
-    httpGet:
-      path: /realms/master
-
-  # Configure command
-  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
-  command: []
-  # - "/opt/keycloak/bin/kc.sh"
-  # - "start-dev"
-
-  # Environment variables to configure application
-  # </br> Ref: https://www.keycloak.org/server/configuration
-  env: {}
-    # KC_DB_PASSWORD: keycloak
-    # KC_DB_URL: jdbc:postgresql://postgresql:5432/keycloak
-    # KC_DB_USERNAME: keycloak
-    # KC_DB: postgres
-    # KC_HEALTH_ENABLED: true
-    # KC_HOSTNAME: keycloak.mydomain.com
-    # KC_METRICS_ENABLED: true
-    # KC_PROXY: edge
-    # KEYCLOAK_ADMIN_PASSWORD: keycloak
-    # KEYCLOAK_ADMIN: keycloak
-
-# -- knowledge-galaxy deployment
-# </br> Ref: https://github.com/konstellation-io/knowledge-galaxy
 knowledgeGalaxy:
   # -- Whether to enable Knowledge Galaxy
   enabled: false
-
-  # -- Image registry
-  # The image configuration for the base service
   image:
-    # The repository of the image
+    # -- The image repository
     repository: konstellation/knowledge-galaxy
-    # The pull policy for the image
-    pullPolicy: IfNotPresent
-    # The image tag
+    # -- The image tag
     tag: v1.2.1
-
-  # -- Configuration
+    # -- The image pull policy
+    pullPolicy: IfNotPresent
   config:
     # -- Log level
     logLevel: "INFO"
@@ -406,90 +314,77 @@ knowledgeGalaxy:
     # -- Minimum number of words to use for project description
     descriptionMinWords: 50
 
-  # -- Enable creation of ServiceAccount
-  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
+  ## Service account for Knowledge Galaxy to use.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+  ##
   serviceaccount:
-    # Specifies whether a service account should be created
-    create: true
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use
-    # If not set and create is true, a name is generated using the fullname template
+    # -- Whether to create a service account
+    enabled: true
+    # -- The name of the service account to use
+    # @default -- knowledge-galaxy
     name: ""
+    # -- The service account annotations
+    annotations: {}
+
     # -- Reference to one or more secrets to be used when pulling images. Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
     imagePullSecrets: []
     # - name: regcred
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
 
-# -- KDL Server deployment
-kdlServer:
-  # -- Image registry
-  # The image configuration for the base service
-  image:
-    # The repository of the image
-    repository: konstellation/kdl-server
-    # The pull policy for the image
-    pullPolicy: IfNotPresent
-    # The image tag
-    tag: 1.38.0
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
 
-  # -- Ingress configuration to expose app
-  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+kdlServer:
+  image:
+    # -- The image repository
+    repository: konstellation/kdl-server
+    # -- The image tag
+    tag: 1.38.0
+    # -- The image pull policy
+    pullPolicy: IfNotPresent
   ingress:
-    enabled: false
-    className: ""
+    # -- The ingress class name
+    className: "nginx"
     tls:
       # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
       secretName: null
     # -- Ingress annotations
     annotations:
-      # cert-manager.io/issuer: your-issuer
-      # kubernetes.io/ingress.class: nginx
-      # kubernetes.io/tls-acme: "true"
-
-      # This Chart has been developed using Nginx Ingress Controller by default.
-      # Using the following default annotations ensures its correct operation.
-      # Ref: https://kubernetes.github.io/ingress-nginx/
-      #
+      ## This Chart has been developed using Nginx Ingress Controller by default.
+      ## Using the following default annotations ensures its correct operation.
+      ## Ref: https://kubernetes.github.io/ingress-nginx/
+      ##
       nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
       nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
 
-      # Large values are needed here to serve big files from Filebrowser
-      #
+      ## Large values are needed here to serve big files from Filebrowser
+      ##
       nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
-      # If additional annotations are needed to configure it, provide an additional
-      # file ensuring they are appended to the default ones.
-      #
-      # Example:
-      #
+      ## If additional annotations are needed to configure it, provide an additional
+      ## file ensuring they are appended to the default ones.
+      ##
+      ## Example:
+      ##
       # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
       # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
       # nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
       # nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+      # cert-manager.io/issuer: your-issuer
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
+
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
 
 # -- MinIO subchart deployment
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/minio/values.yaml
@@ -536,24 +431,25 @@ mongodb:
     # Enable MongoDB data persistence using PVC. If false, use emptyDir
     enabled: false
 
-# (DEPRECATION) legacy, remove in future versions
+# TODO: legacy, remove in future versions
 # OAuth2-Proxy legacy to configure user authentication
 oauth2Proxy:
   image:
-    # The repository of the image
+    # -- The image repository
     repository: quay.io/oauth2-proxy/oauth2-proxy
-    # The image tag
+    # -- The image tag
     tag: v7.0.1-amd64
-    # The pull policy for the image
+    # -- The image pull policy
     pullPolicy: IfNotPresent
   config:
     # -- The seed string for secure cookies. Ref: https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview
     cookieSecret: "mycookiesecret16"
   # -- The OAuth2-Proxy custom configuration file
   customConfig:
-  #  |-
-  #  provider = "github"
-  #  client
+    # oauth2_proxy.cfg: |-
+    #   provider = "github"
+    #   client
+
 
 # -- OAuth2-Proxy subchart deployment
 # </br> Ref: https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml
@@ -575,11 +471,6 @@ oauth2proxy:
   # If left empty, it will default to the release name
   cookieName: ""
 
-# (LEGACY) Until gitea is used
-postgres:
-  dbName: gitea
-  dbPassword: gitea
-
 # -- PostgreSQL subchart deployment
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 postgresql:
@@ -599,128 +490,105 @@ postgresql:
     password: ChangeMe
     # PostgreSQL application database
     # </br> Ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#environment-variables
-    database: "kdl"
+    database: "openbas"
 
-  # Enable persistence using Persistent Volume Claims
-  primary:
-    # Persistence parameters
-    persistence:
-      # Enable PostgreSQL data persistence using PVC
-      enabled: false
+  # Persistence parameters
+  persistence:
+    # Enable PostgreSQL data persistence using PVC
+    enabled: false
 
-# -- project-operator operator
 projectOperator:
-
-  # -- The image configuration for the manager container
+  ## Main container specs
+  ##
   manager:
-    # -- Image registry
-    # The image configuration for the base service
     image:
-      # The repository of the image
+      # -- The image repository
       repository: konstellation/kdl-project-operator
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
+      # -- The image tag
       tag: 0.19.0
+      # -- The image pull policy
+      pullPolicy: IfNotPresent
 
-  # -- Resources limits and requested
-  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-  resources: {}
+    # -- Resource requests and limits for primary projectOperator container. Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    resources: {}
     # limits:
-    #   cpu: 100m
-    #   memory: 128Mi
+    #   cpu: 500m
+    #   memory: 200Mi
     # requests:
     #   cpu: 100m
-    #   memory: 128Mi
+    #   memory: 60Mi
 
-  # -- kube-rbac-proxy container specs
+    ## kube-rbac-proxy container specs
+    ##
   kubeRbacProxy:
     image:
       # -- Image repository
       repository: gcr.io/kubebuilder/kube-rbac-proxy
-      # -- Image pull policy
-      pullPolicy: IfNotPresent
       # -- Image tag
       tag: v0.8.0
+      # -- Image pull policy
+      pullPolicy: IfNotPresent
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
 
-  # -- mlflow configuration
-  mlflow:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-mlflow
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: v0.13.5
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
 
+  ## The following components are managed by the manager container when kdlproject custom resources are detected
+  ##
+  mlflow:
+    image:
+      # -- The image repository
+      repository: konstellation/kdl-mlflow
+      # -- The image tag
+      tag: v0.13.5
+      # -- The image pull policy
+      pullPolicy: IfNotPresent
     volume:
       # -- Storage class to use for persistence
       storageClassName: standard
       # -- The storage size for the persistent volume claim
       size: 1Gi
-
-    # -- Ingress configuration to expose app
-    # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
     ingress:
-      className: "nginx"
-      annotations: {}
-        # kubernetes.io/ingress.class: nginx
-        # kubernetes.io/tls-acme: "true"
       tls:
         # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
         secretName: null
+      # -- The ingress class name
+      className: "nginx"
+      # -- Ingress annotations
+      annotations: {}
 
-    # -- Node labels for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
     nodeSelector: {}
 
-    # -- Tolerations for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-    tolerations: []
-
-    # -- Affinity for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+    # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
     affinity: {}
 
-  # -- filebrowser configuration
+    # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+    tolerations: []
+
   filebrowser:
-    # -- Image registry
-    # The image configuration for the base service
     image:
-      # The repository of the image
+      # -- The image repository
       repository: filebrowser/filebrowser
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
+      # -- The image tag
       tag: v2
+      # -- The image pull policy
+      pullPolicy: IfNotPresent
 
-    # -- Node labels for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+    # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
     nodeSelector: {}
 
-    # -- Tolerations for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-    tolerations: []
-
-    # -- Affinity for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+    # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
     affinity: {}
 
-# -- Mount volume to share data between components
+    # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+    tolerations: []
+
 sharedVolume:
   # -- The name of the shared volume
   name: received-data
@@ -729,100 +597,82 @@ sharedVolume:
   # -- The storage size for the persistent volume claim
   size: 10Gi
 
-# -- User Tools Operator deployment
 userToolsOperator:
-  # -- Image registry
-  # The image configuration for the base service
   image:
-    # The repository of the image
+    # -- The image repository
     repository: konstellation/kdl-user-tools-operator
-    # The pull policy for the image
-    pullPolicy: IfNotPresent
-    # The image tag
+    # -- The image tag
     tag: 0.29.0
-
-  # -- Storage configuration
+    # -- The image pull policy
+    pullPolicy: IfNotPresent
   storage:
     # -- The storage size for the persistent volume claim
     size: 10Gi
     # -- Storage class to use for persistence
     storageClassName: standard
 
-  # -- Node labels for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
   nodeSelector: {}
 
-  # -- Tolerations for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-  tolerations: []
-
-  # -- Affinity for pod assignment
-  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   affinity: {}
 
-  # -- repocloner configuration
-  # The following components are managed by the manager container when `usertool` custom resources are detected
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
+
+  ## The following components are managed by the manager container when `usertool` custom resources are detected
+  ##
   repoCloner:
-    # -- Image registry
-    # The image configuration for the base service
     image:
-      # The repository of the image
+      # -- The image repository
       repository: konstellation/kdl-repo-cloner
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
+      # -- The image tag
       tag: 0.18.0
-
-  # -- vscode configuration
+      # -- The image pull policy
+      pullPolicy: IfNotPresent
   vscode:
-    # -- Image registry
-    # The image configuration for the base service
     image:
-      # The repository of the image
+      # -- The image repository
       repository: konstellation/kdl-vscode
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
+      # -- The image tag
       tag: v0.15.0
-
-  # -- vscodeRuntime configuration
-  vscodeRuntime:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-py
-      # The pull policy for the image
+      # -- The image pull policy
       pullPolicy: IfNotPresent
-      # The image tag
+  vscodeRuntime:
+    image:
+      # -- The image repository
+      repository: konstellation/kdl-py
+      # -- The image tag
       tag: "3.9"
+      # -- The image pull policy
+      pullPolicy: IfNotPresent
 
-  # Default ingress config for all deployed User Tools.
-  #
-  # This Chart has been developed using Nginx Ingress Controller by default.
-  # Using the following default annotations ensures its correct operation.
-  # Ref: https://kubernetes.github.io/ingress-nginx/
-  #
+  ## Default ingress config for all deployed User Tools.
+  ##
+  ## This Chart has been developed using Nginx Ingress Controller by default.
+  ## Using the following default annotations ensures its correct operation.
+  ## Ref: https://kubernetes.github.io/ingress-nginx/
+  ##
   ingress:
-    enabled: false
+    # -- The ingress class name
     className: "nginx"
+    tls:
+      # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
+      secretName: null
+    # -- Ingress annotations
     annotations:
       nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
       nginx.ingress.kubernetes.io/configuration-snippet: |
         more_set_headers "Content-Security-Policy: frame-ancestors 'self' *";
-      # In case of additional security to be required set the previous annotation as follows
-      #
+      ## In case of additional security to be required set the previous annotation as follows
+      ##
       # nginx.ingress.kubernetes.io/configuration-snippet: |
       #   more_set_headers "Content-Security-Policy: frame-ancestors 'self' https://kdlapp.kdl.local";
-    tls:
-      # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
-      secretName: null
 
-  # If enabled, users will be able to download a kubeconfig file, so they can attach an external terminal/IDE to
-  # the vscodeRuntime running inside KST.
-  # Ref: https://code.visualstudio.com/docs/remote/remote-overview
+  ## If enabled, users will be able to download a kubeconfig file, so they can attach an external terminal/IDE to
+  ## the vscodeRuntime running inside KST.
   kubeconfig:
-    # -- Whether to enable kubeconfig for using with VSCode remote development.
+    # -- Whether to enable kubeconfig for using with VSCode remote development. Ref: https://code.visualstudio.com/docs/remote/remote-overview
     enabled: false
     # -- The Kube API Server URL for using with VSCode remote development
     externalServerUrl: ""
@@ -831,12 +681,11 @@ userToolsOperator:
     # enabled: true
     # externalServerUrl: https://192.168.0.21:16443
 
-  # -- oauth2-proxy configuration
   oauth2Proxy:
     image:
-      # The repository of the image
+      # -- The image repository
       repository: quay.io/oauth2-proxy/oauth2-proxy
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
+      # -- The image tag
       tag: v7.0.1-amd64
+      # -- The image pull policy
+      pullPolicy: IfNotPresent

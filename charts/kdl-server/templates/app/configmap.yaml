@@ -5,36 +5,57 @@ metadata:
   labels:
     app: kdl-server
 data:
+  ##
+  # KDL APP configuration
+  KDL_ADMIN_EMAIL: {{ .Values.gitea.admin.email }}
+  KDL_ADMIN_USERNAME: {{ .Values.gitea.admin.username }}
   KDL_SERVER_PORT: '8080'
 
   BASE_DOMAIN_NAME: {{ .Values.global.domain }}
   SHARED_VOLUME: {{ .Values.sharedVolume.name }}
   TLS_ENABLED: "{{ .Values.global.ingress.tls.enabled }}"
 
-  KDL_ADMIN_USERNAME: {{ .Values.gitea.admin.username }}
-  KDL_ADMIN_EMAIL: {{ .Values.gitea.admin.email }}
+  config.json: |+
+    {
+      "SERVER_NAME": "{{ .Values.global.serverName }}",
+      "SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}",
+      "KNOWLEDGE_GALAXY_ENABLED": {{ .Values.knowledgeGalaxy.enabled }},
+      "KG_SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg",
+      "GITEA_URL": "{{ include "http.protocol" . }}://gitea.{{ .Values.global.domain }}",
+      "RELEASE_VERSION": "{{ .Chart.AppVersion }}",
+      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }}
+    }
 
-  # URL Setup
-  PROJECT_FILEBROWSER_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/filebrowser/PROJECT_ID/"
-  MINIO_ENDPOINT: "{{ .Release.Name }}-minio:9000"
-  USER_TOOLS_VSCODE_URL: "{{ include "http.protocol" . }}://USERNAME-code.{{ .Values.global.domain }}/?folder=/home/coder/repos/REPO_FOLDER"
-  DRONE_URL: "{{ printf "%s://drone.%s" (include "http.protocol" . ) .Values.global.domain }}"
+  ##
+  # KDL URL Setup
   DRONE_INTERNAL_URL: "http://drone"
-  PROJECT_MLFLOW_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/mlflow/PROJECT_ID/"
+  DRONE_URL: "{{ printf "%s://drone.%s" (include "http.protocol" . ) .Values.global.domain }}"
   KNOWLEDGE_GALAXY_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg/projects/PROJECT_ID/"
+  MINIO_ENDPOINT: "{{ .Release.Name }}-minio:9000"
+  PROJECT_FILEBROWSER_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/filebrowser/PROJECT_ID/"
+  PROJECT_MLFLOW_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/mlflow/PROJECT_ID/"
+  USER_TOOLS_VSCODE_URL: "{{ include "http.protocol" . }}://USERNAME-code.{{ .Values.global.domain }}/?folder=/home/coder/repos/REPO_FOLDER"
 
+  ##
+  # OAuth2 Proxy
+  OAUTH2_PROXY_IMG_PULLPOLICY: "{{ .Values.oauth2Proxy.image.pullPolicy }}"
   OAUTH2_PROXY_IMG_REPO: "{{ .Values.oauth2Proxy.image.repository }}"
   OAUTH2_PROXY_IMG_TAG: "{{ .Values.oauth2Proxy.image.tag }}"
-  OAUTH2_PROXY_IMG_PULLPOLICY: "{{ .Values.oauth2Proxy.image.pullPolicy }}"
 
-  GITEA_OAUTH2_SETUP_IMG_REPO: "{{ .Values.giteaOauth2Setup.image.repository }}"
-  GITEA_OAUTH2_SETUP_IMG_TAG: "{{ .Values.giteaOauth2Setup.image.tag }}"
-  GITEA_OAUTH2_SETUP_IMG_PULLPOLICY: "{{ .Values.giteaOauth2Setup.image.pullPolicy }}"
+  ##
+  # Gitea OAuth2 Setup
   GITEA_OAUTH2_SETUP_ADMIN_SECRETS: gitea-admin
   GITEA_OAUTH2_SETUP_CONFIGMAP: gitea-oauth2
+  GITEA_OAUTH2_SETUP_IMG_PULLPOLICY: "{{ .Values.giteaOauth2Setup.image.pullPolicy }}"
+  GITEA_OAUTH2_SETUP_IMG_REPO: "{{ .Values.giteaOauth2Setup.image.repository }}"
+  GITEA_OAUTH2_SETUP_IMG_TAG: "{{ .Values.giteaOauth2Setup.image.tag }}"
 
+  ##
+  # Knowledge Galaxy
   KNOWLEDGE_GALAXY_ENABLED: "{{ .Values.knowledgeGalaxy.enabled }}"
 
+  ##
+  # User Tools Operator
   PROJECT_MLFLOW_IMG_REPO: "{{ .Values.projectOperator.mlflow.image.repository }}"
   PROJECT_MLFLOW_IMG_TAG: "{{ .Values.projectOperator.mlflow.image.tag }}"
   PROJECT_MLFLOW_IMG_PULLPOLICY: "{{ .Values.projectOperator.mlflow.image.pullPolicy }}"
@@ -71,6 +92,8 @@ data:
   REPO_CLONER_IMG_TAG: "{{ .Values.userToolsOperator.repoCloner.image.tag }}"
   REPO_CLONER_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.repoCloner.image.pullPolicy }}"
 
+  ##
+  # User Tools Operator
   {{- if kindIs "invalid" .Values.userToolsOperator.giteaOauth2Setup }}
   USER_TOOLS_GITEA_OAUTH2_SETUP_IMG_REPO: "{{ .Values.giteaOauth2Setup.image.repository }}"
   USER_TOOLS_GITEA_OAUTH2_SETUP_IMG_TAG: "{{ .Values.giteaOauth2Setup.image.tag }}"
@@ -104,18 +127,7 @@ data:
   USER_TOOLS_TLS_SECRET_NAME: "{{ include "userTools.tlsSecretName" . }}"
   {{- end }}
 
+  ##
   # Labels
   LABELS_COMMON_APP_RELEASE: {{ .Values.kdlServer.image.tag }}
   LABELS_COMMON_CHART_RELEASE: {{ .Chart.Version }}
-
-  # KDL APP config file
-  config.json: |+
-    {
-      "SERVER_NAME": "{{ .Values.global.serverName }}",
-      "SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}",
-      "KNOWLEDGE_GALAXY_ENABLED": {{ .Values.knowledgeGalaxy.enabled }},
-      "KG_SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg",
-      "GITEA_URL": "{{ include "http.protocol" . }}://gitea.{{ .Values.global.domain }}",
-      "RELEASE_VERSION": "{{ .Chart.AppVersion }}",
-      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }}
-    }

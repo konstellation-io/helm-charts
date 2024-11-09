@@ -16,10 +16,13 @@ spec:
         checksum/oauth2-config: {{ include (print $.Template.BasePath "/app/oauth2-proxy-configmap.yaml") . | sha256sum }}
         checksum/oauth2-secret: {{ include (print $.Template.BasePath "/app/oauth2-secret.yaml") . | sha256sum }}
         checksum/project-proxy-config: {{ include (print $.Template.BasePath "/app/project-proxy-nginx-config.yaml") . | sha256sum }}
-        checksum/gitea-oauth2-config: {{ include (print $.Template.BasePath "/common/gitea-oauth2-configmap.yaml") . | sha256sum }}
-        checksum/gitea-admin-secret: {{ include (print $.Template.BasePath "/common/gitea-admin-secret.yaml") . | sha256sum }}
+        {{- if .Values.gitea.enabled }}
+        checksum/gitea-oauth2-config: {{ include (print $.Template.BasePath "/gitea/gitea-oauth2-configmap.yaml") . | sha256sum }}
+        checksum/gitea-admin-secret: {{ include (print $.Template.BasePath "/gitea/gitea-admin-secret.yaml") . | sha256sum }}
+        {{- end }}
     spec:
       initContainers:
+        {{- if .Values.gitea.enabled }}
         - name: gitea-oauth2-setup
           image: "{{ .Values.giteaOauth2Setup.image.repository }}:{{ .Values.giteaOauth2Setup.image.tag }}"
           imagePullPolicy: IfNotPresent
@@ -37,6 +40,8 @@ spec:
                 name: gitea-oauth2
             - configMapRef:
                 name: kdl-server
+        {{- end }}
+        {{- if .Values.drone.enabled }}
         - name: drone-authorizer
           image: {{ .Values.droneAuthorizer.image.repository }}:{{ .Values.droneAuthorizer.image.tag }}
           imagePullPolicy: IfNotPresent
@@ -54,6 +59,7 @@ spec:
           envFrom:
             - secretRef:
                 name: gitea-admin
+          {{- end }}
       containers:
         - name: kdl-app
           image: {{ .Values.kdlServer.image.repository }}:{{ .Values.kdlServer.image.tag }}

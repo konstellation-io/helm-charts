@@ -4,6 +4,9 @@ metadata:
   name: kdl-server-oauth2-proxy
 data:
   oauth2_proxy.cfg: |+
+    {{- if .Values.oauth2Proxy.customConfig }}
+    {{ .Values.oauth2Proxy.customConfig | nindent 8 }}
+    {{- else }}
     provider="github"
     redirect_url="{{ printf "%s://kdlapp.%s/oauth2/callback" ( include "http.protocol" . ) .Values.global.domain }}"
     login_url="{{ printf "%s://gitea.%s/login/oauth/authorize" ( include "http.protocol" . ) .Values.global.domain }}"
@@ -15,3 +18,4 @@ data:
     cookie_samesite="{{ ternary "none" "lax" .Values.global.ingress.tls.enabled }}"
     ssl_insecure_skip_verify=true
     ssl_upstream_insecure_skip_verify=true
+    {{- end }}

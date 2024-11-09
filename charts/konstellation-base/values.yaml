@@ -22,10 +22,12 @@ nameOverride: ""
 # -- String to fully override konstellation-base.fullname template
 fullnameOverride: ""
 
-# -- Global Docker registry secret names as an array
+# -- Docker registry secret names as an array
 imagePullSecrets: []
+  # - name: my-secret-name
 
 # -- Enable creation of ServiceAccount
+# </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -47,7 +49,6 @@ testConnection:
   tag: ""
 
 # -- Environment variables to configure application
-# </br> Ref: https://docs.konstellation-base.io/latest/deployment/configuration/#platform
 env: {}
   # MY_VARIABLE: value
 
@@ -109,6 +110,8 @@ service:
   type: ClusterIP
   # -- Kubernetes Service port
   port: 80
+  # -- Kubernetes Service health check path
+  # healthPath: ""
   # -- NodePort port (only when type is NodePort)
   # nodePort: 32000
   # -- Pod expose port
@@ -248,10 +251,6 @@ ingress:
 # -- Resources limits and requested
 # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
