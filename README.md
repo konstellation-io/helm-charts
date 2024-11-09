@@ -48,3 +48,11 @@ Charts are also available in OCI format. The list of available charts can be fou
 ```console
 helm install [RELEASE_NAME] oci://ghcr.io/konstellation-io/helm-charts/<helm-chart-name> --version=[version]
 ```
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
