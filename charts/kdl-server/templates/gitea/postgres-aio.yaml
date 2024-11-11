@@ -1,0 +1,102 @@
+{{ if .Capabilities.APIVersions.Has "apps/v1" }}
+apiVersion: apps/v1
+{{ else if .Capabilities.APIVersions.Has "apps/v1beta1" }}
+apiVersion: apps/v1beta1
+{{ end }}
+kind: StatefulSet
+metadata:
+  labels:
+    app: postgres
+  name: postgres
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - image: {{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}
+        imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+        name: postgres
+        envFrom:
+          - secretRef:
+              name: postgres
+        volumeMounts:
+          - name: postgres-pvc
+            mountPath: /var/lib/postgresql/data
+            subPath: data # to prevent warning: "initdb: directory "/var/lib/postgresql/data" exists but is not empty"
+          - name: postgres-initdb
+            mountPath: /docker-entrypoint-initdb.d/
+    {{- with .Values.postgres.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.postgres.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.postgres.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: postgres-initdb
+          configMap:
+            name: postgres-initdb
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-pvc
+        labels:
+          app: postgres
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.postgres.storage.storageClassName }}
+        resources:
+          requests:
+            storage:  {{ .Values.postgres.storage.size }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  clusterIP: None
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+type: Opaque
+data:
+  POSTGRES_DB: {{ .Values.postgres.dbName | b64enc }}
+  POSTGRES_PASSWORD: {{ .Values.postgres.dbPassword | b64enc }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  labels:
+    app: postgres-initdb
+data:
+  init.sql: |
+    CREATE USER gitea WITH ENCRYPTED PASSWORD 'gitea';
+    GRANT ALL PRIVILEGES ON DATABASE gitea TO gitea;
+    CREATE DATABASE hub;
+    CREATE DATABASE drone;

@@ -491,8 +491,59 @@ kdlServer:
   # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
 
+# -- (DEPRECATION) MinIO chart's values. Check MinIO chart's [documentation](https://github.com/minio/minio/tree/master/helm/minio) for more info about values
+# @default -- Check [values.yaml](./values.yaml)
+# minio:
+#   enabled: false
+#   legacy: true
+#   resources:
+#     requests:
+#       memory: 1Gi
+#   mode: standalone
+#   rootUser: "minio"
+#   rootPassword: "minio123"
+#   serviceAccount:
+#     create: false
+#   persistence:
+#     storageClass: standard
+#     existingClaim: ""
+#     accessMode: ReadWriteMany
+
+#   # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
+#   nodeSelector: {}
+
+#   # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+#   affinity: {}
+
+#   # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+#   tolerations: []
+
+#   ## This Chart uses custom ingresses for MinIO and MinIO Console and not
+#   ## the ones implemented by the official MinIO Chart which are disabled by default
+#   ##
+#   ingress:
+#     # -- The ingress class name
+#     className: "nginx"
+#     tls:
+#       # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
+#       secretName: null
+#     # -- Ingress annotations
+#     annotations:
+#       nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+
+#   consoleIngress:
+#     # The ingress class name
+#     className: "nginx"
+#     tls:
+#       # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
+#       secretName: null
+#     # -- Ingress annotations
+#     annotations:
+#       nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+
 # -- MinIO subchart deployment
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/minio/values.yaml
+# TODO: pending to remove legacy minio
 minio:
   # -- Enable or disable MinIO subchart
   enabled: true
@@ -577,8 +628,31 @@ oauth2proxy:
 
 # (LEGACY) Until gitea is used
 postgres:
+  image:
+    # -- The image repository
+    repository: postgres
+    # -- The image tag
+    tag: 12.1
+    # -- The image pull policy
+    pullPolicy: IfNotPresent
+  # -- The name of the Postgres database for Gitea
   dbName: gitea
-  dbPassword: gitea
+  # -- The password for the Gitea's database
+  dbPassword: test
+  storage:
+    # -- The storage size for the persistent volume claim
+    size: 10Gi
+    # -- Storage class to use for persistence
+    storageClassName: ""
+
+  # -- Define which Nodes the Pods are scheduled on. Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  nodeSelector: {}
+
+  # -- Assign custom affinity rules. Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  affinity: {}
+
+  # -- If specified, the pod's tolerations. Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  tolerations: []
 
 # -- PostgreSQL subchart deployment
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
@@ -725,7 +799,7 @@ sharedVolume:
   # -- The name of the shared volume
   name: received-data
   # -- Storage class to use for persistence
-  storageClassName: standard
+  storageClassName: ""
   # -- The storage size for the persistent volume claim
   size: 10Gi
 
