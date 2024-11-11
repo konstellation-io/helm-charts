@@ -5,7 +5,7 @@ metadata:
 data:
   oauth2_proxy.cfg: |+
     {{- if .Values.oauth2Proxy.customConfig }}
-    {{ .Values.oauth2Proxy.customConfig | nindent 8 }}
+    {{ .Values.oauth2Proxy.customConfig | nindent 4 }}
     {{- else }}
     provider="github"
     redirect_url="{{ printf "%s://kdlapp.%s/oauth2/callback" ( include "http.protocol" . ) .Values.global.domain }}"
