@@ -316,6 +316,9 @@ keycloak:
   # -- Enable or disable Keycloak subchart
   enabled: true
 
+  # Force keycloak name
+  fullnameOverride: keycloak
+
   # Image registry
   # The image configuration for the base service
   image:
@@ -569,7 +572,7 @@ minio:
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
 mongodb:
   # -- Enable or disable MongoDB subchart
-  enabled: true
+  enabled: false
 
   # mode MongoDB server mode (`standalone` or `replicaset`)
   architecture: standalone
