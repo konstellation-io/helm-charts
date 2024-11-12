@@ -3,6 +3,52 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: 1.38.0
+    created: "2024-11-12T16:43:37.711968694Z"
+    dependencies:
+    - condition: minio.enabled
+      name: minio
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 14.8.1
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 16.2.1
+    - alias: oauth2proxy
+      condition: oauth2proxy.enabled
+      name: oauth2-proxy
+      repository: oci://ghcr.io/oauth2-proxy/charts
+      version: 7.7.28
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 15.5.38
+    - alias: keycloak
+      condition: keycloak.enabled
+      name: konstellation-base
+      repository: oci://ghcr.io/konstellation-io/helm-charts
+      version: 1.0.2
+    description: A Helm chart to deploy KDL server
+    digest: f01426a1424c6dfbf7aa5293c4704bbeb2ff0095ae7020d84b311db268430413
+    home: https://www.konstellation.io
+    keywords:
+    - ia
+    - kdl
+    - kdl-server
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    name: kdl-server
+    sources:
+    - https://github.com/konstellation-io/kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.0.3-rc.4/kdl-server-6.0.3-rc.4.tgz
+    version: 6.0.3-rc.4
+  - apiVersion: v2
+    appVersion: 1.38.0
     created: "2024-11-11T17:07:02.59715304Z"
     dependencies:
     - condition: minio.enabled
@@ -1398,4 +1444,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2024-11-12T15:58:46.160145296Z"
+generated: "2024-11-12T16:43:37.712262729Z"
