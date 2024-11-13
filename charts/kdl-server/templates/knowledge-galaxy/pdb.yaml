@@ -1,0 +1,18 @@
+{{- if .Values.knowledgeGalaxy.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-knowledge-galaxy
+  labels:
+    {{- include "kdl-server.knowledgeGalaxyLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kdl-server.selectorKnowledgeGalaxyLabels" . | nindent 6 }}
+  {{- if .Values.knowledgeGalaxy.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.knowledgeGalaxy.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.knowledgeGalaxy.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.knowledgeGalaxy.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+{{- end }}

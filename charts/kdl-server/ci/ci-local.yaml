@@ -1,0 +1,221 @@
+image:
+  tag: 1.38.0
+
+# -- String to partially override konstellation-base.fullname template (will maintain the release name)
+nameOverride: ""
+
+# -- String to fully override konstellation-base.fullname template
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+
+testConnection:
+  enabled: true
+
+env:
+  TEST: test
+
+secrets:
+  - name: secret-name
+    data:
+      my.key: |-
+        my-content
+      my_var: my-value
+
+initContainers:
+  - name: my-container
+    image: busybox
+    command: ['sh', '-c', 'echo "Hello, World!"']
+
+
+ingress:
+  enabled: true
+  className: "public"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
+  hosts:
+  - host: chart-example.local
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+
+lifecycle:
+  postStart:
+    exec:
+      command:
+        - "/bin/sh"
+        - "-c"
+        - "ssh-keyscan -H gitea >> /app/.ssh/known_hosts"
+
+livenessProbe:
+  enabled: true
+
+readinessProbe:
+  enabled: true
+
+startupProbe:
+  enabled: true
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+podDisruptionBudget:
+  enabled: true
+
+autoscaling:
+  enabled: true
+
+nodeSelector:
+  os: linux
+
+tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"
+
+keycloak:
+  enabled: true
+
+knowledgeGalaxy:
+  enabled: true
+
+minio:
+  enabled: true
+
+oauth2proxy:
+  enabled: true
+
+  # whether to use http or https
+  httpScheme: http
+  # OAuth client ID
+  clientID: "XXXXXXX"
+  # OAuth client secret
+  clientSecret: "XXXXXXXX"
+  # Create a new secret with the following command
+  # openssl rand -base64 32 | head -c 32 | base64
+  # Use an existing secret for OAuth2 credentials (see secret.yaml for required fields)
+  # Example:
+  # existingSecret: secret
+  cookieSecret: "XXXXXXXX"
+  # The name of the cookie that oauth2-proxy will create
+  # If left empty, it will default to the release name
+  cookieName: ""
+  # Ref: https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview#config-options
+  # Ref: https://github.com/oauth2-proxy/oauth2-proxy/blob/master/contrib/oauth2-proxy.cfg.example
+  # Ref: https://oauth2-proxy.github.io/oauth2-proxy/configuration/providers/keycloak_oidc
+  # configFile: |-
+  #   provider = "keycloak-oidc"
+  #   client_id = "oauth2-proxy"
+  #   client_secret = "XXXXXXXX"
+  #   redirect_url = "https://domain.com/oauth2/callback"
+  #   oidc_issuer_url = "https://keycloak.svc/realms/<realm>"
+  #   email_domains = ["domain.com"]
+  #   code_challenge_method = "S256"
+  #   skip_provider_button = true
+  #   pass_user_headers = true
+  #   upstreams = [
+  #     "http://127.0.0.1:8080/",
+  #     "http://127.0.0.1:9000/mlflow/",
+  #     "http://127.0.0.1:9000/filebrowser/",
+  #     "http://127.0.0.1:9000/kg/"
+  #   ]
+  #   skip_auth_routes = ["/config.json"]
+  #   cookie_secret = "XXXXXXXX"
+  #   cookie_secure = true
+  #   cookie_httponly = true
+
+  extraContainers:
+     - name: project-proxy
+       image: nginx:alpine
+       ports:
+         - containerPort: 9000
+       volumeMounts:
+         - name: project-proxy-nginx-config
+           mountPath: /etc/nginx/nginx.conf
+           subPath: nginx.conf
+
+  extraVolumes:
+    - name: project-proxy-nginx-config
+      configMap:
+        name: project-proxy-nginx-config
+
+  extraObjects:
+    # Ref: https://oauth2-proxy.github.io/oauth2-proxy/configuration/integration
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: project-proxy-nginx-config
+      data:
+        nginx.conf: |
+          user  nginx;
+          worker_processes  1;
+          error_log  /var/log/nginx/error.log warn;
+          pid        /var/run/nginx.pid;
+          events {
+              worker_connections  1024;
+          }
+          http {
+            include       /etc/nginx/mime.types;
+            default_type  application/octet-stream;
+            log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                '$status $body_bytes_sent "$http_referer" '
+                                '"$http_user_agent" "$http_x_forwarded_for"';
+            access_log  /var/log/nginx/access.log  main;
+            sendfile        on;
+            keepalive_timeout  65;
+
+            server {
+              listen 9000;
+              resolver kube-dns.kube-system.svc.cluster.local valid=5s;
+              client_max_body_size 1000000M;
+
+              location = /auth {
+                  internal;
+                  proxy_pass              http://127.0.0.1:8080/api/auth/project;
+                  proxy_pass_request_body off;
+                  proxy_set_header        Content-Length "";
+                  proxy_set_header        X-Original-URI $request_uri;
+              }
+
+              location ~ ^/mlflow/([^/]+)/(.*)$ {
+                  auth_request /auth;
+                  auth_request_set $auth_status $upstream_status;
+                  proxy_pass http://$1-mlflow.kdl.svc.cluster.local:5000/$2$is_args$args;
+              }
+
+              location ~ ^/filebrowser/([^/]+)/(.*)$ {
+                  auth_request /auth;
+                  auth_request_set $auth_status $upstream_status;
+                  set $query $2;
+                  proxy_pass http://$1-filebrowser.kdl.svc.cluster.local:9696/$query$is_args$args;
+              }
+
+              location ~ ^/kg/(api|static)/(.*)$ {
+                  proxy_pass http://knowledge-galaxy.kdl.svc.cluster.local:8080/kg/$1/$2$is_args$args;
+              }
+
+              location ~ ^/kg/(favicon.ico|config.json)$ {
+                  proxy_pass http://knowledge-galaxy.kdl.svc.cluster.local:8080/kg/$1;
+              }
+
+              location ~ ^/kg/(.*)$ {
+                  auth_request /auth;
+                  auth_request_set $auth_status $upstream_status;
+                  proxy_pass http://knowledge-galaxy.kdl.svc.cluster.local:8080/kg/$1$is_args$args;
+              }
+            }
+          }
+
+postgresql:
+  enabled: true

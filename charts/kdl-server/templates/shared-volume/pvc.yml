@@ -1,11 +1,42 @@
-kind: PersistentVolumeClaim
+{{- if .Values.sharedVolume.enabled }}
 apiVersion: v1
+kind: sharedVolumeClaim
 metadata:
+  {{- if .Values.sharedVolume.name }}
   name: {{ .Values.sharedVolume.name }}-claim
+  {{- else }}
+  name: {{ template "konstellation-base.fullname" . }}-claim
+  {{- end }}
+  {{- if .Values.sharedVolume.annotations }}
+  annotations:
+{{ toYaml .Values.sharedVolume.annotations | indent 4 }}
+  {{- end }}
+  labels:
+    {{- include "konstellation-base.labels" . | nindent 4 }}
+    {{- with .Values.sharedVolume.labels }}
+       {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
-  storageClassName: {{ .Values.sharedVolume.storageClassName }}
   accessModes:
-    - ReadWriteMany
+{{ toYaml .Values.sharedVolume.accessModes | indent 4 }}
+{{- if .Values.sharedVolume.storageClass }}
+{{- if (eq "-" .Values.sharedVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.sharedVolume.storageClass }}"
+{{- end }}
+{{- end }}
+{{- if .Values.sharedVolume.volumeBindingMode }}
+  volumeBindingMode: "{{ .Values.sharedVolume.volumeBindingMode }}"
+{{- end }}
   resources:
     requests:
-      storage: {{ .Values.sharedVolume.size }}
+      storage: "{{ .Values.sharedVolume.size }}"
+{{- if .Values.sharedVolume.selector }}
+  selector:
+  {{- toYaml .Values.sharedVolume.selector | nindent 4 }}
+{{- end }}
+{{- if .Values.sharedVolume.volumeName }}
+  volumeName: "{{ .Values.sharedVolume.volumeName }}"
+{{- end }}
+{{- end }}

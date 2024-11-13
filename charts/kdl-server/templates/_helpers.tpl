@@ -51,53 +51,27 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Create the name of the service account to use
-*/}}
-{{- define "kdl-server.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "kdl-server.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
-{{- end }}
-
-{{/*
-Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
-Patch the label selector on an object
-This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
-The matchLabels are created with the selectorLabels template.
-This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
-*/}}
-{{- define "kdl-server.patchLabelSelector" -}}
-{{- if not (hasKey ._target "labelSelector") }}
-{{- $selectorLabels := (include "kdl-server.selectorLabels" .) | fromYaml }}
-{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
-{{- end }}
-{{- end }}
-
-{{/*
-Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
-Patch topology spread constraints
-This template uses the kdl-server.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
-This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
-*/}}
-{{- define "kdl-server.patchTopologySpreadConstraints" -}}
-{{- range $constraint := .Values.topologySpreadConstraints }}
-{{- include "kdl-server.patchLabelSelector" (merge (dict "_target" $constraint) $) }}
-{{- end }}
-{{- end }}
-
-{{/*
 #######################
 SERVER SECTION
 #######################
 */}}
 
 {{/*
+Create the name of the service account to use
+*/}}
+{{- define "kdl-server.kdlServerServiceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+{{- default (include "kdl-server.fullname" .) .Values.serviceAccount.name -}}
+{{- else -}}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Default server component
 */}}
 {{- define "kdl-server.kdlServerComponentLabel" -}}
-kdl-server.component: server
+kdl-server.component: kdlServer
 {{- end -}}
 
 {{/*
@@ -145,6 +119,17 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 KNOWLEDGEGALAXY SECTION
 #######################
 */}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kdl-server.knowledgeGalaxyServiceAccountName" -}}
+{{- if .Values.knowledgeGalaxy.serviceAccount.create -}}
+{{- default (printf "%s-knowledge-galaxy" (include "kdl-server.fullname" .)) .Values.knowledgeGalaxy.serviceAccount.name | quote -}}
+{{- else -}}
+{{- default "default" .Values.knowledgeGalaxy.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Default knowledgeGalaxy component
@@ -251,12 +236,12 @@ Create minio tls secret name
 {{/*
 Create kdlServer tls secret name
 */}}
-{{- define "kdlServer.tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.kdlServer.ingress.tls.secretName -}}
+{{- define "tlsSecretName" -}}
+{{- if kindIs "invalid" .Values.ingress.tls.secretName -}}
   {{- $_ := set $ "appName" "kdlapp" }}
   {{- include "global.tlsSecretName" . -}}
 {{- else -}}
-  {{- .Values.kdlServer.ingress.tls.secretName -}}
+  {{- .Values.ingress.tls.secretName -}}
 {{- end -}}
 {{- end -}}
 

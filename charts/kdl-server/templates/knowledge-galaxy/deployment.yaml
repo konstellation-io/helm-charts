@@ -2,55 +2,183 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: knowledge-galaxy
+  name: {{ include "kdl-server.fullname" . }}-knowledge-galaxy
+  labels:
+    {{- include "kdl-server.knowledgeGalaxyLabels" . | nindent 4 }}
 spec:
+  {{- if not .Values.knowledgeGalaxy.autoscaling.enabled }}
+  replicas: {{ .Values.knowledgeGalaxy.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app: knowledge-galaxy
+      {{- include "kdl-server.selectorKnowledgeGalaxyLabels" . | nindent 6 }}
   template:
     metadata:
-      labels:
-        app: knowledge-galaxy
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/knowledge-galaxy/config.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/knowledge-galaxy/secret.yaml") . | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/knowledge-galaxy/configmap.yaml") . | sha256sum }}
+      {{- with .Values.knowledgeGalaxy.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kdl-server.knowledgeGalaxyLabels" . | nindent 8 }}
+        {{- with .Values.knowledgeGalaxy.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
-      {{- if .Values.knowledgeGalaxy.serviceaccount.enabled }}
-      serviceAccountName:  {{ template "knowledgeGalaxy.serviceAccountName" . }}
+      imagePullSecrets:
+        {{- toYaml .Values.knowledgeGalaxy.imagePullSecrets | nindent 8 }}
+      serviceAccountName: {{ include "kdl-server.knowledgeGalaxyServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.knowledgeGalaxy.podSecurityContext | nindent 8 }}
+      {{- with .Values.knowledgeGalaxy.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: knowledge-galaxy
-          image: {{ .Values.knowledgeGalaxy.image.repository }}:{{ .Values.knowledgeGalaxy.image.tag }}
+          securityContext:
+            {{- toYaml .Values.knowledgeGalaxy.securityContext | nindent 12 }}
+          image: "{{ .Values.knowledgeGalaxy.image.repository }}:{{ .Values.knowledgeGalaxy.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.knowledgeGalaxy.image.pullPolicy }}
-          env:
-            - name: SERVER_MONGODB_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.mongodb.connectionString.secretName }}
-                  key: {{ .Values.global.mongodb.connectionString.secretKey }}
+          {{- with .Values.knowledgeGalaxy.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.knowledgeGalaxy.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.knowledgeGalaxy.service.targetPort | default .Values.knowledgeGalaxy.service.port }}
+              protocol: TCP
+            {{- range $port := .Values.knowledgeGalaxy.service.extraPorts }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.targetPort }}
+              protocol: TCP
+            {{- end }}
+          lifecycle:
+            {{- with .Values.knowledgeGalaxy.lifecycle }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.knowledgeGalaxy.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.knowledgeGalaxy.livenessProbeCustom }}
+            {{- toYaml .Values.knowledgeGalaxy.livenessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.knowledgeGalaxy.service.healthPath | default "/" | quote }}
+              port: {{ .Values.knowledgeGalaxy.service.targetPort | default .Values.knowledgeGalaxy.service.port }}
+            failureThreshold: {{ .Values.knowledgeGalaxy.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.knowledgeGalaxy.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.knowledgeGalaxy.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.knowledgeGalaxy.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.knowledgeGalaxy.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.knowledgeGalaxy.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.knowledgeGalaxy.readinessProbeCustom }}
+            {{- toYaml .Values.knowledgeGalaxy.readinessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.knowledgeGalaxy.service.healthPath | default "/" | quote }}
+              port: {{ .Values.knowledgeGalaxy.service.targetPort | default .Values.knowledgeGalaxy.service.port }}
+            failureThreshold: {{ .Values.knowledgeGalaxy.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.knowledgeGalaxy.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.knowledgeGalaxy.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.knowledgeGalaxy.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.knowledgeGalaxy.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.knowledgeGalaxy.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.knowledgeGalaxy.startupProbeCustom }}
+            {{- toYaml .Values.knowledgeGalaxy.startupProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.knowledgeGalaxy.service.healthPath | default "/" | quote }}
+              port: {{ .Values.knowledgeGalaxy.service.targetPort | default .Values.knowledgeGalaxy.service.port }}
+            failureThreshold: {{ .Values.knowledgeGalaxy.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.knowledgeGalaxy.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.knowledgeGalaxy.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.knowledgeGalaxy.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.knowledgeGalaxy.startupProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
           envFrom:
-            - configMapRef:
-                name: knowledge-galaxy
+            {{- if .Values.envFromFiles }}
+            {{ tpl (toYaml .Values.envFromFiles) . | indent 8 }}
+            {{- end }}
+          env:
+          # TODO: keep legacy backward compatibility
+          - name: SERVER_MONGODB_URI
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.mongodb.connectionString.secretName }}
+                key: {{ .Values.global.mongodb.connectionString.secretKey }}
+          # Variables from secrets have precedence
+          {{- $envList := dict -}}
+          {{- if .Values.knowledgeGalaxy.envFromSecrets }}
+          {{- range $key, $value := .Values.knowledgeGalaxy.envFromSecrets }}
+          {{- if not (hasKey $envList $key) }}
+          - name: {{ $key | upper }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $value.name }}
+                key: {{ $value.key | default $key }}
+          {{- $_ := set $envList $key true }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          # Variables from configmap have precedence
+          {{- $envList := dict -}}
+          {{- if .Values.knowledgeGalaxy.envFromConfigMap }}
+          {{- range $key, $value := .Values.knowledgeGalaxy.envFromConfigMap }}
+          {{- if not (hasKey $envList $key) }}
+          - name: {{ $key | upper }}
+            valueFrom:
+              configMapKeyRef:
+                name: {{ $value.name }}
+                key: {{ $value.key | default $key }}
+          {{- $_ := set $envList $key true }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          # Add Variables in plain text if they were not already added from secrets
+          {{- if .Values.knowledgeGalaxy.env }}
+          {{- range $key, $value := .Values.knowledgeGalaxy.env }}
+          {{- if not (hasKey $envList $key) }}
+          - name: {{ $key | upper }}
+            value: {{ $value | quote }}
+          {{- $_ := set $envList $key true }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.knowledgeGalaxy.resources | nindent 12 }}
           volumeMounts:
             - name: ui-config
               mountPath: /kg/public/config.json
               subPath: config.json
-          ports:
-            - containerPort: 8080
-    {{- with .Values.knowledgeGalaxy.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.knowledgeGalaxy.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.knowledgeGalaxy.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.knowledgeGalaxy.terminationGracePeriodSeconds }}
       volumes:
         - name: ui-config
           configMap:
             name: knowledge-galaxy
-{{ end }}
+      {{- with .Values.knowledgeGalaxy.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.knowledgeGalaxy.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.knowledgeGalaxy.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.knowledgeGalaxy.topologySpreadConstraints }}
+      {{- $_ := include "kdl-server.patchTopologySpreadConstraints" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
