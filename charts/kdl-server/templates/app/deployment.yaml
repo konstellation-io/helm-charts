@@ -41,25 +41,6 @@ spec:
             - configMapRef:
                 name: kdl-server
         {{- end }}
-        {{- if .Values.drone.enabled }}
-        - name: drone-authorizer
-          image: {{ .Values.droneAuthorizer.image.repository }}:{{ .Values.droneAuthorizer.image.tag }}
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: DRONE_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: DRONE_URL
-                  name: kdl-server
-            - name: DRONE_INTERNAL_URL
-              valueFrom:
-                configMapKeyRef:
-                  key: DRONE_INTERNAL_URL
-                  name: kdl-server
-          envFrom:
-            - secretRef:
-                name: gitea-admin
-          {{- end }}
       containers:
         - name: kdl-app
           image: {{ .Values.kdlServer.image.repository }}:{{ .Values.kdlServer.image.tag }}
