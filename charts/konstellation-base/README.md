@@ -86,6 +86,7 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | configMaps | object | `{}` | ConfigMap values to create configuration files Generate ConfigMap with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/configmap/ |
 | env | object | `{}` | Environment variables to configure application |
 | envFromConfigMap | object | `{}` | Variables from configMap |
+| envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
 | envFromSecrets | object | `{}` | Variables from secrets |
 | fullnameOverride | string | `""` | String to fully override konstellation-base.fullname template |
 | image | object | `{"pullPolicy":"IfNotPresent","repository":"nginx","tag":""}` | Image registry The image configuration for the base service |
