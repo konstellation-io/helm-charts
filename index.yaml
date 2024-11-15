@@ -3,6 +3,56 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: 1.38.0
+    created: "2024-11-15T19:39:32.024563527Z"
+    dependencies:
+    - condition: minio.enabled
+      name: minio
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 14.8.1
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 16.2.1
+    - alias: oauth2proxy
+      condition: oauth2proxy.enabled
+      name: oauth2-proxy
+      repository: oci://ghcr.io/oauth2-proxy/charts
+      version: 7.7.28
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 15.5.38
+    - alias: keycloak
+      condition: keycloak.enabled
+      name: konstellation-base
+      repository: oci://ghcr.io/konstellation-io/helm-charts
+      version: 1.0.2
+    description: A Helm chart to deploy KDL server
+    digest: fbb76939fb7ce90ceafaf893145132e52e6d0643e035b956a575c09c4ad72b52
+    home: https://www.konstellation.io
+    keywords:
+    - ia
+    - kdl
+    - kdl-server
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    - email: angelluis.piquero@intelygenz.com
+      name: alpiquero
+    - email: daniel.chavero@intelygenz.com
+      name: danielchg
+    name: kdl-server
+    sources:
+    - https://github.com/konstellation-io/kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.0.3-rc.5/kdl-server-6.0.3-rc.5.tgz
+    version: 6.0.3-rc.5
+  - apiVersion: v2
+    appVersion: 1.38.0
     created: "2024-11-12T16:43:37.711968694Z"
     dependencies:
     - condition: minio.enabled
@@ -1584,6 +1634,24 @@ entries:
   konstellation-base:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-11-15T19:39:32.189658566Z"
+    description: A Helm chart to deploy konstellation-base for Kubernetes
+    digest: 29a13549d1bb0d51644665c540b4e6a59d35bbce6184285c5fcc67b609c8091a
+    home: https://github.com/konstellation-io/helm-charts/tree/main/charts/konstellation-base
+    keywords:
+    - konstellation
+    - chart
+    - template
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    name: konstellation-base
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.1.2/konstellation-base-1.1.2.tgz
+    version: 1.1.2
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-11-14T08:33:48.535535593Z"
     description: A Helm chart to deploy konstellation-base for Kubernetes
     digest: 6838325639d5923d36119f75638ab508c70a4c47c114128bd8421395455c72d8
@@ -1672,4 +1740,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2024-11-14T08:33:48.535841504Z"
+generated: "2024-11-15T19:39:32.190081193Z"
