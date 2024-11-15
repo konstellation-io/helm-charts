@@ -1,4 +1,4 @@
-{{- if .Values.knowledgeGalaxy.autoscaling.enabled }}
+{{- if and .Values.knowledgeGalaxy.enabled .Values.knowledgeGalaxy.autoscaling.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

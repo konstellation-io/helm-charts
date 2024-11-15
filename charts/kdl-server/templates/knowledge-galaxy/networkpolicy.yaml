@@ -1,4 +1,4 @@
-{{- if .Values.knowledgeGalaxy.networkPolicy.enabled }}
+{{- if and .Values.knowledgeGalaxy.enabled .Values.knowledgeGalaxy.networkPolicy.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

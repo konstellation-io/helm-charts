@@ -17,6 +17,10 @@ testConnection:
 env:
   TEST: test
 
+envFromFiles:
+  - secretRef:
+      name: secret-name
+
 secrets:
   - name: secret-name
     data:
@@ -28,7 +32,6 @@ initContainers:
   - name: my-container
     image: busybox
     command: ['sh', '-c', 'echo "Hello, World!"']
-
 
 ingress:
   enabled: true

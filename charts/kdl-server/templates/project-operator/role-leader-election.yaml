@@ -1,8 +1,10 @@
+{{- if and .Values.projectOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: project-operator-leader-election-role
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "kdl-server.fullname" . }}-project-operator-leader-election
+  labels:
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -25,3 +27,4 @@ rules:
   verbs:
   - create
   - patch
+{{- end }}

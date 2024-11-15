@@ -1,4 +1,4 @@
-{{- if .Values.knowledgeGalaxy.podDisruptionBudget.enabled }}
+{{- if and .Values.knowledgeGalaxy.enabled .Values.knowledgeGalaxy.podDisruptionBudget.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

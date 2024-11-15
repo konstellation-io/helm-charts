@@ -1,13 +1,26 @@
+{{ if .Values.projectOperator.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
+  name: {{ include "kdl-server.fullname" . }}-project-operator
   labels:
-    control-plane: controller-manager
-  name: project-operator-controller-manager-metrics-service
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 spec:
+  type: {{ .Values.projectOperator.service.type }}
   ports:
-  - name: https
-    port: 8443
-    targetPort: https
+    - port: {{ .Values.projectOperator.service.port }}
+      targetPort: {{ .Values.projectOperator.service.targetPort | default .Values.projectOperator.service.port }}
+      protocol: TCP
+      name: http
+      {{- if and (eq "NodePort" .Values.projectOperator.service.type) .Values.projectOperator.service.nodePort }}
+      nodePort: {{ .Values.projectOperator.service.nodePort }}
+      {{- end }}
+    {{- range $port := .Values.projectOperator.service.extraPorts }}
+    - name: {{ $port.name }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.targetPort }}
+      protocol: TCP
+    {{- end }}
   selector:
-    control-plane: controller-manager
+    {{- include "kdl-server.selectorProjectOperatorLabels" . | nindent 4 }}
+{{ end }}

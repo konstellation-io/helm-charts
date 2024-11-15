@@ -1,7 +1,10 @@
+{{- if and .Values.projectOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: project-operator-manager-role
+  name: {{ include "kdl-server.fullname" . }}-project-operator
+  labels:
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -66,3 +69,4 @@ rules:
   - ingresses
   verbs:
   - '*'
+{{- end }}

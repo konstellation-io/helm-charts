@@ -5,14 +5,14 @@ metadata:
   {{- if .Values.sharedVolume.name }}
   name: {{ .Values.sharedVolume.name }}-claim
   {{- else }}
-  name: {{ template "konstellation-base.fullname" . }}-claim
+  name: {{ template "kdl-server.fullname" . }}-claim
   {{- end }}
   {{- if .Values.sharedVolume.annotations }}
   annotations:
 {{ toYaml .Values.sharedVolume.annotations | indent 4 }}
   {{- end }}
   labels:
-    {{- include "konstellation-base.labels" . | nindent 4 }}
+    {{- include "kdl-server.labels" . | nindent 4 }}
     {{- with .Values.sharedVolume.labels }}
        {{- toYaml . | nindent 4 }}
     {{- end }}

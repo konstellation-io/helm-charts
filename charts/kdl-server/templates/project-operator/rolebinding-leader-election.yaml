@@ -1,13 +1,16 @@
+{{- if and .Values.projectOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: project-operator-leader-election-rolebinding
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "kdl-server.fullname" . }}-project-operator-leader-election
+  labels:
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: project-operator-leader-election-role
+  name: {{ include "kdl-server.fullname" . }}-project-operator-leader-election
 subjects:
 - kind: ServiceAccount
-  name: project-operator-controller-manager
+  name: {{ include "kdl-server.projectOperatorServiceAccountName" . }}
   namespace: {{ .Release.Namespace }}
+{{- end }}

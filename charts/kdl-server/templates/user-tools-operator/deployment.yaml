@@ -1,23 +1,66 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.userToolsOperator.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
+{{ if .Values.userToolsOperator.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-tools-operator
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if not .Values.userToolsOperator.autoscaling.enabled }}
+  replicas: {{ .Values.userToolsOperator.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      name: user-tools-operator
+      {{- include "kdl-server.selectorUserToolsOperatorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+      {{- with .Values.userToolsOperator.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        name: user-tools-operator
+        {{- include "kdl-server.userToolsOperatorLabels" . | nindent 8 }}
+        {{- with .Values.userToolsOperator.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
-      serviceAccountName: user-tools-operator
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kdl-server.userToolsOperatorServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.userToolsOperator.podSecurityContext | nindent 8 }}
+      {{- with .Values.userToolsOperator.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: user-tools-operator
-          # Replace this with the built image name
-          image: "{{ .Values.userToolsOperator.image.repository }}:{{ .Values.userToolsOperator.image.tag }}"
+          securityContext:
+            {{- toYaml .Values.userToolsOperator.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.userToolsOperator.image.repository }}:{{ .Values.userToolsOperator.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: "{{ .Values.userToolsOperator.image.repository }}:{{ .Values.userToolsOperator.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
           imagePullPolicy: {{ .Values.userToolsOperator.image.pullPolicy }}
+          {{- with .Values.userToolsOperator.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.userToolsOperator.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          lifecycle:
+            {{- with .Values.userToolsOperator.lifecycle }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -29,15 +72,24 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "user-tools-operator"
-    {{- with .Values.userToolsOperator.nodeSelector }}
+          resources:
+            {{- toYaml .Values.knowledgeGalaxy.resources | nindent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.userToolsOperator.terminationGracePeriodSeconds }}
+      {{- with .Values.userToolsOperator.nodeSelector }}
       nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.userToolsOperator.affinity }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.userToolsOperator.affinity }}
       affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.userToolsOperator.tolerations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.userToolsOperator.tolerations }}
       tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.userToolsOperator.topologySpreadConstraints }}
+      {{- $_ := include "kdl-server.patchTopologySpreadConstraintsUserToolsOperator" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

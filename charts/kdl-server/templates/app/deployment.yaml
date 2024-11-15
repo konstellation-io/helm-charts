@@ -1,7 +1,11 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kdl-server.fullname" . }}
+  name: {{ include "kdl-server.fullname" . }}-server
   labels:
     {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 spec:
@@ -32,7 +36,37 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kdl-server.kdlServerServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+        {{- if .Values.readyChecker.enabled }}
+        - name: ready-checker-server
+          {{- if $.Values.global.imageRegistry }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.readyChecker.repository }}:{{ $.Values.readyChecker.tag }}"
+          {{- else }}
+          image: {{ $.Values.readyChecker.repository }}:{{ $.Values.readyChecker.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $.Values.readyChecker.pullPolicy }}
+          command:
+            - 'sh'
+            - '-c'
+            - >
+              RETRY=0;
+              until [ $RETRY -eq {{ $.Values.readyChecker.retries }} ];
+              do
+                nc -zv {{ $.Values.fullnameOverride | default (include "kdl-server.fullname" .) }}-server {{ $.Values.service.port }} && break;
+                echo "[$RETRY/{{ $.Values.readyChecker.retries }}] waiting service {{ $.Values.fullnameOverride | default (include "kdl-server.fullname" .) }}-server:{{ $.Values.service.port }} is ready";
+                sleep {{ $.Values.readyChecker.timeout }};
+                RETRY=$(($RETRY + 1));
+              done
+        {{- end }}
         {{- if .Values.gitea.enabled }}
         - name: gitea-oauth2-setup
           image: "{{ .Values.giteaOauth2Setup.image.repository }}:{{ .Values.giteaOauth2Setup.image.tag }}"
@@ -59,7 +93,11 @@ spec:
         - name: kdl-app
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+          {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.command }}
           command: {{- toYaml . | nindent 12 }}
@@ -138,7 +176,10 @@ spec:
                 name: gitea-oauth2
             {{- end }}
             {{- if .Values.envFromFiles }}
-{{ tpl (toYaml .Values.envFromFiles) . | indent 8 }}
+            {{- tpl (toYaml .Values.envFromFiles) . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.global.envFromFiles }}
+            {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
             {{- end }}
           env:
             # TODO: keep legacy backward compatibility
@@ -168,7 +209,6 @@ spec:
             {{- end }}
             {{- end }}
             # Variables from configmap have precedence
-            {{- $envList := dict }}
             {{- if .Values.envFromConfigMap }}
             {{- range $key, $value := .Values.envFromConfigMap }}
             {{- if not (hasKey $envList $key) }}
@@ -184,6 +224,42 @@ spec:
             # Add Variables in plain text if they were not already added from secrets
             {{- if .Values.env }}
             {{- range $key, $value := .Values.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables global from secrets have precedence
+            {{- if .Values.global.envFromSecrets }}
+            {{- range $key, $value := .Values.global.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables global from configmap have precedence
+            {{- if .Values.global.envFromConfigMap }}
+            {{- range $key, $value := .Values.global.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables in plain text if they were not already added from secrets
+            {{- if .Values.global.env }}
+            {{- range $key, $value := .Values.global.env }}
             {{- if not (hasKey $envList $key) }}
             - name: {{ $key | upper }}
               value: {{ $value | quote }}
@@ -281,7 +357,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.topologySpreadConstraints }}
-      {{- $_ := include "kdl-server.patchTopologySpreadConstraints" $ }}
+      {{- $_ := include "kdl-server.patchTopologySpreadConstraintsServer" $ }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}

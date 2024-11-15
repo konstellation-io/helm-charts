@@ -1,0 +1,71 @@
+{{- include "validate.cleaner" . }}
+
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.cleaner.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
+{{ if .Values.cleaner.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-cleaner
+  labels:
+    {{- include "kdl-server.cleanerLabels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleaner.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cleaner.concurrencyPolicy }}
+  failedJobsHistoryLimit: {{ .Values.cleaner.failedJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ .Values.cleaner.successfulJobsHistoryLimit }}
+  startingDeadlineSeconds: {{ .Values.cleaner.startingDeadlineSeconds }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.cleaner.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.cleaner.activeDeadlineSeconds }}
+      template:
+        spec:
+          {{- if $combinedSecrets }}
+          imagePullSecrets:
+            {{- range $combinedSecrets }}
+            - name: {{ .name }}
+            {{- end }}
+          {{- end }}
+          containers:
+            - name: cleaner
+              {{- if .Values.global.imageRegistry }}
+              image: "{{ .Values.global.imageRegistry }}/{{ .Values.cleaner.image.repository }}:{{ .Values.cleaner.image.tag | default .Chart.AppVersion }}"
+              {{- else }}
+              image: {{ .Values.cleaner.image.repository }}:{{ .Values.cleaner.image.tag | default .Chart.AppVersion }}
+              {{- end }}
+              imagePullPolicy: {{ .Values.cleaner.image.pullPolicy }}
+              args:
+                - /bin/sh
+                - -c
+                - >-
+                  /usr/local/bin/cleaner -path={{ .Values.cleaner.trashPath }} --threshold={{ .Values.cleaner.threshold }}
+              {{- if .Values.cleaner.resources }}
+              resources:
+                {{- toYaml .Values.cleaner.resources | nindent 16 }}
+              {{- end }}
+              volumeMounts:
+              {{- if .Values.sharedVolume.enabled }}
+              - name: {{ .Values.sharedVolume.name }}
+                mountPath: /shared-storage
+              {{- end }}
+              {{- with .Values.volumeMounts }}
+              {{- toYaml . | nindent 12 }}
+              {{- end }}
+          volumes:
+          {{- if .Values.sharedVolume.enabled }}
+            - name: {{ .Values.sharedVolume.name }}
+              persistentVolumeClaim:
+                {{- if .Values.sharedVolume.name }}
+                claimName: {{ .Values.sharedVolume.name }}-claim
+                {{- else }}
+                claimName: {{ template "kdl-server.fullname" . }}-claim
+                {{- end }}
+          {{- end }}
+          {{- with .Values.volumes }}
+          {{- toYaml . | nindent 8 }}
+          {{- end }}
+          restartPolicy: {{ .Values.cleaner.restartPolicy }}
+{{- end }}

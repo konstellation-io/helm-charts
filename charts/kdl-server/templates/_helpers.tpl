@@ -71,7 +71,7 @@ Create the name of the service account to use
 Default server component
 */}}
 {{- define "kdl-server.kdlServerComponentLabel" -}}
-kdl-server.component: kdlServer
+kdl-server.component: server
 {{- end -}}
 
 {{/*
@@ -116,6 +116,47 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 
 {{/*
 #######################
+CLEANER SECTION
+#######################
+*/}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kdl-server.cleanerServiceAccountName" -}}
+{{- if .Values.cleaner.serviceAccount.create -}}
+{{- default (printf "%s-cleaner" (include "kdl-server.fullname" .)) .Values.cleaner.serviceAccount.name | quote -}}
+{{- else -}}
+{{- default "default" .Values.cleaner.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Default cleaner component
+*/}}
+{{- define "kdl-server.cleanerComponentLabel" -}}
+kdl-server.component: cleaner
+{{- end -}}
+
+{{/*
+Generate labels for cleaner component
+*/}}
+{{- define "kdl-server.cleanerLabels" -}}
+{{- toYaml (merge ((include "kdl-server.labels" .) | fromYaml) ((include "kdl-server.cleanerComponentLabel" .) | fromYaml)) }}
+{{- end }}
+
+{{/*
+Validate that if 'cleaner.enabled' is true and 'sharedVolume.enabled' is false,
+then 'volumes' and 'volumeMounts' must not be empty.
+*/}}
+{{- define "validate.cleaner" -}}
+{{- if and .Values.cleaner.enabled (not .Values.sharedVolume.enabled) (or (empty .Values.volumes) (empty .Values.volumeMounts)) -}}
+  {{- fail "Error: When 'cleaner.enabled' is true and 'sharedVolume.enabled' is false, 'volumes' and 'volumeMounts' must not be empty. Please enable 'sharedVolume' or provide appropriate 'volumes' and 'volumeMounts' configurations." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+#######################
 KNOWLEDGEGALAXY SECTION
 #######################
 */}}
@@ -135,7 +176,7 @@ Create the name of the service account to use
 Default knowledgeGalaxy component
 */}}
 {{- define "kdl-server.knowledgeGalaxyComponentLabel" -}}
-kdl-server.component: knowledgeGalaxy
+kdl-server.component: knowledge-galaxy
 {{- end -}}
 
 {{/*
@@ -179,6 +220,134 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 {{- end }}
 
 {{/*
+#########################
+USERTOOLSOPERATOR SECTION
+#########################
+*/}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kdl-server.userToolsOperatorServiceAccountName" -}}
+{{- if .Values.userToolsOperator.serviceAccount.create -}}
+{{- default (printf "%s-user-tools-operator" (include "kdl-server.fullname" .)) .Values.userToolsOperator.serviceAccount.name | quote -}}
+{{- else -}}
+{{- default "default" .Values.userToolsOperator.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Default userToolsOperator component
+*/}}
+{{- define "kdl-server.userToolsOperatorComponentLabel" -}}
+kdl-server.component: user-tools-operator
+{{- end -}}
+
+{{/*
+Generate labels for userToolsOperator component
+*/}}
+{{- define "kdl-server.userToolsOperatorLabels" -}}
+{{- toYaml (merge ((include "kdl-server.labels" .) | fromYaml) ((include "kdl-server.userToolsOperatorComponentLabel" .) | fromYaml)) }}
+{{- end }}
+
+{{/*
+Generate selectorLabels for userToolsOperator component
+*/}}
+{{- define "kdl-server.selectorUserToolsOperatorLabels" -}}
+{{- toYaml (merge ((include "kdl-server.selectorLabels" .) | fromYaml) ((include "kdl-server.userToolsOperatorComponentLabel" .) | fromYaml)) }}
+{{- end }}
+
+{{/*
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch the label selector on an object
+This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
+The matchLabels are created with the selectorLabels template.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
+*/}}
+{{- define "kdl-server.patchSelectorUserToolsOperatorLabels" -}}
+{{- if not (hasKey ._target "labelSelector") }}
+{{- $selectorLabels := (include "kdl-server.selectorUserToolsOperatorLabels" .) | fromYaml }}
+{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch topology spread constraints
+This template uses the kdl-server.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
+*/}}
+{{- define "kdl-server.patchTopologySpreadConstraintsUserToolsOperator" -}}
+{{- range $constraint := .Values.userToolsOperator.topologySpreadConstraints }}
+{{- include "kdl-server.patchSelectorUserToolsOperatorLabels" (merge (dict "_target" $constraint (include "kdl-server.selectorUserToolsOperatorLabels" $)) $) }}
+{{- end }}
+{{- end }}
+
+{{/*
+############################
+PROJECTTOOLSOPERATOR SECTION
+############################
+*/}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kdl-server.projectOperatorServiceAccountName" -}}
+{{- if .Values.projectOperator.serviceAccount.create -}}
+{{- default (printf "%s-project-tools-operator" (include "kdl-server.fullname" .)) .Values.projectOperator.serviceAccount.name | quote -}}
+{{- else -}}
+{{- default "default" .Values.projectOperator.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Default projectOperator component
+*/}}
+{{- define "kdl-server.projectOperatorComponentLabel" -}}
+kdl-server.component: project-tools-operator
+{{- end -}}
+
+{{/*
+Generate labels for projectOperator component
+*/}}
+{{- define "kdl-server.projectOperatorLabels" -}}
+{{- toYaml (merge ((include "kdl-server.labels" .) | fromYaml) ((include "kdl-server.projectOperatorComponentLabel" .) | fromYaml)) }}
+{{- end }}
+
+{{/*
+Generate selectorLabels for projectOperator component
+*/}}
+{{- define "kdl-server.selectorProjectOperatorLabels" -}}
+{{- toYaml (merge ((include "kdl-server.selectorLabels" .) | fromYaml) ((include "kdl-server.projectOperatorComponentLabel" .) | fromYaml)) }}
+{{- end }}
+
+{{/*
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch the label selector on an object
+This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
+The matchLabels are created with the selectorLabels template.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
+*/}}
+{{- define "kdl-server.patchSelectorProjectOperatorLabels" -}}
+{{- if not (hasKey ._target "labelSelector") }}
+{{- $selectorLabels := (include "kdl-server.selectorProjectOperatorLabels" .) | fromYaml }}
+{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch topology spread constraints
+This template uses the kdl-server.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
+*/}}
+{{- define "kdl-server.patchTopologySpreadConstraintsProjectOperator" -}}
+{{- range $constraint := .Values.projectOperator.topologySpreadConstraints }}
+{{- include "kdl-server.patchSelectorProjectOperatorLabels" (merge (dict "_target" $constraint (include "kdl-server.selectorProjectOperatorLabels" $)) $) }}
+{{- end }}
+{{- end }}
+
+{{/*
 ##############
 # WIP LEGACY #
 ##############
@@ -189,13 +358,6 @@ Add the protocol part to the uri
 */}}
 {{- define "http.protocol" -}}
   {{ ternary "https" "http" .Values.global.ingress.tls.enabled }}
-{{- end -}}
-
-{{/* Create the name of knowledge-galaxy service account to use */}}
-{{- define "knowledgeGalaxy.serviceAccountName" -}}
-{{- if .Values.knowledgeGalaxy.serviceaccount.enabled -}}
-    {{ default "knowledge-galaxy" .Values.knowledgeGalaxy.serviceaccount.name }}
-{{- end -}}
 {{- end -}}
 
 {{/*

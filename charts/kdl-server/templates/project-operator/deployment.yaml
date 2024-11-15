@@ -1,70 +1,99 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.projectOperator.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
+{{ if .Values.projectOperator.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: {{ include "kdl-server.fullname" . }}-project-operator
   labels:
-    control-plane: controller-manager
-  name: project-operator-controller-manager
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if not .Values.projectOperator.autoscaling.enabled }}
+  replicas: {{ .Values.projectOperator.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      control-plane: controller-manager
+      {{- include "kdl-server.selectorProjectOperatorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+      {{- with .Values.projectOperator.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
-        control-plane: controller-manager
+        {{- include "kdl-server.projectOperatorLabels" . | nindent 8 }}
+        {{- with .Values.projectOperator.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
-    {{- with .Values.projectOperator.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.projectOperator.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-    {{- with .Values.projectOperator.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-    {{- end }}
-      containers:
-      - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: {{ .Values.projectOperator.kubeRbacProxy.image.repository }}:{{ .Values.projectOperator.kubeRbacProxy.image.tag }}
-        imagePullPolicy: {{ .Values.projectOperator.kubeRbacProxy.image.pullPolicy }}
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-      - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
-        - --leader-elect
-        - --leader-election-id=project-operator
-        image: {{ .Values.projectOperator.manager.image.repository }}:{{ .Values.projectOperator.manager.image.tag }}
-        imagePullPolicy: {{ .Values.projectOperator.manager.image.pullPolicy }}
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-{{- if .Values.projectOperator.manager.resources }}
-        resources:
-{{ toYaml .Values.projectOperator.manager.resources | indent 10 }}
-{{- end }}
-        securityContext:
-          allowPrivilegeEscalation: false
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kdl-server.projectOperatorServiceAccountName" . }}
       securityContext:
-        runAsNonRoot: true
-      serviceAccountName: project-operator-controller-manager
-      terminationGracePeriodSeconds: 10
+        {{- toYaml .Values.projectOperator.podSecurityContext | nindent 8 }}
+      {{- with .Values.projectOperator.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: project-operator
+          securityContext:
+            {{- toYaml .Values.projectOperator.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.projectOperator.image.repository }}:{{ .Values.projectOperator.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: "{{ .Values.projectOperator.image.repository }}:{{ .Values.projectOperator.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.projectOperator.image.pullPolicy }}
+          {{- with .Values.projectOperator.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.projectOperator.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          lifecycle:
+            {{- with .Values.projectOperator.lifecycle }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.knowledgeGalaxy.resources | nindent 12 }}
+        {{- if .Values.projectOperator.extraContainers }}
+          {{- toYaml .Values.projectOperator.extraContainers | nindent 8 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.projectOperator.terminationGracePeriodSeconds }}
+      {{- with .Values.projectOperator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.projectOperator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.projectOperator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.projectOperator.topologySpreadConstraints }}
+      {{- $_ := include "kdl-server.patchTopologySpreadConstraintsProjectOperator" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,11 +1,15 @@
+{{ if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: user-tools-operator
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
-  name: user-tools-operator
+  name: {{ include "kdl-server.userToolsOperatorServiceAccountName" . }}
 roleRef:
   kind: Role
-  name: user-tools-operator
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
   apiGroup: rbac.authorization.k8s.io
+{{- end }}

@@ -1,0 +1,32 @@
+{{- if and .Values.userToolsOperator.enabled .Values.userToolsOperator.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "kdl-server.fullname" . }}
+  minReplicas: {{ .Values.userToolsOperator.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.userToolsOperator.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.userToolsOperator.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.userToolsOperator.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.userToolsOperator.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.userToolsOperator.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}
