@@ -84,7 +84,7 @@ spec:
             - configMapRef:
                 name: gitea-oauth2
             - configMapRef:
-                name: kdl-server
+                name: {{ include "kdl-server.fullname" . }}-server
         {{- end }}
         {{- with .Values.initContainers }}
           {{- toYaml . | nindent 8 }}
@@ -164,11 +164,8 @@ spec:
             {{- end }}
           {{- end }}
           envFrom:
-            # TODO: keep legacy backward compatibility
-            - secretRef:
-                name: kdl-server
             - configMapRef:
-                name: kdl-server
+                name: {{ include "kdl-server.fullname" . }}-server
             {{- if .Values.gitea.enabled }}
             - secretRef:
                 name: gitea-admin
@@ -318,6 +315,8 @@ spec:
           ports:
             - containerPort: 9000
         {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
           {{- if not .Values.oauth2proxy.enabled }}
             - name: project-proxy-nginx-config
@@ -327,6 +326,9 @@ spec:
           {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
+        {{- if .Values.extraContainers }}
+          {{- toYaml .Values.extraContainers | nindent 8 }}
+        {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
         # TODO: legacy backward compatibility
@@ -336,7 +338,7 @@ spec:
             name: kdl-server-oauth2-proxy
         - name: kdl-server
           configMap:
-            name: kdl-server
+            name: {{ include "kdl-server.fullname" . }}-server
         - name: project-proxy-nginx-config
           configMap:
             name: project-proxy-nginx-config
