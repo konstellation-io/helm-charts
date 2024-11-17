@@ -19,7 +19,7 @@ A Helm chart to deploy KDL server
 
 | Repository | Name | Version |
 |------------|------|---------|
-| oci://ghcr.io/konstellation-io/helm-charts | keycloak(konstellation-base) | 1.0.2 |
+| oci://ghcr.io/konstellation-io/helm-charts | keycloak(konstellation-base) | 1.1.2 |
 | oci://ghcr.io/oauth2-proxy/charts | oauth2proxy(oauth2-proxy) | 7.7.28 |
 | oci://registry-1.docker.io/bitnamicharts | minio | 14.8.1 |
 | oci://registry-1.docker.io/bitnamicharts | mongodb | 16.2.1 |
@@ -294,6 +294,7 @@ helm show values konstellation-io/kdl-server
 | envFromConfigMap | object | `{}` | Variables from configMap |
 | envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
 | envFromSecrets | object | `{}` | Variables from secrets |
+| extraContainers | list | `[]` | Configure extra containers |
 | fullnameOverride | string | `""` | String to fully override kdl-server.fullname template |
 | gitea | object | `{"admin":{"email":"test@test.com","password":"123456","username":"kdladmin"},"affinity":{},"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"gitea/gitea","tag":"1.14.4"},"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n"},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"storage":{"size":"10Gi","storageClassName":"standard"},"tolerations":[]}` | Gitea deployment (DEPRECATION) Remove in future versions |
 | gitea.admin.email | string | `"test@test.com"` | Admin user email |
