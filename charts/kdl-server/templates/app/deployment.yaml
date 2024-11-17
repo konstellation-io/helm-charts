@@ -107,7 +107,7 @@ spec:
           {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.targetPort | default .Values.service.port }}
+              containerPort: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) }}
               protocol: TCP
             {{- range $port := .Values.service.extraPorts }}
             - name: {{ $port.name }}

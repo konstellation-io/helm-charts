@@ -12,7 +12,7 @@ data:
   # KDL APP configuration
   KDL_ADMIN_EMAIL: {{ .Values.gitea.admin.email }}
   KDL_ADMIN_USERNAME: {{ .Values.gitea.admin.username }}
-  KDL_SERVER_PORT: {{ .Values.service.targetPort | default .Values.service.port }}
+  KDL_SERVER_PORT: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) | quote }}
 
   BASE_DOMAIN_NAME: {{ .Values.global.domain }}
   SHARED_VOLUME: {{ .Values.sharedVolume.name }}

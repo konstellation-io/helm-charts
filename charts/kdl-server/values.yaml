@@ -136,6 +136,12 @@ secrets: {}
   #       my-content
   #     my_var: my-value
 
+# -- Configure extra containers
+extraContainers: []
+  # - name: project-proxy
+  #   image: nginx:alpine
+  #   command: ['sh', '-c', 'echo "Hello, World!"']
+
 # -- Configure additional containers
 # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
 initContainers: []

@@ -2,7 +2,7 @@ apiVersion: v2
 type: application
 name: kdl-server
 description: A Helm chart to deploy KDL server
-version: 6.0.3-rc.9
+version: 6.0.3-rc.5
 appVersion: 1.38.0
 sources:
   - https://github.com/konstellation-io/kdl-server
@@ -44,6 +44,6 @@ dependencies:
     condition: postgresql.enabled
   - name: konstellation-base
     alias: keycloak
-    version: 1.0.2
+    version: 1.1.2
     repository: oci://ghcr.io/konstellation-io/helm-charts
     condition: keycloak.enabled
