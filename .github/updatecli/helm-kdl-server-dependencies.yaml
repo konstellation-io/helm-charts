@@ -1,0 +1,83 @@
+sources:
+  konstellation-base:
+    kind: helmchart
+    spec:
+      url: https://charts.konstellation.io
+      name: konstellation-base
+      versionFilter:
+        kind: semver
+        pattern: '*' # replace with CI/CD updatecli
+    sourceid: konstellation-base
+  minio:
+    kind: helmchart
+    spec:
+      url: https://charts.bitnami.com/bitnami
+      name: minio
+      versionFilter:
+        kind: semver
+        pattern: '*' # replace with CI/CD updatecli
+    sourceid: minio
+  mongodb:
+    kind: helmchart
+    spec:
+      url: https://charts.bitnami.com/bitnami
+      name: mongodb
+      versionFilter:
+        kind: semver
+        pattern: '*' # replace with CI/CD updatecli
+    sourceid: mongodb
+  oauth2-proxy:
+    kind: helmchart
+    spec:
+      url: https://oauth2-proxy.github.io/manifests
+      name: oauth2-proxy
+      versionFilter:
+        kind: semver
+        pattern: '*' # replace with CI/CD updatecli
+    sourceid: oauth2-proxy
+  postgresql:
+    kind: helmchart
+    spec:
+      url: https://charts.bitnami.com/bitnami
+      name: postgresql
+      versionFilter:
+        kind: semver
+        pattern: '*' # replace with CI/CD updatecli
+    sourceid: postgresql
+conditions: {}
+targets:
+  konstellation-base:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.dependencies[0].version
+    sourceid: konstellation-base
+  minio:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.dependencies[1].version
+    sourceid: minio
+  mongodb:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.dependencies[2].version
+    sourceid: mongodb
+  oauth2-proxy:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.dependencies[3].version
+    sourceid: oauth2-proxy
+  postgresql:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: charts/kdl-server/Chart.yaml
+      key: $.dependencies[4].version
+    sourceid: postgresql
