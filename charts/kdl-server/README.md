@@ -20,9 +20,9 @@ A Helm chart to deploy KDL server
 | Repository | Name | Version |
 |------------|------|---------|
 | oci://ghcr.io/konstellation-io/helm-charts | keycloak(konstellation-base) | 1.1.2 |
-| oci://ghcr.io/oauth2-proxy/charts | oauth2proxy(oauth2-proxy) | 7.7.28 |
-| oci://registry-1.docker.io/bitnamicharts | minio | 14.8.1 |
-| oci://registry-1.docker.io/bitnamicharts | mongodb | 16.2.1 |
+| oci://ghcr.io/oauth2-proxy/charts | oauth2proxy(oauth2-proxy) | 7.7.29 |
+| oci://registry-1.docker.io/bitnamicharts | minio | 14.8.5 |
+| oci://registry-1.docker.io/bitnamicharts | mongodb | 16.3.0 |
 | oci://registry-1.docker.io/bitnamicharts | postgresql | 15.5.38 |
 
 ## Add repository
