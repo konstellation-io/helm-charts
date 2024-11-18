@@ -327,7 +327,7 @@ startupProbeCustom: {}
 # -- Check if dependencies are ready
 readyChecker:
   # -- Enable or disable ready-checker
-  enabled: true
+  enabled: false
   # -- Repository of the image
   repository: busybox
   # -- Pull policy for the image
@@ -1418,7 +1418,7 @@ projectOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.19.0
+    tag: 0.19.1
 
   # Additional containers to be added to the pod
   extraContainers:
@@ -1727,7 +1727,7 @@ userToolsOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.29.0
+    tag: 0.29.1
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
