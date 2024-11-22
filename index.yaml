@@ -3,6 +3,56 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: 1.38.1
+    created: "2024-11-22T13:04:45.187388442Z"
+    dependencies:
+    - alias: keycloak
+      condition: keycloak.enabled
+      name: konstellation-base
+      repository: oci://ghcr.io/konstellation-io/helm-charts
+      version: 1.1.2
+    - condition: minio.enabled
+      name: minio
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 14.8.1
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 16.2.1
+    - alias: oauth2proxy
+      condition: oauth2proxy.enabled
+      name: oauth2-proxy
+      repository: oci://ghcr.io/oauth2-proxy/charts
+      version: 7.7.28
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 15.5.38
+    description: A Helm chart to deploy KDL server
+    digest: d130ccc88ae807aed8b5cbb0f1a51a23bd47d9572a5d619189db160c7321882a
+    home: https://www.konstellation.io
+    keywords:
+    - ia
+    - kdl
+    - kdl-server
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    - email: angelluis.piquero@intelygenz.com
+      name: alpiquero
+    - email: daniel.chavero@intelygenz.com
+      name: danielchg
+    name: kdl-server
+    sources:
+    - https://github.com/konstellation-io/kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.0.3-rc.14/kdl-server-6.0.3-rc.14.tgz
+    version: 6.0.3-rc.14
+  - apiVersion: v2
+    appVersion: 1.38.1
     created: "2024-11-22T10:27:56.562573852Z"
     dependencies:
     - alias: keycloak
@@ -2490,4 +2540,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2024-11-22T10:29:44.287021755Z"
+generated: "2024-11-22T13:04:45.187760205Z"
