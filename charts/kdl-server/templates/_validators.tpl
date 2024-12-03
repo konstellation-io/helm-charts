@@ -8,8 +8,8 @@ KDL SERVER SECTION
 Validate that if 'env.MINIO_ENDPOINT' exists
 */}}
 {{- define "validate.server_environment" -}}
-{{- if or (not .Values.env.KDL_ADMIN_EMAIL) (not .Values.env.KDL_ADMIN_USERNAME) (not .Values.env.MINIO_ENDPOINT) -}}
-  {{- fail "Error: environment env.MINIO_ENDPOINT doesn't exist" -}}
+{{- if or (not .Values.env.MINIO_ENDPOINT) -}}
+  {{- fail "Error: environment required env.MINIO_ENDPOINT doesn't exist" -}}
 {{- end -}}
 {{- end -}}
 

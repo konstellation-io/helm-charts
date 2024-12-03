@@ -83,10 +83,10 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | args | list | `[]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
 | command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
-| configMaps | object | `{}` | ConfigMap values to create configuration files Generate ConfigMap with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/configmap/ |
+| configMaps | list | `[]` | ConfigMap values to create configuration files Generate ConfigMap with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/configmap/ |
 | env | object | `{}` | Environment variables to configure application |
 | envFromConfigMap | object | `{}` | Variables from configMap |
-| envFromFiles | object | `{}` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
+| envFromFiles | list | `[]` | Variables from files managed by you </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
 | envFromSecrets | object | `{}` | Variables from secrets |
 | fullnameOverride | string | `""` | String to fully override konstellation-base.fullname template |
 | image | object | `{"pullPolicy":"IfNotPresent","repository":"nginx","tag":""}` | Image registry The image configuration for the base service |
@@ -119,7 +119,7 @@ helm template test konstellation-io/konstellation-base -f examples/XX-example.ya
 | readinessProbeCustom | object | `{}` | Custom readinessProbe |
 | replicaCount | int | `1` | Number of replicas Specifies the number of replicas for the service |
 | resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
-| secrets | object | `{}` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
+| secrets | list | `[]` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
 | securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | service | object | `{"port":80,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
 | service.port | int | `80` | Kubernetes Service port |

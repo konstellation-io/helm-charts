@@ -66,7 +66,7 @@ envFromConfigMap: {}
 
 # -- Variables from files managed by you
 # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
-envFromFiles: {}
+envFromFiles: []
   # - secretRef:
   #     name: <name-secret>
   # - configMapRef:
@@ -75,7 +75,7 @@ envFromFiles: {}
 # -- Secrets values to create credentials and reference by envFromSecrets
 # Generate Secret with following name: <release-name>-<name>
 # </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/
-secrets: {}
+secrets: []
   # - name: secret-name
   #   data:
   #     my.key: |-
@@ -85,7 +85,7 @@ secrets: {}
 # -- ConfigMap values to create configuration files
 # Generate ConfigMap with following name: <release-name>-<name>
 # </br> Ref: https://kubernetes.io/docs/concepts/configuration/configmap/
-configMaps: {}
+configMaps: []
   # - name: configmap-name
   #   data:
   #     my.key: |-

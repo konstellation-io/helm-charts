@@ -57,10 +57,17 @@ spec:
               RETRY=0;
               until [ $RETRY -eq {{ $.Values.readyChecker.retries }} ];
               do
-                nc -zv {{ $service.name }} {{ $service.port }} && break;
+                if nc -zv {{ $service.name }} {{ $service.port }}; then
+                  echo "Service {{ $service.name }}:{{ $service.port }} is ready";
+                  exit 0;
+                fi;
                 echo "[$RETRY/{{ $.Values.readyChecker.retries }}] waiting service {{ $service.name }}:{{ $service.port }} is ready";
                 sleep {{ $.Values.readyChecker.timeout }};
                 RETRY=$(($RETRY + 1));
+                if [ $RETRY -eq {{ $.Values.readyChecker.retries }} ]; then
+                  echo "Service {{ $service.name }}:{{ $service.port }} is not ready";
+                  exit 1;
+                fi;
               done
         {{- end }}
         {{- end }}
@@ -185,7 +192,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            # Add Variables in plain text if they were not already added from secrets
+            # Variables in plain text if they were not already added from secrets
             {{- if .Values.env }}
             {{- range $key, $value := .Values.env }}
             {{- if not (hasKey $envList $key) }}
@@ -195,7 +202,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            # Variables global from secrets have precedence
+            # Global variables from secrets have precedence
             {{- if .Values.global.envFromSecrets }}
             {{- range $key, $value := .Values.global.envFromSecrets }}
             {{- if not (hasKey $envList $key) }}
@@ -208,7 +215,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- end }}
-            # Variables global from configmap have precedence
+            # Global variables from configmap have precedence
             {{- if .Values.global.envFromConfigMap }}
             {{- range $key, $value := .Values.global.envFromConfigMap }}
             {{- if not (hasKey $envList $key) }}
