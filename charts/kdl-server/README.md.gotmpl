@@ -9,6 +9,8 @@
 * Helm 3+
 * Kubernetes 1.24+
 
+{{ .Files.Get "COMPATIBILITY_MATRIX.md" }}
+
 {{ template "chart.requirementsSection" . }}
 
 ## Add repository
