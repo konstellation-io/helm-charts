@@ -151,7 +151,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-          # Add Variables in plain text if they were not already added from secrets
+          # Variables in plain text if they were not already added from secrets
           {{- if .Values.knowledgeGalaxy.env }}
           {{- range $key, $value := .Values.knowledgeGalaxy.env }}
           {{- if not (hasKey $envList $key) }}
@@ -161,7 +161,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-          # Variables global from secrets have precedence
+          # Global variables from secrets have precedence
           {{- if .Values.global.envFromSecrets }}
           {{- range $key, $value := .Values.global.envFromSecrets }}
           {{- if not (hasKey $envList $key) }}
@@ -174,7 +174,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
-          # Variables global from configmap have precedence
+          # Global variables from configmap have precedence
           {{- if .Values.global.envFromConfigMap }}
           {{- range $key, $value := .Values.global.envFromConfigMap }}
           {{- if not (hasKey $envList $key) }}
