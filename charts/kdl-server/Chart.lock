@@ -1,0 +1,18 @@
+dependencies:
+- name: konstellation-base
+  repository: oci://ghcr.io/konstellation-io/helm-charts
+  version: 1.1.2
+- name: minio
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 14.8.1
+- name: mongodb
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 16.2.1
+- name: oauth2-proxy
+  repository: oci://ghcr.io/oauth2-proxy/charts
+  version: 7.7.28
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 15.5.38
+digest: sha256:9c1eb0805bfa0f9831b921aad56a5148e8a3ff1ded1356f4d826baba5947df58
+generated: "2024-11-20T16:37:35.417904613Z"
