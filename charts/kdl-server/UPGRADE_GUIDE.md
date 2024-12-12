@@ -1,5 +1,153 @@
 > [!IMPORTANT]
-> Upgrading an existing Release to a new major version (`v0.15.X` -> ``v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+> Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+
+### From `6.0.2` to `6.1.0`
+
+**global**
+
+The new `global` section consolidates commonly shared configurations across all components. Key additions include:
+
+* `imageRegistry`: default container image registry for all components
+* `imagePullSecrets`: enables authentication for pulling images from private registries
+* `env`: Global environment variables applicable to all components
+* `envFromSecrets` and `envFromConfigMap`: allow defining environment variables from Kubernetes Secrets and ConfigMaps
+* `envFromFiles`: adds support for loading environment variables from external files, enhancing flexibility in environment management
+
+**kdl-server**
+
+* **Reorganization**
+  * `resources`, `image`, `env`, `ingress`, `service`, and `persistentVolume` configurations have been moved to root values
+
+* **Additions**
+  * `nameOverride` and `fullnameOverride`: allow overriding naming conventions for components
+  * `autoscaling`: support for horizontal pod autoscaler with configurable CPU and memory thresholds, minimum and maximum replicas
+  * `pdb` (Pod Disruption Budget): configurable to ensure high availability during voluntary disruptions
+  * `volumeMounts`: support for attaching custom volume mounts to containers
+  * `podSecurityContext`: defines pod-level security settings, such as `fsGroup`
+  * `securityContext`: configurable container-level security options, such as dropping capabilities or running as a non-root user
+  * `livenessProbe`, `readinessProbe`, and `startupProbe`: added for container lifecycle management
+  * `extraContainers` and `initContainers`: allow additional functionality and custom initialization processes
+  * `serviceAccount`: support for annotations, custom names, and API credential management
+  * `networkPolicy`: configurable global ingress and egress policies with support for IP blocks, namespaces, and pod selectors
+  * `terminationGracePeriodSeconds`: configurable termination grace period for pods across all components
+
+* **Deprecations**
+  * Legacy MongoDB connection string configuration has been deprecated
+  * Simplified ingress annotations under global configurations
+
+**cleaner**
+
+* **Additions**
+  * `schedule`: configurable cronjob schedule for cleaning up old files
+  * `trashPath`: allows specifying the path to be cleaned
+  * `threshold`: defines the minimum file age before cleanup
+  * Resource limits and requests: support for defining CPU and memory usage
+  * Have been removed on future releases
+
+**knowledgeGalaxy**
+
+* **Additions**
+  * `imagePullSecrets`: support for pulling images from private registries
+  * Enhanced environment variable management with `envFromFiles` and `envFromSecrets`
+  * `livenessProbe` and `readinessProbe`: added for improved health monitoring
+  * `networkPolicy`: support for ingress and egress controls
+  * Customization of `serviceAccount` with annotations and name overrides
+
+**userToolsOperator**
+
+* **Additions**
+  * Resource configuration for CPU and memory limits
+  * `env` and `envFromFiles`: enhanced environment variable management
+  * `livenessProbe` and `readinessProbe`: support for container health checks
+  * `networkPolicy`: added for more secure communication
+  * `serviceAccount`: customization options for API credential management
+
+**projectOperator**
+
+* **Additions**
+  * Resource limits and requests for components
+  * `serviceMonitor` integration for Prometheus monitoring
+  * `affinity`, `tolerations`, and `nodeSelector` support for pod scheduling
+  * Lifecycle hooks for managing pod startup and termination processes
+
+**gitea**
+
+* **Deprecations**
+  * Legacy ingress and secret configurations have been removed
+* **Additions**
+  * Improved resource management for Gitea pods
+  * Enhanced `networkPolicy` for better control of ingress and egress
+
+**keycloak**
+
+* **Additions**
+  * Based on `konstellation-io/konstellation-base` chart
+  * `fullnameOverride`: support for custom naming conventions
+  * `imagePullSecrets`: added for private image registries
+  * Enhanced handling of environment variables through `envFromFiles` and `envFromSecrets`
+  * Persistent volume support with flexible options for storage classes and access modes
+
+**minio**
+
+* **Deprecations**
+  * Legacy ingress configurations have been deprecated
+* **Additions**
+  * Change dependecy to `bitnami/minio` chart
+  * Enhanced volume configurations for improved persistence
+  * Added support for `networkPolicy` to control access
+
+**mongodb**
+
+* **Deprecations**
+  * Legacy connection string configurations are now deprecated
+* **Additions**
+  * Change dependecy to `bitnami/mongodb` chart
+  * Improved secret-based MongoDB connection string management
+  * Enhanced integration with shared volumes for persistence
+
+**oauth2-proxy**
+
+* **New Features**
+  * Change dependecy to `oauth2-proxy/oauth2-proxy` chart
+  * Introduced a new, centralized `oauth2` configuration section to replace legacy configurations
+  * `clientID` and `clientSecret` settings added for more secure integration with OAuth2 providers
+  * Support for multiple OAuth2 providers with distinct configurations
+  * `redirectURIs` and `scopes` now configurable at a granular level
+  * Enhanced token validation and refresh capabilities with support for advanced OAuth2 flows
+  * Added support for `openid` integration, improving compatibility with identity providers
+* **Legacy oauth2Proxy**
+  * Legacy OAuth2 configurations have been deprecated
+  * Removed hardcoded `clientID` and `clientSecret` options in favor of more flexible secret-based configurations
+  * Updated callback and redirect URIs to adhere to modern OAuth2 specifications
+
+**postgresql**
+
+* **Additions**
+  * Change dependecy to `bitnami/postgresql` chart
+  * Introduced configuration for PostgreSQL integration to Keycloak
+  * Support for environment variable customization specific to PostgreSQL
+  * Enhanced persistent volume support for PostgreSQL data storage
+  * Added compatibility with `serviceAccount` for PostgreSQL pods
+  * `securityContext` and `podSecurityContext` configurations added for PostgreSQL security
+
+**sharedVolume**
+
+* **Additions**
+  * Support for shared persistent volumes with options for access modes and storage classes
+  * Label-based volume bindings for using pre-provisioned volumes
+
+**deprecated features**
+
+* **Drone**
+  * Removed `drone`, `droneAuthorizer`, and `droneRunner` configurations
+* **Legacy MongoDB**
+  * Connection strings have been deprecated in favor of secret-based management
+* **Legacy oauth2-Proxy**
+  * Replaced with new `oauth2-proxy` configurations
+* **MinIO legacy Configurations**
+  * Deprecated older ingress and volume configurations
+
+CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
 
 ### From `6.0.1` to `6.0.2`
 

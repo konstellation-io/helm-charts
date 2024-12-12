@@ -61,7 +61,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: 1.38.0
+  tag: 1.39.0
 
 # -- String to partially override kdl-server.fullname template (will maintain the release name)
 nameOverride: ""
@@ -1374,7 +1374,7 @@ projectOperator:
       # The pull policy for the image
       pullPolicy: IfNotPresent
       # The image tag
-      tag: v0.13.5
+      tag: 0.14.18
 
     volume:
       # -- Storage class to use for persistence
@@ -1495,7 +1495,7 @@ userToolsOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.30.0
+    tag: 0.31.0
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1647,7 +1647,7 @@ userToolsOperator:
       # The pull policy for the image
       pullPolicy: IfNotPresent
       # The image tag
-      tag: 0.18.0
+      tag: 0.19.0
 
   # -- vscode configuration
   vscode:
@@ -1661,7 +1661,7 @@ userToolsOperator:
       # The pull policy for the image
       pullPolicy: IfNotPresent
       # The image tag
-      tag: v0.15.0
+      tag: 0.16.0
 
   # -- vscodeRuntime configuration
   vscodeRuntime:

@@ -82,7 +82,155 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 > [!IMPORTANT]
-> Upgrading an existing Release to a new major version (`v0.15.X` -> ``v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+> Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+
+### From `6.0.2` to `6.1.0`
+
+**global**
+
+The new `global` section consolidates commonly shared configurations across all components. Key additions include:
+
+* `imageRegistry`: default container image registry for all components
+* `imagePullSecrets`: enables authentication for pulling images from private registries
+* `env`: Global environment variables applicable to all components
+* `envFromSecrets` and `envFromConfigMap`: allow defining environment variables from Kubernetes Secrets and ConfigMaps
+* `envFromFiles`: adds support for loading environment variables from external files, enhancing flexibility in environment management
+
+**kdl-server**
+
+* **Reorganization**
+  * `resources`, `image`, `env`, `ingress`, `service`, and `persistentVolume` configurations have been moved to root values
+
+* **Additions**
+  * `nameOverride` and `fullnameOverride`: allow overriding naming conventions for components
+  * `autoscaling`: support for horizontal pod autoscaler with configurable CPU and memory thresholds, minimum and maximum replicas
+  * `pdb` (Pod Disruption Budget): configurable to ensure high availability during voluntary disruptions
+  * `volumeMounts`: support for attaching custom volume mounts to containers
+  * `podSecurityContext`: defines pod-level security settings, such as `fsGroup`
+  * `securityContext`: configurable container-level security options, such as dropping capabilities or running as a non-root user
+  * `livenessProbe`, `readinessProbe`, and `startupProbe`: added for container lifecycle management
+  * `extraContainers` and `initContainers`: allow additional functionality and custom initialization processes
+  * `serviceAccount`: support for annotations, custom names, and API credential management
+  * `networkPolicy`: configurable global ingress and egress policies with support for IP blocks, namespaces, and pod selectors
+  * `terminationGracePeriodSeconds`: configurable termination grace period for pods across all components
+
+* **Deprecations**
+  * Legacy MongoDB connection string configuration has been deprecated
+  * Simplified ingress annotations under global configurations
+
+**cleaner**
+
+* **Additions**
+  * `schedule`: configurable cronjob schedule for cleaning up old files
+  * `trashPath`: allows specifying the path to be cleaned
+  * `threshold`: defines the minimum file age before cleanup
+  * Resource limits and requests: support for defining CPU and memory usage
+  * Have been removed on future releases
+
+**knowledgeGalaxy**
+
+* **Additions**
+  * `imagePullSecrets`: support for pulling images from private registries
+  * Enhanced environment variable management with `envFromFiles` and `envFromSecrets`
+  * `livenessProbe` and `readinessProbe`: added for improved health monitoring
+  * `networkPolicy`: support for ingress and egress controls
+  * Customization of `serviceAccount` with annotations and name overrides
+
+**userToolsOperator**
+
+* **Additions**
+  * Resource configuration for CPU and memory limits
+  * `env` and `envFromFiles`: enhanced environment variable management
+  * `livenessProbe` and `readinessProbe`: support for container health checks
+  * `networkPolicy`: added for more secure communication
+  * `serviceAccount`: customization options for API credential management
+
+**projectOperator**
+
+* **Additions**
+  * Resource limits and requests for components
+  * `serviceMonitor` integration for Prometheus monitoring
+  * `affinity`, `tolerations`, and `nodeSelector` support for pod scheduling
+  * Lifecycle hooks for managing pod startup and termination processes
+
+**gitea**
+
+* **Deprecations**
+  * Legacy ingress and secret configurations have been removed
+* **Additions**
+  * Improved resource management for Gitea pods
+  * Enhanced `networkPolicy` for better control of ingress and egress
+
+**keycloak**
+
+* **Additions**
+  * Based on `konstellation-io/konstellation-base` chart
+  * `fullnameOverride`: support for custom naming conventions
+  * `imagePullSecrets`: added for private image registries
+  * Enhanced handling of environment variables through `envFromFiles` and `envFromSecrets`
+  * Persistent volume support with flexible options for storage classes and access modes
+
+**minio**
+
+* **Deprecations**
+  * Legacy ingress configurations have been deprecated
+* **Additions**
+  * Change dependecy to `bitnami/minio` chart
+  * Enhanced volume configurations for improved persistence
+  * Added support for `networkPolicy` to control access
+
+**mongodb**
+
+* **Deprecations**
+  * Legacy connection string configurations are now deprecated
+* **Additions**
+  * Change dependecy to `bitnami/mongodb` chart
+  * Improved secret-based MongoDB connection string management
+  * Enhanced integration with shared volumes for persistence
+
+**oauth2-proxy**
+
+* **New Features**
+  * Change dependecy to `oauth2-proxy/oauth2-proxy` chart
+  * Introduced a new, centralized `oauth2` configuration section to replace legacy configurations
+  * `clientID` and `clientSecret` settings added for more secure integration with OAuth2 providers
+  * Support for multiple OAuth2 providers with distinct configurations
+  * `redirectURIs` and `scopes` now configurable at a granular level
+  * Enhanced token validation and refresh capabilities with support for advanced OAuth2 flows
+  * Added support for `openid` integration, improving compatibility with identity providers
+* **Legacy oauth2Proxy**
+  * Legacy OAuth2 configurations have been deprecated
+  * Removed hardcoded `clientID` and `clientSecret` options in favor of more flexible secret-based configurations
+  * Updated callback and redirect URIs to adhere to modern OAuth2 specifications
+
+**postgresql**
+
+* **Additions**
+  * Change dependecy to `bitnami/postgresql` chart
+  * Introduced configuration for PostgreSQL integration to Keycloak
+  * Support for environment variable customization specific to PostgreSQL
+  * Enhanced persistent volume support for PostgreSQL data storage
+  * Added compatibility with `serviceAccount` for PostgreSQL pods
+  * `securityContext` and `podSecurityContext` configurations added for PostgreSQL security
+
+**sharedVolume**
+
+* **Additions**
+  * Support for shared persistent volumes with options for access modes and storage classes
+  * Label-based volume bindings for using pre-provisioned volumes
+
+**deprecated features**
+
+* **Drone**
+  * Removed `drone`, `droneAuthorizer`, and `droneRunner` configurations
+* **Legacy MongoDB**
+  * Connection strings have been deprecated in favor of secret-based management
+* **Legacy oauth2-Proxy**
+  * Replaced with new `oauth2-proxy` configurations
+* **MinIO legacy Configurations**
+  * Deprecated older ingress and volume configurations
+
+CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
 
 ### From `6.0.1` to `6.0.2`
 
@@ -305,7 +453,7 @@ helm show values konstellation-io/kdl-server
 | global.ingress.tls.enabled | bool | `false` |  |
 | global.ingress.tls.secretName | string | `""` |  |
 | global.serverName | string | `"local-server"` | KDL Server instance name |
-| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.38.0"}` | Image registry The image configuration for the base service |
+| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.39.0"}` | Image registry The image configuration for the base service |
 | imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"chart-example.local","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}],"tls":[]}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
@@ -387,7 +535,7 @@ helm show values konstellation-io/kdl-server
 | podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | postgresql | object | `{"auth":{"database":"kdl","password":"ChangeMe","username":"user"},"enabled":true,"primary":{"persistence":{"enabled":false}},"replicaCount":1}` | PostgreSQL subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml |
 | postgresql.enabled | bool | `true` | Enable or disable PostgreSQL subchart |
-| projectOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080","--leader-elect","--leader-election-id=project-operator"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"extraContainers":[{"args":["--secure-listen-address=0.0.0.0:8443","--upstream=http://127.0.0.1:8080/","--logtostderr=true","--v=10"],"image":"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0","imagePullPolicy":"IfNotPresent","name":"kube-rbac-proxy","ports":[{"containerPort":8443,"name":"https"}]}],"filebrowser":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"mlflow":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"port":80,"targetPort":8443,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
+| projectOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080","--leader-elect","--leader-election-id=project-operator"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"extraContainers":[{"args":["--secure-listen-address=0.0.0.0:8443","--upstream=http://127.0.0.1:8080/","--logtostderr=true","--v=10"],"image":"gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0","imagePullPolicy":"IfNotPresent","name":"kube-rbac-proxy","ports":[{"containerPort":8443,"name":"https"}]}],"filebrowser":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"filebrowser/filebrowser","tag":"v2"},"nodeSelector":{},"tolerations":[]},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"mlflow":{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"0.14.18"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"port":80,"targetPort":8443,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
 | projectOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | projectOperator.args | list | `["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080","--leader-elect","--leader-election-id=project-operator"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | projectOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
@@ -402,9 +550,9 @@ helm show values konstellation-io/kdl-server
 | projectOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | projectOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
 | projectOperator.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
-| projectOperator.mlflow | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}}` | mlflow configuration |
+| projectOperator.mlflow | object | `{"affinity":{},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"0.14.18"},"ingress":{"annotations":{},"className":"nginx","tls":{"secretName":null}},"nodeSelector":{},"tolerations":[],"volume":{"size":"1Gi","storageClassName":""}}` | mlflow configuration |
 | projectOperator.mlflow.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
-| projectOperator.mlflow.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"v0.13.5"}` | Image registry The image configuration for the base service |
+| projectOperator.mlflow.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"0.14.18"}` | Image registry The image configuration for the base service |
 | projectOperator.mlflow.ingress | object | `{"annotations":{},"className":"nginx","tls":{"secretName":null}}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | projectOperator.mlflow.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
 | projectOperator.mlflow.nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
@@ -464,13 +612,13 @@ helm show values konstellation-io/kdl-server
 | testConnection | object | `{"enabled":false,"repository":"busybox","tag":""}` | Enable or disable test connection |
 | tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
-| userToolsOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.30.0"},"imagePullSecrets":[],"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"},"className":"nginx","enabled":false,"tls":{"secretName":null}},"initContainers":[],"kubeconfig":{"enabled":false,"externalServerUrl":""},"lifecycle":{},"nodeSelector":{},"oauth2Proxy":{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"repoCloner":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}},"resources":{},"securityContext":{},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"storage":{"size":"10Gi","storageClassName":""},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[],"vscode":{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}},"vscodeRuntime":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}}` | User Tools Operator deployment ref: https://github.com/konstellation-io/kdl-server/tree/main/user-tools-operator |
+| userToolsOperator | object | `{"affinity":{},"args":["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.31.0"},"imagePullSecrets":[],"ingress":{"annotations":{"nginx.ingress.kubernetes.io/configuration-snippet":"more_set_headers \"Content-Security-Policy: frame-ancestors 'self' *\";\n","nginx.ingress.kubernetes.io/proxy-body-size":"1000000m"},"className":"nginx","enabled":false,"tls":{"secretName":null}},"initContainers":[],"kubeconfig":{"enabled":false,"externalServerUrl":""},"lifecycle":{},"nodeSelector":{},"oauth2Proxy":{"image":{"pullPolicy":"IfNotPresent","repository":"quay.io/oauth2-proxy/oauth2-proxy","tag":"v7.0.1-amd64"}},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"repoCloner":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.19.0"}},"resources":{},"securityContext":{},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"storage":{"size":"10Gi","storageClassName":""},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[],"vscode":{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"0.16.0"}},"vscodeRuntime":{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}}` | User Tools Operator deployment ref: https://github.com/konstellation-io/kdl-server/tree/main/user-tools-operator |
 | userToolsOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | userToolsOperator.args | list | `["--health-probe-bind-address=:8081","--metrics-bind-address=127.0.0.1:8080"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | userToolsOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
 | userToolsOperator.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | userToolsOperator.enabled | bool | `true` | Enable or disable User Tools Operator deployment |
-| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.30.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.31.0"}` | Image registry The image configuration for the base service |
 | userToolsOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | userToolsOperator.ingress.tls.secretName | string | `nil` | The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`. |
 | userToolsOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
@@ -483,8 +631,8 @@ helm show values konstellation-io/kdl-server
 | userToolsOperator.podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
 | userToolsOperator.podLabels | object | `{}` | Configure labels on Pods |
 | userToolsOperator.podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
-| userToolsOperator.repoCloner | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}}` | repocloner configuration The following components are managed by the manager container when `usertool` custom resources are detected |
-| userToolsOperator.repoCloner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.18.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.repoCloner | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.19.0"}}` | repocloner configuration The following components are managed by the manager container when `usertool` custom resources are detected |
+| userToolsOperator.repoCloner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-repo-cloner","tag":"0.19.0"}` | Image registry The image configuration for the base service |
 | userToolsOperator.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
 | userToolsOperator.securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | userToolsOperator.serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
@@ -494,9 +642,9 @@ helm show values konstellation-io/kdl-server
 | userToolsOperator.terminationGracePeriodSeconds | int | `30` | Configure Pod termination grace period </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination |
 | userToolsOperator.tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | userToolsOperator.topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
-| userToolsOperator.vscode | object | `{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}}` | vscode configuration |
+| userToolsOperator.vscode | object | `{"enabled":false,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"0.16.0"}}` | vscode configuration |
 | userToolsOperator.vscode.enabled | bool | `false` | Enable or disable vscode |
-| userToolsOperator.vscode.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"v0.15.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.vscode.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-vscode","tag":"0.16.0"}` | Image registry The image configuration for the base service |
 | userToolsOperator.vscodeRuntime | object | `{"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}}` | vscodeRuntime configuration |
 | userToolsOperator.vscodeRuntime.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-py","tag":"3.9"}` | Image registry The image configuration for the base service |
 | volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |
