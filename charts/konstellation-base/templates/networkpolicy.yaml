@@ -4,14 +4,14 @@ kind: NetworkPolicy
 metadata:
   name: {{ include "konstellation-base.fullname" . }}
   labels:
-    {{- include "opencti.knowledgeGalaxyLabels" . | nindent 4 }}
+    {{- include "konstellation-base.labels" . | nindent 4 }}
 spec:
   {{- if and (not .Values.networkPolicy.policyTypes) (not .Values.networkPolicy.ingress) (not .Values.networkPolicy.egress) }}
   podSelector: {}
   {{- else }}
   podSelector:
     matchLabels:
-      {{- include "opencti.selectorWorkerLabels" . | nindent 6 }}
+      {{- include "konstellation-base.selectorLabels" . | nindent 6 }}
   {{- end }}
 
   {{- if .Values.networkPolicy.policyTypes }}
