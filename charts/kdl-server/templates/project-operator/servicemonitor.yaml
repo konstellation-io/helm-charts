@@ -2,13 +2,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-server
+  name: {{ include "kdl-server.project-operator.name" . }}
   labels:
-    {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
+    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- include "kdl-server.selectorKdlServerLabels" . | nindent 8 }}
+      {{- include "kdl-server.selectorProjectOperatorLabels" . | nindent 8 }}
   endpoints:
   - port: metrics
     interval: {{ .Values.projectOperator.serviceMonitor.interval | quote }}

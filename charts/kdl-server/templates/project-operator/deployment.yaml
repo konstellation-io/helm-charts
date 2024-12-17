@@ -6,7 +6,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-project-operator
+  name: {{ include "kdl-server.project-operator.name" . }}
   labels:
     {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 spec:

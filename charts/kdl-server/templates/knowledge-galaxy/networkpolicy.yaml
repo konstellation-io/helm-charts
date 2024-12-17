@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-knowledge-galaxy
+  name: {{ include "kdl-server.knowledge-galaxy.name" . }}
   labels:
     {{- include "opencti.knowledgeGalaxyLabels" . | nindent 4 }}
 spec:

@@ -1,6 +1,6 @@
 {{/*
 #######################
-KDL SERVER SECTION
+# KDL SERVER SECTION
 #######################
 */}}
 
@@ -15,7 +15,7 @@ Validate that if 'env.MINIO_ENDPOINT' exists
 
 {{/*
 #######################
-CLEANER SECTION
+# CLEANER SECTION
 #######################
 */}}
 

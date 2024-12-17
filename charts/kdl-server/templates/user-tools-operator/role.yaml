@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
   labels:
     {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
