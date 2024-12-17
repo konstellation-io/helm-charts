@@ -175,9 +175,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.labels['app.kubernetes.io/version']
             - name: RELEASE_CHART_VERSION
-              valueFrom:
-                fieldRef:
-                  fieldPath: {{ .Chart.Version }}
+              value: {{ .Chart.Version | quote }}
             # Variables from secrets have precedence
             {{- $envList := dict }}
             {{- if .Values.envFromSecrets }}
