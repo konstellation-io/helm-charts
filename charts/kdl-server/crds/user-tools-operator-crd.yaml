@@ -5,8 +5,8 @@ metadata:
 spec:
   group: kdl.konstellation.io
   names:
-    kind: UserTools
-    listKind: UserToolsList
+    kind: KDLUserTools
+    listKind: KDLUserToolsList
     plural: usertools
     singular: usertool
   scope: Namespaced
@@ -17,7 +17,7 @@ spec:
     schema:
       openAPIV3Schema:
         type: object
-        description: UserTools is the Schema for the usertools API
+        description: KDLUserTools is the Schema for the KDLUserTools API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
