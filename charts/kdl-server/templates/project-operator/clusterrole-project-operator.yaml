@@ -1,43 +1,34 @@
-{{- if and .Values.projectOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-project-operator
+  name: {{ include "kdl-server.project-operator.name" . }}
   labels:
     {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 rules:
+# Existing namespace permissions
 - apiGroups:
   - ""
   resources:
   - namespaces
   verbs:
   - get
+
+# Core API permissions for basic resources
 - apiGroups:
   - ""
   resources:
   - secrets
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
+  - persistentvolumeclaims
+  - configmaps
+  - serviceaccounts
+  - services
   - events
   verbs:
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims
-  verbs:
   - '*'
+
+# KDLProject custom resource permissions
 - apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - '*'
-- apiGroups:
-  - project.konstellation.io
+  - kdl.konstellation.io
   resources:
   - kdlprojects
   - kdlprojects/status
@@ -50,23 +41,44 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  - services
-  verbs:
-  - '*'
+
+# Workload permissions
 - apiGroups:
   - apps
   resources:
   - deployments
   verbs:
   - '*'
+
+# Network-related permissions
 - apiGroups:
   - networking.k8s.io
   resources:
   - ingresses
+  - networkpolicies
   verbs:
   - '*'
-{{- end }}
+
+# Autoscaling permissions
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - '*'
+
+# Pod Disruption Budget permissions
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - '*'
+
+# Pod Security Context permissions for security configurations
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use

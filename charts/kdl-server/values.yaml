@@ -44,9 +44,6 @@ global:
   # -- The DNS domain name that will serve the application
   domain: kdl.local
 
-  # -- HTTP(S) enabled
-  httpSchema: "http"  # or "https"
-
   # (DEPRECATION) Clean _helpers.tpl
   ingress:
     tls:
@@ -61,7 +58,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: 1.39.0
+  tag: "1.39.0"
 
 # -- String to partially override kdl-server.fullname template (will maintain the release name)
 nameOverride: ""
@@ -101,8 +98,8 @@ testConnection:
   enabled: false
   # The repository of the image
   repository: busybox
-  # Overrides the image tag whose default is the chart appVersion
-  tag: ""
+  # Overrides the image tag
+  tag: "latest"
 
 # -- Environment variables to configure application
 env: {}
@@ -337,7 +334,7 @@ readyChecker:
   # -- Pull policy for the image
   pullPolicy: IfNotPresent
   # -- Overrides the image tag
-  tag: latest
+  tag: "latest"
   # -- Number of retries before giving up
   retries: 30
   # -- Timeout for each check
@@ -347,10 +344,6 @@ readyChecker:
   - name: mongodb
     port: 27017
   - name: keycloak
-    port: 8080
-  - name: minio
-    port: 9000
-  - name: oauth2proxy
     port: 80
 
 # -- Enable ServiceMonitor to get metrics
@@ -508,7 +501,7 @@ cleaner:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.16.0
+    tag: "0.16.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -663,7 +656,7 @@ knowledgeGalaxy:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: v1.2.1
+    tag: "v1.2.1"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1186,21 +1179,7 @@ projectOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.20.0
-
-  # Additional containers to be added to the pod
-  extraContainers:
-    - name: kube-rbac-proxy
-      image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-      imagePullPolicy: IfNotPresent
-      args:
-      - --secure-listen-address=0.0.0.0:8443
-      - --upstream=http://127.0.0.1:8080/
-      - --logtostderr=true
-      - --v=10
-      ports:
-      - containerPort: 8443
-        name: https
+    tag: "0.20.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1232,10 +1211,13 @@ projectOperator:
   # -- Configure args
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   args:
+    - --enable-http2
     - --health-probe-bind-address=:8081
-    - --metrics-bind-address=127.0.0.1:8080
     - --leader-elect
     - --leader-election-id=project-operator
+    - --metrics-bind-address=:8080
+    - --zap-log-level=error
+    - --zap-stacktrace-level=error
 
   # -- Configure command
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
@@ -1249,18 +1231,18 @@ projectOperator:
     # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
     type: ClusterIP
     # -- Kubernetes Service port
-    port: 80
+    port: 8081
     # -- Kubernetes Service health check path
     # healthPath: ""
     # -- NodePort port (only when type is NodePort)
     # nodePort: 32000
     # -- Pod expose port
-    targetPort: 8443
+    targetPort: 8081
     # -- Pod extra ports
-    # extraPorts:
-    # - name: metrics
-    #   port: 9080
-    #   targetPort: 9080
+    extraPorts:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
 
   # -- Enable ServiceMonitor to get metrics
   # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
@@ -1362,72 +1344,26 @@ projectOperator:
   ### Following values are used to configure the Project Operator
   ### This config pass on ConfigMap to KDL API create Project CRD with the
   ### desired configuration.
-  # ref: https://github.com/konstellation-io/kdl-server/blob/main/project-operator/helm-charts/kdlproject/values.yaml
-
-  # -- mlflow configuration
-  mlflow:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-mlflow
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: 0.14.18
-
-    volume:
-      # -- Storage class to use for persistence
-      storageClassName: ""
-      # -- The storage size for the persistent volume claim
-      size: 1Gi
-
-    # -- Ingress configuration to expose app
-    # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
-    ingress:
-      className: "nginx"
-      annotations: {}
-        # kubernetes.io/ingress.class: nginx
-        # kubernetes.io/tls-acme: "true"
-      tls:
-        # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
-        secretName: null
-
-    # -- Node labels for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
-    nodeSelector: {}
-
-    # -- Tolerations for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-    tolerations: []
-
-    # -- Affinity for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
-    affinity: {}
-
-  # -- filebrowser configuration
-  filebrowser:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: filebrowser/filebrowser
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: v2
-
-    # -- Node labels for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
-    nodeSelector: {}
-
-    # -- Tolerations for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
-    tolerations: []
-
-    # -- Affinity for pod assignment
-    # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
-    affinity: {}
+  # ref: https://github.com/konstellation-io/kdl-server/blob/main/project-operator/helm-charts/kdl-project/values.yaml
+  templateCustomResource: |
+    apiVersion: kdl.konstellation.io/v1
+    kind: KDLProject
+    metadata:
+      name: replaced-by-kdl-api
+      namespace: replaced-by-kdl-api
+    spec:
+      projectId: replaced-by-kdl-api
+      domain: kdl.local
+      mlflow:
+        image:
+          repository: konstellation/kdl-mlflow
+          pullPolicy: IfNotPresent
+          tag: "0.14.18"
+      filebrowser:
+        image:
+          repository: filebrowser/filebrowser
+          pullPolicy: IfNotPresent
+          tag: "v2"
 
 # -- Shared Volume configuration
 # Mount volume to share data between components
@@ -1495,7 +1431,7 @@ userToolsOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.31.0
+    tag: "0.31.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1636,7 +1572,7 @@ userToolsOperator:
     # -- Storage class to use for persistence
     storageClassName: ""
 
-  # -- repocloner configuration
+  # -- repo-cloner configuration
   # The following components are managed by the manager container when `usertool` custom resources are detected
   repoCloner:
     # -- Image registry
@@ -1647,12 +1583,13 @@ userToolsOperator:
       # The pull policy for the image
       pullPolicy: IfNotPresent
       # The image tag
-      tag: 0.19.0
+      tag: "0.19.0"
 
   # -- vscode configuration
   vscode:
     # -- Enable or disable vscode
     enabled: false
+
     # -- Image registry
     # The image configuration for the base service
     image:
@@ -1661,7 +1598,7 @@ userToolsOperator:
       # The pull policy for the image
       pullPolicy: IfNotPresent
       # The image tag
-      tag: 0.16.0
+      tag: "0.16.0"
 
   # -- vscodeRuntime configuration
   vscodeRuntime:
@@ -1708,13 +1645,3 @@ userToolsOperator:
     ##
     # enabled: true
     # externalServerUrl: https://192.168.0.21:16443
-
-  # -- oauth2-proxy configuration
-  oauth2Proxy:
-    image:
-      # The repository of the image
-      repository: quay.io/oauth2-proxy/oauth2-proxy
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: v7.0.1-amd64

@@ -2,7 +2,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
   labels:
     {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 spec:

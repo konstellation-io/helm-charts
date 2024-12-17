@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
   labels:
     {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 subjects:
@@ -10,6 +10,6 @@ subjects:
   name: {{ include "kdl-server.userToolsOperatorServiceAccountName" . }}
 roleRef:
   kind: Role
-  name: {{ include "kdl-server.fullname" . }}-user-tools-operator
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}

@@ -2,7 +2,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-knowledge-galaxy
+  name: {{ include "kdl-server.knowledge-galaxy.name" . }}
   labels:
     {{- include "kdl-server.knowledgeGalaxyLabels" . | nindent 4 }}
 spec:

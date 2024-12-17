@@ -52,9 +52,16 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{/*
 #######################
-SERVER SECTION
+# SERVER SECTION
 #######################
 */}}
+
+{{/*
+Create the name for the server
+*/}}
+{{- define "kdl-server.server.name" -}}
+{{- printf "%s-server" (include "kdl-server.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 
 {{/*
 Create the name of the service account to use
@@ -71,7 +78,7 @@ Create the name of the service account to use
 Default server component
 */}}
 {{- define "kdl-server.kdlServerComponentLabel" -}}
-kdl-server.component: server
+kdl-server/component: server
 {{- end -}}
 
 {{/*
@@ -116,7 +123,7 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 
 {{/*
 #######################
-CLEANER SECTION
+# CLEANER SECTION
 #######################
 */}}
 
@@ -135,7 +142,7 @@ Create the name of the service account to use
 Default cleaner component
 */}}
 {{- define "kdl-server.cleanerComponentLabel" -}}
-kdl-server.component: cleaner
+kdl-server/component: cleaner
 {{- end -}}
 
 {{/*
@@ -146,10 +153,17 @@ Generate labels for cleaner component
 {{- end }}
 
 {{/*
-#######################
-KNOWLEDGEGALAXY SECTION
-#######################
+#########################
+# KNOWLEDGEGALAXY SECTION
+#########################
 */}}
+
+{{/*
+Create the name for the knowledge-galaxy
+*/}}
+{{- define "kdl-server.knowledge-galaxy.name" -}}
+{{- printf "%s-knowledge-galaxy" (include "kdl-server.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 
 {{/*
 Create the name of the service account to use
@@ -166,7 +180,7 @@ Create the name of the service account to use
 Default knowledgeGalaxy component
 */}}
 {{- define "kdl-server.knowledgeGalaxyComponentLabel" -}}
-kdl-server.component: knowledge-galaxy
+kdl-server/component: knowledge-galaxy
 {{- end -}}
 
 {{/*
@@ -210,10 +224,17 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 {{- end }}
 
 {{/*
-#########################
-USERTOOLSOPERATOR SECTION
-#########################
+###########################
+# USERTOOLSOPERATOR SECTION
+###########################
 */}}
+
+{{/*
+Create the name for the user-tools-operator
+*/}}
+{{- define "kdl-server.user-tools-operator.name" -}}
+{{- printf "%s-user-tools-operator" (include "kdl-server.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 
 {{/*
 Create the name of the service account to use
@@ -230,7 +251,7 @@ Create the name of the service account to use
 Default userToolsOperator component
 */}}
 {{- define "kdl-server.userToolsOperatorComponentLabel" -}}
-kdl-server.component: user-tools-operator
+kdl-server/component: user-tools-operator
 {{- end -}}
 
 {{/*
@@ -275,9 +296,16 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 
 {{/*
 ############################
-PROJECTTOOLSOPERATOR SECTION
+# PROJECTOPERATOR SECTION
 ############################
 */}}
+
+{{/*
+Create the name for the project-operator
+*/}}
+{{- define "kdl-server.project-operator.name" -}}
+{{- printf "%s-project-operator" (include "kdl-server.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
 
 {{/*
 Create the name of the service account to use
@@ -294,7 +322,7 @@ Create the name of the service account to use
 Default projectOperator component
 */}}
 {{- define "kdl-server.projectOperatorComponentLabel" -}}
-kdl-server.component: project-tools-operator
+kdl-server/component: project-tools-operator
 {{- end -}}
 
 {{/*
@@ -339,7 +367,7 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 
 {{/*
 ##############
-# WIP LEGACY #
+# WIP LEGACY
 ##############
 */}}
 

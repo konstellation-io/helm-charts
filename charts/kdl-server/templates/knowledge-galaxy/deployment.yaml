@@ -6,7 +6,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-knowledge-galaxy
+  name: {{ include "kdl-server.knowledge-galaxy.name" . }}
   labels:
     {{- include "kdl-server.knowledgeGalaxyLabels" . | nindent 4 }}
 spec:
