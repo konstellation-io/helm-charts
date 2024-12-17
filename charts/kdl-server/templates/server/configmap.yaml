@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-server
+  name: {{ include "kdl-server.server.name" . }}
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "0"
@@ -11,19 +11,19 @@ data:
   ##
   # KDL APP configuration
   KDL_SERVER_PORT: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) | quote }}
-
   BASE_DOMAIN_NAME: {{ .Values.global.domain }}
   SHARED_VOLUME: {{ .Values.sharedVolume.name }}
+
   TLS_ENABLED: "{{ .Values.global.ingress.tls.enabled }}"
 
   config.json: |+
     {
+      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }}
+      "KG_SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg",
+      "KNOWLEDGE_GALAXY_ENABLED": {{ .Values.knowledgeGalaxy.enabled }},
+      "RELEASE_VERSION": "{{ .Chart.AppVersion }}",
       "SERVER_NAME": "{{ .Values.global.serverName }}",
       "SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}",
-      "KNOWLEDGE_GALAXY_ENABLED": {{ .Values.knowledgeGalaxy.enabled }},
-      "KG_SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg",
-      "RELEASE_VERSION": "{{ .Chart.AppVersion }}",
-      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }}
     }
 
   ##
@@ -33,47 +33,12 @@ data:
   USER_TOOLS_VSCODE_URL: "{{ include "http.protocol" . }}://USERNAME-code.{{ .Values.global.domain }}/?folder=/home/coder/repos/REPO_FOLDER"
 
   ##
-  # OAuth2 Proxy (deprecate)
-  # TODO: remove from CRD and KDL API
-  OAUTH2_PROXY_IMG_PULLPOLICY: "IfNotPresent"
-  OAUTH2_PROXY_IMG_REPO: "quay.io/oauth2-proxy/oauth2-proxy"
-  OAUTH2_PROXY_IMG_TAG: "latest"
-
-  ##
   # Knowledge Galaxy
   KNOWLEDGE_GALAXY_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg/projects/PROJECT_ID/"
   KNOWLEDGE_GALAXY_ENABLED: "{{ .Values.knowledgeGalaxy.enabled }}"
 
   ##
-  # Project Operator
-  PROJECT_MLFLOW_IMG_REPO: "{{ .Values.projectOperator.mlflow.image.repository }}"
-  PROJECT_MLFLOW_IMG_TAG: "{{ .Values.projectOperator.mlflow.image.tag }}"
-  PROJECT_MLFLOW_IMG_PULLPOLICY: "{{ .Values.projectOperator.mlflow.image.pullPolicy }}"
-  PROJECT_MLFLOW_STORAGE_CLASS_NAME: "{{ .Values.projectOperator.mlflow.volume.storageClassName}}"
-  PROJECT_MLFLOW_STORAGE_SIZE: "{{ .Values.projectOperator.mlflow.volume.size}}"
-  PROJECT_MLFLOW_INGRESS_CLASS_NAME: {{ .Values.projectOperator.mlflow.ingress.className }}
-  PROJECT_MLFLOW_ENCODED_INGRESS_ANNOTATIONS: |+
-    {{- toYaml .Values.projectOperator.mlflow.ingress.annotations | b64enc | nindent 4 }}
-  {{- if and .Values.global.ingress.tls.enabled (or (not (kindIs "invalid" .Values.projectOperator.mlflow.ingress.tls.secretName )) (not (kindIs "invalid" .Values.global.ingress.tls.secretName ))) }}
-  PROJECT_MLFLOW_INGRESS_TLS_SECRET_NAME: "{{ include "projectOperator.mlflow.tlsSecretName" . }}"
-  {{- end }}
-  PROJECT_MLFLOW_NODESELECTOR: |+
-    {{- toYaml .Values.projectOperator.mlflow.nodeSelector | b64enc | nindent 4 }}
-  PROJECT_MLFLOW_AFFINITY: |+
-    {{- toYaml .Values.projectOperator.mlflow.affinity | b64enc | nindent 4 }}
-  PROJECT_MLFLOW_TOLERATIONS: |+
-    {{- toYaml .Values.projectOperator.mlflow.tolerations | b64enc | nindent 4 }}
-
-  PROJECT_FILEBROWSER_IMG_REPO: "{{ .Values.projectOperator.filebrowser.image.repository }}"
-  PROJECT_FILEBROWSER_IMG_TAG: "{{ .Values.projectOperator.filebrowser.image.tag }}"
-  PROJECT_FILEBROWSER_IMG_PULLPOLICY: "{{ .Values.projectOperator.filebrowser.image.pullPolicy }}"
-  PROJECT_FILEBROWSER_NODESELECTOR: |+
-    {{- toYaml .Values.projectOperator.filebrowser.nodeSelector | b64enc | nindent 4 }}
-  PROJECT_FILEBROWSER_AFFINITY: |+
-    {{- toYaml .Values.projectOperator.filebrowser.affinity | b64enc | nindent 4 }}
-  PROJECT_FILEBROWSER_TOLERATIONS: |+
-    {{- toYaml .Values.projectOperator.filebrowser.tolerations | b64enc | nindent 4 }}
-
+  # User Tools Operator
   VSCODE_IMG_REPO: "{{ .Values.userToolsOperator.vscode.image.repository }}"
   VSCODE_IMG_TAG: "{{ .Values.userToolsOperator.vscode.image.tag }}"
   VSCODE_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.vscode.image.pullPolicy }}"
@@ -81,12 +46,6 @@ data:
   REPO_CLONER_IMG_REPO: "{{ .Values.userToolsOperator.repoCloner.image.repository }}"
   REPO_CLONER_IMG_TAG: "{{ .Values.userToolsOperator.repoCloner.image.tag }}"
   REPO_CLONER_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.repoCloner.image.pullPolicy }}"
-
-  ##
-  # User Tools Operator
-  USER_TOOLS_OAUTH2_PROXY_IMG_REPO: "{{ .Values.userToolsOperator.oauth2Proxy.image.repository }}"
-  USER_TOOLS_OAUTH2_PROXY_IMG_TAG: "{{ .Values.userToolsOperator.oauth2Proxy.image.tag }}"
-  USER_TOOLS_OAUTH2_PROXY_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.oauth2Proxy.image.pullPolicy }}"
 
   USER_TOOLS_VSCODE_RUNTIME_IMG_REPO: "{{ .Values.userToolsOperator.vscodeRuntime.image.repository }}"
   USER_TOOLS_VSCODE_RUNTIME_IMG_TAG: "{{ .Values.userToolsOperator.vscodeRuntime.image.tag }}"

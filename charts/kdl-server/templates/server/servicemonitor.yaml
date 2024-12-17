@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-server
+  name: {{ include "kdl-server.server.name" . }}
   labels:
     {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 spec:

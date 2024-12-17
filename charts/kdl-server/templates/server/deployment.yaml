@@ -7,7 +7,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kdl-server.fullname" . }}-server
+  name: {{ include "kdl-server.server.name" . }}
   labels:
     {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 spec:
@@ -20,8 +20,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/kdl-config: {{ include (print $.Template.BasePath "/app/configmap.yaml") . | sha256sum }}
-        checksum/kdl-secret: {{ include (print $.Template.BasePath "/app/secret.yaml") . | sha256sum }}
+        checksum/kdl-project-operator-template: {{ include (print $.Template.BasePath "/server/configmap-project-operator.yaml") . | sha256sum }}
+        checksum/kdl-config: {{ include (print $.Template.BasePath "/server/configmap.yaml") . | sha256sum }}
+        checksum/kdl-secret: {{ include (print $.Template.BasePath "/server/secret.yaml") . | sha256sum }}
       {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -150,7 +151,7 @@ spec:
           {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ include "kdl-server.fullname" . }}-server
+                name: {{ include "kdl-server.server.name" . }}
             {{- if .Values.envFromFiles }}
             {{- tpl (toYaml .Values.envFromFiles) . | nindent 12 }}
             {{- end }}
@@ -158,13 +159,25 @@ spec:
             {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
             {{- end }}
           env:
-            # TODO: keep legacy backward compatibility
+            # Default environment
             - name: SSH_KNOWN_HOSTS
               value: /app/.ssh/known_hosts
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: RELEASE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/instance']
+            - name: RELEASE_APP_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/version']
+            - name: RELEASE_CHART_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: {{ .Chart.Version }}
             # Variables from secrets have precedence
             {{- $envList := dict }}
             {{- if .Values.envFromSecrets }}
@@ -254,7 +267,7 @@ spec:
       volumes:
         - name: kdl-server
           configMap:
-            name: {{ include "kdl-server.fullname" . }}-server
+            name: {{ include "kdl-server.server.name" . }}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
