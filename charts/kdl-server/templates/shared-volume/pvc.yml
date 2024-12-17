@@ -3,9 +3,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   {{- if .Values.sharedVolume.name }}
-  name: {{ .Values.sharedVolume.name }}-claim
+  name: {{ .Values.sharedVolume.name }}
   {{- else }}
-  name: {{ template "kdl-server.fullname" . }}-claim
+  name: {{ template "kdl-server.fullname" . }}
   {{- end }}
   {{- if .Values.sharedVolume.annotations }}
   annotations:
