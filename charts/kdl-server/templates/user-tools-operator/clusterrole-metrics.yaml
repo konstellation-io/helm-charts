@@ -1,0 +1,13 @@
+{{ if .Values.userToolsOperator.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kdl-server.user-tools-operator.name" . }}-metrics
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+{{- end }}

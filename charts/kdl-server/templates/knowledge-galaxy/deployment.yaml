@@ -67,10 +67,10 @@ spec:
               containerPort: {{ $port.targetPort }}
               protocol: TCP
             {{- end }}
+          {{- with .Values.knowledgeGalaxy.lifecycle }}
           lifecycle:
-            {{- with .Values.knowledgeGalaxy.lifecycle }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           {{- if .Values.knowledgeGalaxy.livenessProbe.enabled }}
           livenessProbe:
             {{- if .Values.knowledgeGalaxy.livenessProbeCustom }}

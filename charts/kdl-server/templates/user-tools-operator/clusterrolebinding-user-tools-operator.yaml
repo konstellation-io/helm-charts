@@ -1,0 +1,16 @@
+{{ if .Values.userToolsOperator.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "kdl-server.userToolsOperatorServiceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

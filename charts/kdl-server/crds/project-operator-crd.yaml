@@ -306,6 +306,74 @@ spec:
                             type: array
                             items:
                               type: string
+                  podAnnotations:
+                    description: |
+                      Pod annotations provide a flexible mechanism for attaching non-identifying metadata
+                      to pods in the development environment. Unlike labels, annotations can store
+                      arbitrary metadata that enriches pods with additional information and can influence
+                      system behavior.
+
+                      Annotations serve multiple crucial purposes in a Kubernetes environment:
+                      - They can trigger specific behaviors in other systems and tools
+                      - They store build and release information
+                      - They configure monitoring and logging systems
+                      - They maintain deployment history and tracking
+                      - They enable integration with external tools and services
+
+                      In the context of development environments, annotations can be used to:
+                      - Store information about the environment's configuration
+                      - Track deployment timestamps and versions
+                      - Configure service mesh behaviors
+                      - Enable specific monitoring patterns
+                      - Store documentation links and references
+                      - Maintain audit and compliance information
+
+                      Common annotation patterns include:
+                      - kubernetes.io/change-cause: Records the reason for the latest update
+                      - prometheus.io/scrape: Configures metric collection
+                      - sidecar.istio.io/inject: Controls service mesh injection
+                      - environment.tools/last-updated: Tracks configuration updates
+                      - docs.tools/environment-guide: Links to relevant documentation
+
+                      When using annotations, consider:
+                      - They are not used for object selection (use labels instead)
+                      - They can store larger data chunks than labels
+                      - They can include non-alphanumeric characters
+                      - They support structured data in their values
+                      - They can be automatically modified by system components
+                    type: object
+                    additionalProperties:
+                      type: string
+                  podLabels:
+                    description: |
+                      Custom labels that will be added to the pods in the development
+                      environment. These labels serve multiple important purposes in
+                      the Kubernetes ecosystem and are crucial for pod identification
+                      and management.
+
+                      Pod labels enable:
+                      - Runtime identification and tracking
+                      - Capability management
+                      - Service discovery
+                      - Resource grouping
+                      - Policy application
+                      - Monitoring and metrics
+
+                      In the KDL context, labels are particularly important for:
+                      - Associating pods with specific runtimes
+                      - Tracking capability versions
+                      - Enabling selective service routing
+                      - Supporting audit requirements
+                      - Facilitating resource management
+
+                      Example labels include:
+                      - runtimeId: Identifies the specific runtime version
+                      - capabilityId: Tracks enabled capabilities
+                      - environmentType: Distinguishes development environments
+                      - userTier: Indicates resource tier allocation
+                    type: object
+                    additionalProperties:
+                      type: string
                   podSecurityContext:
                     description: |
                       Pod-level security context defines security settings that apply
@@ -400,12 +468,75 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  livenessProbeCustom:
+                    description: |
+                      Liveness probe configuration determines if a container is operating
+                      properly and should continue running. This probe helps maintain
+                      service health by automatically restarting unhealthy containers.
+
+                      Liveness probes are crucial for:
+                      - Detecting application deadlocks
+                      - Identifying hung processes
+                      - Managing memory leaks
+                      - Handling unrecoverable errors
+                      - Maintaining service reliability
+
+                      The probe should check:
+                      - Basic application health
+                      - Critical service functions
+                      - Resource availability
+                      - System stability
+                      - Core dependencies
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for liveness checking. Should
+                          verify basic service health without heavy processing.
+
+                          The endpoint should:
+                          - Respond quickly
+                          - Check critical functions
+                          - Avoid external dependencies
+                          - Minimize resource usage
+                          - Provide clear health status
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path for the liveness check. Should be a lightweight
+                              endpoint that confirms basic service health.
+                            type: string
+                          port:
+                            description: |
+                              Port number where the liveness check endpoint is exposed.
+                              Should be consistently available.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of times the probe can fail before triggering a container
+                          restart. Balance between reliability and stability.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait after container startup before beginning liveness
+                          checks. Must exceed normal startup time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Interval between probe attempts. More frequent checks provide
+                          faster detection of issues.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Number of consecutive successes required after failure to
+                          consider the container healthy again.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Maximum time allowed for a probe attempt. Should be short
+                          enough to detect hanging processes.
+                        type: integer
                   readinessProbe:
                     description: |
                       Readiness probe configuration determines if the Filebrowser container
@@ -446,12 +577,75 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  readinessProbeCustom:
+                    description: |
+                      Readiness probe configuration determines when a container is ready
+                      to accept traffic. This probe is crucial for ensuring that only
+                      fully functional instances receive requests.
+
+                      Readiness probes are essential for:
+                      - Service availability management
+                      - Load balancer configuration
+                      - Traffic routing control
+                      - Deployment orchestration
+                      - Service mesh integration
+
+                      The probe should verify:
+                      - Required services are available
+                      - Dependencies are accessible
+                      - Database connections are established
+                      - Cache is warmed up
+                      - System resources are ready
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for service readiness checking.
+                          Should verify that the service is fully operational.
+
+                          The endpoint should validate:
+                          - Application readiness
+                          - Database connectivity
+                          - Cache availability
+                          - External service access
+                          - Required resources
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path that indicates service readiness. Should return
+                              success only when the service is fully operational.
+                            type: string
+                          port:
+                            description: |
+                              Port number for the readiness check. Must be accessible
+                              within the cluster.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of consecutive probe failures before marking the container
+                          as not ready. Affects service availability during issues.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait before starting readiness checks. Should account
+                          for normal service initialization time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Frequency of readiness checks. Balance between responsiveness
+                          and system load.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Number of consecutive successes required after failure before
+                          marking container as ready.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Timeout for readiness probe attempts. Should be less than
+                          periodSeconds.
+                        type: integer
                   startupProbe:
                     description: |
                       Startup probe configuration helps handle slow-starting containers.
@@ -490,12 +684,76 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  startupProbeCustom:
+                    description: |
+                      Startup probe configuration helps handle slow-starting containers by
+                      providing additional time for initialization before other probes begin.
+                      This is particularly important for development environments that may
+                      require significant setup time for tools and dependencies.
+
+                      A startup probe serves several critical purposes:
+                      - Prevents premature container restarts during initialization
+                      - Accommodates varying startup times across different environments
+                      - Ensures proper tool and dependency initialization
+                      - Provides time for runtime compilation and cache warming
+                      - Maintains service stability during startup phases
+
+                      The probe can be configured to check different aspects of readiness:
+                      - HTTP endpoints for web-based services
+                      - TCP ports for network services
+                      - Command execution for system checks
+                      - File system markers for initialization completion
+                      - Service-specific health indicators
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for health checking. This method
+                          is commonly used for web-based services and APIs.
+
+                          The HTTP check validates:
+                          - Service availability
+                          - Basic functionality
+                          - Network accessibility
+                          - Authentication readiness
+                          - Required dependencies
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path to check for service health. Should be an endpoint
+                              that accurately reflects service readiness.
+                            type: string
+                          port:
+                            description: |
+                              Port number where the health check endpoint is exposed.
+                              Must match the service's configured port.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of times the probe can fail before giving up. Higher
+                          values provide more tolerance for temporary issues during startup.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait after container startup before beginning probe
+                          checks. Should account for typical initialization time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Interval between probe attempts. Balance between quick detection
+                          and resource usage.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Minimum consecutive successes required to consider the probe
+                          successful after failure.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Maximum time allowed for a probe attempt before considering
+                          it failed.
+                        type: integer
                   # Environment and Secrets Management
                   env:
                     description: |
@@ -675,6 +933,7 @@ spec:
                             this for security when the container doesn't need to
                             write to the volume.
                           type: boolean
+                  # Container Lifecycle Configuration
                   lifecycle:
                     description: |
                       Container lifecycle hooks allow you to execute commands or make
@@ -1375,6 +1634,74 @@ spec:
                             type: array
                             items:
                               type: string
+                  podAnnotations:
+                    description: |
+                      Pod annotations provide a flexible mechanism for attaching non-identifying metadata
+                      to pods in the development environment. Unlike labels, annotations can store
+                      arbitrary metadata that enriches pods with additional information and can influence
+                      system behavior.
+
+                      Annotations serve multiple crucial purposes in a Kubernetes environment:
+                      - They can trigger specific behaviors in other systems and tools
+                      - They store build and release information
+                      - They configure monitoring and logging systems
+                      - They maintain deployment history and tracking
+                      - They enable integration with external tools and services
+
+                      In the context of development environments, annotations can be used to:
+                      - Store information about the environment's configuration
+                      - Track deployment timestamps and versions
+                      - Configure service mesh behaviors
+                      - Enable specific monitoring patterns
+                      - Store documentation links and references
+                      - Maintain audit and compliance information
+
+                      Common annotation patterns include:
+                      - kubernetes.io/change-cause: Records the reason for the latest update
+                      - prometheus.io/scrape: Configures metric collection
+                      - sidecar.istio.io/inject: Controls service mesh injection
+                      - environment.tools/last-updated: Tracks configuration updates
+                      - docs.tools/environment-guide: Links to relevant documentation
+
+                      When using annotations, consider:
+                      - They are not used for object selection (use labels instead)
+                      - They can store larger data chunks than labels
+                      - They can include non-alphanumeric characters
+                      - They support structured data in their values
+                      - They can be automatically modified by system components
+                    type: object
+                    additionalProperties:
+                      type: string
+                  podLabels:
+                    description: |
+                      Custom labels that will be added to the pods in the development
+                      environment. These labels serve multiple important purposes in
+                      the Kubernetes ecosystem and are crucial for pod identification
+                      and management.
+
+                      Pod labels enable:
+                      - Runtime identification and tracking
+                      - Capability management
+                      - Service discovery
+                      - Resource grouping
+                      - Policy application
+                      - Monitoring and metrics
+
+                      In the KDL context, labels are particularly important for:
+                      - Associating pods with specific runtimes
+                      - Tracking capability versions
+                      - Enabling selective service routing
+                      - Supporting audit requirements
+                      - Facilitating resource management
+
+                      Example labels include:
+                      - runtimeId: Identifies the specific runtime version
+                      - capabilityId: Tracks enabled capabilities
+                      - environmentType: Distinguishes development environments
+                      - userTier: Indicates resource tier allocation
+                    type: object
+                    additionalProperties:
+                      type: string
                   podSecurityContext:
                     description: |
                       Pod-level security context defines security settings that apply
@@ -1980,12 +2307,75 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  livenessProbeCustom:
+                    description: |
+                      Liveness probe configuration determines if a container is operating
+                      properly and should continue running. This probe helps maintain
+                      service health by automatically restarting unhealthy containers.
+
+                      Liveness probes are crucial for:
+                      - Detecting application deadlocks
+                      - Identifying hung processes
+                      - Managing memory leaks
+                      - Handling unrecoverable errors
+                      - Maintaining service reliability
+
+                      The probe should check:
+                      - Basic application health
+                      - Critical service functions
+                      - Resource availability
+                      - System stability
+                      - Core dependencies
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for liveness checking. Should
+                          verify basic service health without heavy processing.
+
+                          The endpoint should:
+                          - Respond quickly
+                          - Check critical functions
+                          - Avoid external dependencies
+                          - Minimize resource usage
+                          - Provide clear health status
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path for the liveness check. Should be a lightweight
+                              endpoint that confirms basic service health.
+                            type: string
+                          port:
+                            description: |
+                              Port number where the liveness check endpoint is exposed.
+                              Should be consistently available.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of times the probe can fail before triggering a container
+                          restart. Balance between reliability and stability.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait after container startup before beginning liveness
+                          checks. Must exceed normal startup time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Interval between probe attempts. More frequent checks provide
+                          faster detection of issues.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Number of consecutive successes required after failure to
+                          consider the container healthy again.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Maximum time allowed for a probe attempt. Should be short
+                          enough to detect hanging processes.
+                        type: integer
                   readinessProbe:
                     description: |
                       Readiness probe configuration determines if the MLflow container
@@ -2026,12 +2416,75 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  readinessProbeCustom:
+                    description: |
+                      Readiness probe configuration determines when a container is ready
+                      to accept traffic. This probe is crucial for ensuring that only
+                      fully functional instances receive requests.
+
+                      Readiness probes are essential for:
+                      - Service availability management
+                      - Load balancer configuration
+                      - Traffic routing control
+                      - Deployment orchestration
+                      - Service mesh integration
+
+                      The probe should verify:
+                      - Required services are available
+                      - Dependencies are accessible
+                      - Database connections are established
+                      - Cache is warmed up
+                      - System resources are ready
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for service readiness checking.
+                          Should verify that the service is fully operational.
+
+                          The endpoint should validate:
+                          - Application readiness
+                          - Database connectivity
+                          - Cache availability
+                          - External service access
+                          - Required resources
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path that indicates service readiness. Should return
+                              success only when the service is fully operational.
+                            type: string
+                          port:
+                            description: |
+                              Port number for the readiness check. Must be accessible
+                              within the cluster.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of consecutive probe failures before marking the container
+                          as not ready. Affects service availability during issues.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait before starting readiness checks. Should account
+                          for normal service initialization time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Frequency of readiness checks. Balance between responsiveness
+                          and system load.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Number of consecutive successes required after failure before
+                          marking container as ready.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Timeout for readiness probe attempts. Should be less than
+                          periodSeconds.
+                        type: integer
                   startupProbe:
                     description: |
                       Startup probe configuration helps handle slow-starting MLflow
@@ -2072,12 +2525,76 @@ spec:
                         description: "Number of seconds before probe times out."
                         type: integer
                         minimum: 1
-                      custom:
+                  startupProbeCustom:
+                    description: |
+                      Startup probe configuration helps handle slow-starting containers by
+                      providing additional time for initialization before other probes begin.
+                      This is particularly important for development environments that may
+                      require significant setup time for tools and dependencies.
+
+                      A startup probe serves several critical purposes:
+                      - Prevents premature container restarts during initialization
+                      - Accommodates varying startup times across different environments
+                      - Ensures proper tool and dependency initialization
+                      - Provides time for runtime compilation and cache warming
+                      - Maintains service stability during startup phases
+
+                      The probe can be configured to check different aspects of readiness:
+                      - HTTP endpoints for web-based services
+                      - TCP ports for network services
+                      - Command execution for system checks
+                      - File system markers for initialization completion
+                      - Service-specific health indicators
+                    type: object
+                    properties:
+                      httpGet:
                         description: |
-                          Custom probe configuration that overrides the default settings.
-                          This can include specific HTTP endpoints, commands, or TCP
-                          socket checks.
-                        x-kubernetes-preserve-unknown-fields: true
+                          HTTP GET request configuration for health checking. This method
+                          is commonly used for web-based services and APIs.
+
+                          The HTTP check validates:
+                          - Service availability
+                          - Basic functionality
+                          - Network accessibility
+                          - Authentication readiness
+                          - Required dependencies
+                        type: object
+                        properties:
+                          path:
+                            description: |
+                              URL path to check for service health. Should be an endpoint
+                              that accurately reflects service readiness.
+                            type: string
+                          port:
+                            description: |
+                              Port number where the health check endpoint is exposed.
+                              Must match the service's configured port.
+                            type: integer
+                      failureThreshold:
+                        description: |
+                          Number of times the probe can fail before giving up. Higher
+                          values provide more tolerance for temporary issues during startup.
+                        type: integer
+                      initialDelaySeconds:
+                        description: |
+                          Time to wait after container startup before beginning probe
+                          checks. Should account for typical initialization time.
+                        type: integer
+                      periodSeconds:
+                        description: |
+                          Interval between probe attempts. Balance between quick detection
+                          and resource usage.
+                        type: integer
+                      successThreshold:
+                        description: |
+                          Minimum consecutive successes required to consider the probe
+                          successful after failure.
+                        type: integer
+                      timeoutSeconds:
+                        description: |
+                          Maximum time allowed for a probe attempt before considering
+                          it failed.
+                        type: integer
                   initContainers:
                     description: |
                       Configuration for initialization containers that run before the

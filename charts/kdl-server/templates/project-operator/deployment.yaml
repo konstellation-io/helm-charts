@@ -66,20 +66,20 @@ spec:
               containerPort: {{ $port.targetPort }}
               protocol: TCP
             {{- end }}
+          {{- with .Values.projectOperator.lifecycle }}
           lifecycle:
-            {{- with .Values.projectOperator.lifecycle }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 8081
+              port: {{ .Values.projectOperator.service.targetPort | default .Values.projectOperator.service.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /readyz
-              port: 8081
+              port: {{ .Values.projectOperator.service.targetPort | default .Values.projectOperator.service.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:

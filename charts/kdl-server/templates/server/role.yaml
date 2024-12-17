@@ -18,11 +18,10 @@ rules:
     - '*'
   # CRDs
   - apiGroups:
-    - "project.konstellation.io"
     - "kdl.konstellation.io"
     resources:
     - "kdlprojects"
-    - "usertools"
+    - "kdlusertools"
     verbs:
     - '*'
 {{- end }}
