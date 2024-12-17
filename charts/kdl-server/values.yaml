@@ -1346,9 +1346,10 @@ projectOperator:
     apiVersion: kdl.konstellation.io/v1
     kind: KDLProject
     metadata:
-      name: kdlproject-lele -> add from API
-      namespace: kdl -> get from env (API)
+      name: kdlproject-to-be-replaced
+      namespace: kdl-to-be-replaced
     spec:
+      projectId: kdlproject-id-to-be-replaced
       mlflow:
         image:
           repository: konstellation/kdl-mlflow
