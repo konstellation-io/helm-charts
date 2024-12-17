@@ -1,20 +1,5 @@
 {{/*
 #######################
-# KDL SERVER SECTION
-#######################
-*/}}
-
-{{/*
-Validate that if 'env.MINIO_ENDPOINT' exists
-*/}}
-{{- define "validate.server_environment" -}}
-{{- if or (not .Values.env.MINIO_ENDPOINT) -}}
-  {{- fail "Error: environment required env.MINIO_ENDPOINT doesn't exist" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-#######################
 # CLEANER SECTION
 #######################
 */}}
