@@ -1463,16 +1463,48 @@ userToolsOperator:
   # -- Configure args
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   args:
+    - --enable-http2
     - --health-probe-bind-address=:8081
-    - --metrics-bind-address=127.0.0.1:8080
-    # - --leader-elect
-    # - --leader-election-id=user-tools-operator
+    - --leader-elect
+    - --leader-election-id=user-tools-operator
+    - --metrics-bind-address=:8080
+    - --zap-log-level=error
+    - --zap-stacktrace-level=error
 
   # -- Configure command
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   command: []
     # - echo
     # - "Hello, World!"
+
+  # -- Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service:
+    # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
+    type: ClusterIP
+    # -- Kubernetes Service port
+    port: 8081
+    # -- Kubernetes Service health check path
+    # healthPath: ""
+    # -- NodePort port (only when type is NodePort)
+    # nodePort: 32000
+    # -- Pod expose port
+    targetPort: 8081
+    # -- Pod extra ports
+    extraPorts:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+
+  # -- Enable ServiceMonitor to get metrics
+  # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
+  serviceMonitor:
+    # -- Enable or disable
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    metricRelabelings: []
+    relabelings: []
 
   # -- Configure lifecycle hooks
   # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/

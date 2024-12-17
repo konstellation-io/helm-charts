@@ -1,6 +1,6 @@
 {{ if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   name: {{ include "kdl-server.user-tools-operator.name" . }}
   labels:
