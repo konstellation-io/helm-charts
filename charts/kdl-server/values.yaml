@@ -1212,9 +1212,10 @@ projectOperator:
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   args:
     - --health-probe-bind-address=:8081
-    - --metrics-bind-address=127.0.0.1:8080
     - --leader-elect
     - --leader-election-id=project-operator
+    - --metrics-bind-address=:8080
+    - --metrics-require-rbac
 
   # -- Configure command
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
@@ -1228,18 +1229,18 @@ projectOperator:
     # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
     type: ClusterIP
     # -- Kubernetes Service port
-    port: 80
+    port: 8081
     # -- Kubernetes Service health check path
     # healthPath: ""
     # -- NodePort port (only when type is NodePort)
     # nodePort: 32000
     # -- Pod expose port
-    targetPort: 8443
+    targetPort: 8081
     # -- Pod extra ports
-    # extraPorts:
-    # - name: metrics
-    #   port: 9080
-    #   targetPort: 9080
+    extraPorts:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
 
   # -- Enable ServiceMonitor to get metrics
   # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
@@ -1346,10 +1347,11 @@ projectOperator:
     apiVersion: kdl.konstellation.io/v1
     kind: KDLProject
     metadata:
-      name: kdlproject-to-be-replaced
-      namespace: kdl-to-be-replaced
+      name: replaced-by-kdl-api
+      namespace: replaced-by-kdl-api
     spec:
-      projectId: kdlproject-id-to-be-replaced
+      projectId: replaced-by-kdl-api
+      domain: kdl.local
       mlflow:
         image:
           repository: konstellation/kdl-mlflow
