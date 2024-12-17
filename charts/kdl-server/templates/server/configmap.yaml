@@ -18,12 +18,12 @@ data:
 
   config.json: |+
     {
-      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }}
+      "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }},
       "KG_SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg",
       "KNOWLEDGE_GALAXY_ENABLED": {{ .Values.knowledgeGalaxy.enabled }},
       "RELEASE_VERSION": "{{ .Chart.AppVersion }}",
       "SERVER_NAME": "{{ .Values.global.serverName }}",
-      "SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}",
+      "SERVER_URL": "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}"
     }
 
   ##
