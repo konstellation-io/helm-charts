@@ -6,79 +6,26 @@ metadata:
   labels:
     {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
+# Core API permissions for basic resources
 - apiGroups:
   - ""
   resources:
-  - namespaces
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
   - secrets
-  verbs:
-  - '*'
-- apiGroups:
-  - ""
-  resources:
-  - pods
+  - persistentvolumeclaims
+  - configmaps
   - serviceaccounts
   - services
+  - events
   verbs:
   - '*'
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - statefulsets
-  verbs:
-  - '*'
-- apiGroups:
-    - rbac.authorization.k8s.io
-  resources:
-    - roles
-    - rolebindings
-  verbs:
-    - '*'
-- apiGroups:
-    - networking.k8s.io
-  resources:
-    - ingresses
-  verbs:
-    - '*'
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - servicemonitors
-  verbs:
-  - get
-  - create
-- apiGroups:
-  - apps
-  resourceNames:
-  - user-tools-operator
-  resources:
-  - deployments/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-- apiGroups:
-  - apps
-  resources:
-  - replicasets
-  - deployments
-  verbs:
-  - get
+
+# KDLUserTools custom resource permissions
 - apiGroups:
   - kdl.konstellation.io
   resources:
-  - '*'
+  - kdlusertools
+  - kdlusertools/status
+  - kdlusertools/finalizers
   verbs:
   - create
   - delete
@@ -87,4 +34,46 @@ rules:
   - patch
   - update
   - watch
+
+# Workload permissions
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - statefulsets
+  verbs:
+  - '*'
+
+# Network-related permissions
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - '*'
+
+# Autoscaling permissions
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - '*'
+
+# Pod Disruption Budget permissions
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - '*'
+
+# Pod Security Context permissions for security configurations
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
 {{- end }}
