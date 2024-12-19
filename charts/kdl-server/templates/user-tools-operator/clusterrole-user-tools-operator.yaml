@@ -1,19 +1,11 @@
-{{- if .Values.projectOperator.enabled }}
+{{ if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "kdl-server.project-operator.name" . }}
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
   labels:
-    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
-# Existing namespace permissions
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-
 # Core API permissions for basic resources
 - apiGroups:
   - ""
@@ -27,13 +19,13 @@ rules:
   verbs:
   - '*'
 
-# KDLProject custom resource permissions
+# KDLUserTools custom resource permissions
 - apiGroups:
   - kdl.konstellation.io
   resources:
-  - kdlprojects
-  - kdlprojects/status
-  - kdlprojects/finalizers
+  - kdlusertools
+  - kdlusertools/status
+  - kdlusertools/finalizers
   verbs:
   - create
   - delete
@@ -48,6 +40,7 @@ rules:
   - apps
   resources:
   - deployments
+  - statefulsets
   verbs:
   - '*'
 

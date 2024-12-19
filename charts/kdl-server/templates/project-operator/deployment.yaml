@@ -73,13 +73,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 8081
+              port: {{ .Values.projectOperator.service.targetPort | default .Values.projectOperator.service.port }}
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /readyz
-              port: 8081
+              port: {{ .Values.projectOperator.service.targetPort | default .Values.projectOperator.service.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:

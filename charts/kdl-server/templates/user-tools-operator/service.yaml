@@ -1,0 +1,26 @@
+{{ if .Values.userToolsOperator.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kdl-server.user-tools-operator.name" . }}
+  labels:
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
+spec:
+  type: {{ .Values.userToolsOperator.service.type }}
+  ports:
+    - port: {{ .Values.userToolsOperator.service.port }}
+      targetPort: {{ .Values.userToolsOperator.service.targetPort | default .Values.userToolsOperator.service.port }}
+      protocol: TCP
+      name: http
+      {{- if and (eq "NodePort" .Values.userToolsOperator.service.type) .Values.userToolsOperator.service.nodePort }}
+      nodePort: {{ .Values.userToolsOperator.service.nodePort }}
+      {{- end }}
+    {{- range $port := .Values.userToolsOperator.service.extraPorts }}
+    - name: {{ $port.name }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.targetPort }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "kdl-server.selectorUserToolsOperatorLabels" . | nindent 4 }}
+{{ end }}
