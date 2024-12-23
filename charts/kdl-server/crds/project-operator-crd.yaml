@@ -47,6 +47,10 @@ spec:
               Servers may infer this from the endpoint the client submits requests to.
               Cannot be updated. In CamelCase.
             type: string
+          status:
+            description: Status defines the observed state of KDLProject
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
           metadata:
             type: object
           spec:
@@ -58,6 +62,7 @@ spec:
             required:
               - projectId
               - domain
+            x-kubernetes-preserve-unknown-fields: true
             properties:
               nameOverride:
                 description: |
@@ -260,7 +265,15 @@ spec:
                       are crucial for maintaining a secure deployment that follows the
                       principle of least privilege.
                     type: object
+                    additionalProperties: true
                     properties:
+                      privileged:
+                        description: |
+                          Controls whether the container runs in privileged mode.
+                          Running containers in privileged mode gives them almost the same
+                          access as processes running on the host. This should be avoided
+                          unless absolutely necessary for security reasons.
+                        type: boolean
                       runAsUser:
                         description: |
                           The UID to run the Filebrowser process as. Using a non-root user
@@ -1588,7 +1601,15 @@ spec:
                       are crucial for maintaining a secure deployment that follows the
                       principle of least privilege.
                     type: object
+                    additionalProperties: true
                     properties:
+                      privileged:
+                        description: |
+                          Controls whether the container runs in privileged mode.
+                          Running containers in privileged mode gives them almost the same
+                          access as processes running on the host. This should be avoided
+                          unless absolutely necessary for security reasons.
+                        type: boolean
                       runAsUser:
                         description: |
                           The UID to run the MLflow process as. Using a non-root user
@@ -2679,7 +2700,6 @@ spec:
                         - "False": Condition is not met
                         - "Unknown": Status cannot be determined
                       type: string
-                      enum: [True, False, Unknown]
                     lastTransitionTime:
                       description: |
                         Timestamp of when the condition last transitioned from one
@@ -2747,3 +2767,7 @@ spec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
             x-kubernetes-preserve-unknown-fields: true
+    served: true
+    storage: true
+    subresources:
+      status: {}

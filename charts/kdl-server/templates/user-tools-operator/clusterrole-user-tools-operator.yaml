@@ -1,4 +1,4 @@
-{{ if .Values.userToolsOperator.enabled }}
+{{- if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -6,9 +6,13 @@ metadata:
   labels:
     {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
-# Core API permissions for basic resources
-- apiGroups:
-  - ""
+# Namespace
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get"]
+
+# Core
+- apiGroups: [""]
   resources:
   - secrets
   - persistentvolumeclaims
@@ -16,12 +20,35 @@ rules:
   - serviceaccounts
   - services
   - events
-  verbs:
-  - '*'
+  verbs: ["*"]
 
-# KDLUserTools custom resource permissions
-- apiGroups:
-  - kdl.konstellation.io
+# Workload
+- apiGroups: ["apps"]
+  resources:
+  - statefulsets
+  verbs: ["*"]
+
+# Network
+- apiGroups: ["networking.k8s.io"]
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs: ["*"]
+
+# Resource
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["*"]
+
+# Security and availability
+- apiGroups: ["policy"]
+  resources:
+  - poddisruptionbudgets
+  - podsecuritypolicies
+  verbs: ["*"]
+
+# KDL UserTools operator
+- apiGroups: ["kdl.konstellation.io"]
   resources:
   - kdlusertools
   - kdlusertools/status
@@ -35,45 +62,17 @@ rules:
   - update
   - watch
 
-# Workload permissions
-- apiGroups:
-  - apps
+# KDL UserTools
+- apiGroups: ["kdl.konstellation.io"]
   resources:
-  - deployments
-  - statefulsets
+  - kdlusertools
+  - kdlusertools/status
   verbs:
-  - '*'
-
-# Network-related permissions
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses
-  - networkpolicies
-  verbs:
-  - '*'
-
-# Autoscaling permissions
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  verbs:
-  - '*'
-
-# Pod Disruption Budget permissions
-- apiGroups:
-  - policy
-  resources:
-  - poddisruptionbudgets
-  verbs:
-  - '*'
-
-# Pod Security Context permissions for security configurations
-- apiGroups:
-  - policy
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 {{- end }}

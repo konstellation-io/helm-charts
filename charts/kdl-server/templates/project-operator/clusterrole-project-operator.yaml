@@ -6,81 +6,57 @@ metadata:
   labels:
     {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
 rules:
-# Existing namespace permissions
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
+  # Namespace Management
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
 
-# Core API permissions for basic resources
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  - persistentvolumeclaims
-  - configmaps
-  - serviceaccounts
-  - services
-  - events
-  verbs:
-  - '*'
+  # Core Resources Management
+  - apiGroups: [""]
+    resources:
+      - secrets
+      - persistentvolumeclaims
+      - configmaps
+      - serviceaccounts
+      - services
+      - events
+      - pods
+    verbs: ["*"]
 
-# KDLProject custom resource permissions
-- apiGroups:
-  - kdl.konstellation.io
-  resources:
-  - kdlprojects
-  - kdlprojects/status
-  - kdlprojects/finalizers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  # Workload Management
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["*"]
 
-# Workload permissions
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  verbs:
-  - '*'
+  # Network Management
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+      - networkpolicies
+    verbs: ["*"]
 
-# Network-related permissions
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses
-  - networkpolicies
-  verbs:
-  - '*'
+  # Resource Management
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["*"]
 
-# Autoscaling permissions
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  verbs:
-  - '*'
+  # Security and Availability
+  - apiGroups: ["policy"]
+    resources:
+      - poddisruptionbudgets
+      - podsecuritypolicies
+    verbs: ["*"]
 
-# Pod Disruption Budget permissions
-- apiGroups:
-  - policy
-  resources:
-  - poddisruptionbudgets
-  verbs:
-  - '*'
+  # KDL Project Management
+  - apiGroups: ["kdl.konstellation.io"]
+    resources:
+      - kdlprojects
+      - kdlprojects/status
+      - kdlprojects/finalizers
+    verbs: ["*"]
 
-# Pod Security Context permissions for security configurations
-- apiGroups:
-  - policy
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - use
+  # Operator Status Management
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
 {{- end }}

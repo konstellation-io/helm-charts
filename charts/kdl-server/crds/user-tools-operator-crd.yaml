@@ -70,6 +70,10 @@ spec:
               resource represents a complete development environment for a single user
               within the KDL platform.
             type: string
+          status:
+            description: Status defines the observed state of KDLProject
+            type: object
+            x-kubernetes-preserve-unknown-fields: true
           metadata:
             type: object
           spec:
@@ -112,6 +116,7 @@ spec:
               - username
               - usernameSlug
               - sharedVolume
+            x-kubernetes-preserve-unknown-fields: true
             properties:
               # common configuration
               nameOverride:
@@ -432,6 +437,7 @@ spec:
                   - Process isolation
                   - Compliance requirements
                 type: object
+                additionalProperties: true
                 properties:
                   fsGroup:
                     description: |
@@ -482,7 +488,15 @@ spec:
                   - Compliance enforcement
                   - Vulnerability mitigation
                 type: object
+                additionalProperties: true
                 properties:
+                  privileged:
+                    description: |
+                      Controls whether the container runs in privileged mode.
+                      Running containers in privileged mode gives them almost the same
+                      access as processes running on the host. This should be avoided
+                      unless absolutely necessary for security reasons.
+                    type: boolean
                   capabilities:
                     description: |
                       Linux capabilities configuration for fine-grained privilege
@@ -1640,3 +1654,7 @@ spec:
                   freshness of status information and monitoring update frequency.
                 type: string
                 format: date-time
+    served: true
+    storage: true
+    subresources:
+      status: {}
