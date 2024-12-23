@@ -1,1047 +1,1642 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: usertools.kdl.konstellation.io
+  name: kdlusertools.kdl.konstellation.io
 spec:
   group: kdl.konstellation.io
   names:
-    kind: UserTools
-    listKind: UserToolsList
-    plural: usertools
-    singular: usertool
+    kind: KDLUserTools
+    listKind: KDLUserToolsList
+    plural: kdlusertools
+    singular: kdlusertools
+    shortNames:
+      - kdlusertools
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     served: true
     storage: true
+    additionalPrinterColumns:
+    - jsonPath: .spec.usernameSlug
+      name: User
+      type: string
+    - jsonPath: .spec.vscodeRuntime.image.tag
+      name: Runtime
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+      description: "Time since the environment was created"
     schema:
       openAPIV3Schema:
         type: object
-        description: UserTools is the Schema for the usertools API
+        description: |
+          KDLUserTools represents a complete development environment for data scientists
+          within the KDL platform. It orchestrates various components including VSCode,
+          repository management, and shared storage to provide a comprehensive workspace
+          that balances isolation and collaboration.
+
+          This environment is designed to:
+          - Provide a secure, isolated development space for each user
+          - Enable collaboration through shared storage and version control
+          - Ensure consistent development environments across the team
+          - Integrate with enterprise authentication and authorization systems
+          - Support various development workflows and tools
+
+          Each UserTools instance manages:
+          - A VSCode server for web-based development
+          - Repository synchronization for project access
+          - Persistent storage for user data
+          - Shared storage for team collaboration
+          - Resource allocation and limits
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+
+              The APIVersion facilitates future updates and modifications to the resource
+              definition while maintaining backward compatibility. It follows the
+              standard Kubernetes versioning scheme.
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated. In CamelCase.
+
+              For UserTools, this will always be "KDLUserTools", indicating that this
+              resource represents a complete development environment for a single user
+              within the KDL platform.
             type: string
           metadata:
             type: object
           spec:
-            description: Spec defines the desired state of UserTools
+            description: |
+              Spec defines the desired state of UserTools. It includes comprehensive
+              configuration for all aspects of the user's development environment,
+              ensuring a complete and properly configured workspace.
+
+              The specification covers several key areas:
+              1. User Identity and Access Control
+                 - Username and authentication settings
+                 - Service account configuration
+                 - Resource access permissions
+
+              2. Development Environment
+                 - VSCode server configuration
+                 - Runtime environment settings
+                 - Tool versions and configurations
+
+              3. Storage and Data Management
+                 - Persistent volume configuration
+                 - Shared storage access
+                 - Repository management
+
+              4. Network and Security
+                 - Ingress configuration
+                 - Security contexts
+                 - Network policies
+
+              5. Resource Management
+                 - CPU and memory allocation
+                 - Node selection and affinity
+                 - Scaling policies
+
+              This comprehensive configuration ensures that each user has a properly
+              isolated, secure, and fully functional development environment that
+              integrates seamlessly with the broader KDL platform.
             type: object
+            required:
+              - username
+              - usernameSlug
+              - sharedVolume
             properties:
-              affinity:
-                description: If specified, the pod's scheduling constraints.
-                properties:
-                  nodeAffinity:
-                    description: Describes node affinity scheduling rules for the
-                      pod.
-                    properties:
-                      preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to
-                          nodes that satisfy the affinity expressions specified by
-                          this field, but it may choose a node that violates one or
-                          more of the expressions. The node that is most preferred
-                          is the one with the greatest sum of weights, i.e. for each
-                          node that meets all of the scheduling requirements (resource
-                          request, requiredDuringScheduling affinity expressions,
-                          etc.), compute a sum by iterating through the elements of
-                          this field and adding "weight" to the sum if the node matches
-                          the corresponding matchExpressions; the node(s) with the
-                          highest sum are the most preferred.
-                        items:
-                          description: An empty preferred scheduling term matches
-                            all objects with implicit weight 0 (i.e. it's a no-op).
-                            A null preferred scheduling term matches no objects (i.e.
-                            is also a no-op).
-                          properties:
-                            preference:
-                              description: A node selector term, associated with the
-                                corresponding weight.
-                              properties:
-                                matchExpressions:
-                                  description: A list of node selector requirements
-                                    by node's labels.
-                                  items:
-                                    description: A node selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: The label key that the selector
-                                          applies to.
-                                        type: string
-                                      operator:
-                                        description: Represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists, DoesNotExist. Gt, and
-                                          Lt.
-                                        type: string
-                                      values:
-                                        description: An array of string values. If
-                                          the operator is In or NotIn, the values
-                                          array must be non-empty. If the operator
-                                          is Exists or DoesNotExist, the values array
-                                          must be empty. If the operator is Gt or
-                                          Lt, the values array must have a single
-                                          element, which will be interpreted as an
-                                          integer. This array is replaced during a
-                                          strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchFields:
-                                  description: A list of node selector requirements
-                                    by node's fields.
-                                  items:
-                                    description: A node selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: The label key that the selector
-                                          applies to.
-                                        type: string
-                                      operator:
-                                        description: Represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists, DoesNotExist. Gt, and
-                                          Lt.
-                                        type: string
-                                      values:
-                                        description: An array of string values. If
-                                          the operator is In or NotIn, the values
-                                          array must be non-empty. If the operator
-                                          is Exists or DoesNotExist, the values array
-                                          must be empty. If the operator is Gt or
-                                          Lt, the values array must have a single
-                                          element, which will be interpreted as an
-                                          integer. This array is replaced during a
-                                          strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                              type: object
-                            weight:
-                              description: Weight associated with matching the corresponding
-                                nodeSelectorTerm, in the range 1-100.
-                              format: int32
-                              type: integer
-                          required:
-                          - preference
-                          - weight
-                          type: object
-                        type: array
-                      requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the affinity requirements specified by this
-                          field are not met at scheduling time, the pod will not be
-                          scheduled onto the node. If the affinity requirements specified
-                          by this field cease to be met at some point during pod execution
-                          (e.g. due to an update), the system may or may not try to
-                          eventually evict the pod from its node.
-                        properties:
-                          nodeSelectorTerms:
-                            description: Required. A list of node selector terms.
-                              The terms are ORed.
-                            items:
-                              description: A null or empty node selector term matches
-                                no objects. The requirements of them are ANDed. The
-                                TopologySelectorTerm type implements a subset of the
-                                NodeSelectorTerm.
-                              properties:
-                                matchExpressions:
-                                  description: A list of node selector requirements
-                                    by node's labels.
-                                  items:
-                                    description: A node selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: The label key that the selector
-                                          applies to.
-                                        type: string
-                                      operator:
-                                        description: Represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists, DoesNotExist. Gt, and
-                                          Lt.
-                                        type: string
-                                      values:
-                                        description: An array of string values. If
-                                          the operator is In or NotIn, the values
-                                          array must be non-empty. If the operator
-                                          is Exists or DoesNotExist, the values array
-                                          must be empty. If the operator is Gt or
-                                          Lt, the values array must have a single
-                                          element, which will be interpreted as an
-                                          integer. This array is replaced during a
-                                          strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchFields:
-                                  description: A list of node selector requirements
-                                    by node's fields.
-                                  items:
-                                    description: A node selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: The label key that the selector
-                                          applies to.
-                                        type: string
-                                      operator:
-                                        description: Represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists, DoesNotExist. Gt, and
-                                          Lt.
-                                        type: string
-                                      values:
-                                        description: An array of string values. If
-                                          the operator is In or NotIn, the values
-                                          array must be non-empty. If the operator
-                                          is Exists or DoesNotExist, the values array
-                                          must be empty. If the operator is Gt or
-                                          Lt, the values array must have a single
-                                          element, which will be interpreted as an
-                                          integer. This array is replaced during a
-                                          strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                              type: object
-                            type: array
-                        required:
-                        - nodeSelectorTerms
-                        type: object
-                    type: object
-                  podAffinity:
-                    description: Describes pod affinity scheduling rules (e.g. co-locate
-                      this pod in the same node, zone, etc. as some other pod(s)).
-                    properties:
-                      preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to
-                          nodes that satisfy the affinity expressions specified by
-                          this field, but it may choose a node that violates one or
-                          more of the expressions. The node that is most preferred
-                          is the one with the greatest sum of weights, i.e. for each
-                          node that meets all of the scheduling requirements (resource
-                          request, requiredDuringScheduling affinity expressions,
-                          etc.), compute a sum by iterating through the elements of
-                          this field and adding "weight" to the sum if the node has
-                          pods which matches the corresponding podAffinityTerm; the
-                          node(s) with the highest sum are the most preferred.
-                        items:
-                          description: The weights of all of the matched WeightedPodAffinityTerm
-                            fields are added per-node to find the most preferred node(s)
-                          properties:
-                            podAffinityTerm:
-                              description: Required. A pod affinity term, associated
-                                with the corresponding weight.
-                              properties:
-                                labelSelector:
-                                  description: A label query over a set of resources,
-                                    in this case pods.
-                                  properties:
-                                    matchExpressions:
-                                      description: matchExpressions is a list of label
-                                        selector requirements. The requirements are
-                                        ANDed.
-                                      items:
-                                        description: A label selector requirement
-                                          is a selector that contains values, a key,
-                                          and an operator that relates the key and
-                                          values.
-                                        properties:
-                                          key:
-                                            description: key is the label key that
-                                              the selector applies to.
-                                            type: string
-                                          operator:
-                                            description: operator represents a key's
-                                              relationship to a set of values. Valid
-                                              operators are In, NotIn, Exists and
-                                              DoesNotExist.
-                                            type: string
-                                          values:
-                                            description: values is an array of string
-                                              values. If the operator is In or NotIn,
-                                              the values array must be non-empty.
-                                              If the operator is Exists or DoesNotExist,
-                                              the values array must be empty. This
-                                              array is replaced during a strategic
-                                              merge patch.
-                                            items:
-                                              type: string
-                                            type: array
-                                        required:
-                                        - key
-                                        - operator
-                                        type: object
-                                      type: array
-                                    matchLabels:
-                                      additionalProperties:
-                                        type: string
-                                      description: matchLabels is a map of {key,value}
-                                        pairs. A single {key,value} in the matchLabels
-                                        map is equivalent to an element of matchExpressions,
-                                        whose key field is "key", the operator is
-                                        "In", and the values array contains only "value".
-                                        The requirements are ANDed.
-                                      type: object
-                                  type: object
-                                namespaceSelector:
-                                  description: A label query over the set of namespaces
-                                    that the term applies to. The term is applied
-                                    to the union of the namespaces selected by this
-                                    field and the ones listed in the namespaces field.
-                                    null selector and null or empty namespaces list
-                                    means "this pod's namespace". An empty selector
-                                    ({}) matches all namespaces. This field is beta-level
-                                    and is only honored when PodAffinityNamespaceSelector
-                                    feature is enabled.
-                                  properties:
-                                    matchExpressions:
-                                      description: matchExpressions is a list of label
-                                        selector requirements. The requirements are
-                                        ANDed.
-                                      items:
-                                        description: A label selector requirement
-                                          is a selector that contains values, a key,
-                                          and an operator that relates the key and
-                                          values.
-                                        properties:
-                                          key:
-                                            description: key is the label key that
-                                              the selector applies to.
-                                            type: string
-                                          operator:
-                                            description: operator represents a key's
-                                              relationship to a set of values. Valid
-                                              operators are In, NotIn, Exists and
-                                              DoesNotExist.
-                                            type: string
-                                          values:
-                                            description: values is an array of string
-                                              values. If the operator is In or NotIn,
-                                              the values array must be non-empty.
-                                              If the operator is Exists or DoesNotExist,
-                                              the values array must be empty. This
-                                              array is replaced during a strategic
-                                              merge patch.
-                                            items:
-                                              type: string
-                                            type: array
-                                        required:
-                                        - key
-                                        - operator
-                                        type: object
-                                      type: array
-                                    matchLabels:
-                                      additionalProperties:
-                                        type: string
-                                      description: matchLabels is a map of {key,value}
-                                        pairs. A single {key,value} in the matchLabels
-                                        map is equivalent to an element of matchExpressions,
-                                        whose key field is "key", the operator is
-                                        "In", and the values array contains only "value".
-                                        The requirements are ANDed.
-                                      type: object
-                                  type: object
-                                namespaces:
-                                  description: namespaces specifies a static list
-                                    of namespace names that the term applies to. The
-                                    term is applied to the union of the namespaces
-                                    listed in this field and the ones selected by
-                                    namespaceSelector. null or empty namespaces list
-                                    and null namespaceSelector means "this pod's namespace"
-                                  items:
-                                    type: string
-                                  type: array
-                                topologyKey:
-                                  description: This pod should be co-located (affinity)
-                                    or not co-located (anti-affinity) with the pods
-                                    matching the labelSelector in the specified namespaces,
-                                    where co-located is defined as running on a node
-                                    whose value of the label with key topologyKey
-                                    matches that of any node on which any of the selected
-                                    pods is running. Empty topologyKey is not allowed.
-                                  type: string
-                              required:
-                              - topologyKey
-                              type: object
-                            weight:
-                              description: weight associated with matching the corresponding
-                                podAffinityTerm, in the range 1-100.
-                              format: int32
-                              type: integer
-                          required:
-                          - podAffinityTerm
-                          - weight
-                          type: object
-                        type: array
-                      requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the affinity requirements specified by this
-                          field are not met at scheduling time, the pod will not be
-                          scheduled onto the node. If the affinity requirements specified
-                          by this field cease to be met at some point during pod execution
-                          (e.g. due to a pod label update), the system may or may
-                          not try to eventually evict the pod from its node. When
-                          there are multiple elements, the lists of nodes corresponding
-                          to each podAffinityTerm are intersected, i.e. all terms
-                          must be satisfied.
-                        items:
-                          description: Defines a set of pods (namely those matching
-                            the labelSelector relative to the given namespace(s))
-                            that this pod should be co-located (affinity) or not co-located
-                            (anti-affinity) with, where co-located is defined as running
-                            on a node whose value of the label with key <topologyKey>
-                            matches that of any node on which a pod of the set of
-                            pods is running
-                          properties:
-                            labelSelector:
-                              description: A label query over a set of resources,
-                                in this case pods.
-                              properties:
-                                matchExpressions:
-                                  description: matchExpressions is a list of label
-                                    selector requirements. The requirements are ANDed.
-                                  items:
-                                    description: A label selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: key is the label key that the
-                                          selector applies to.
-                                        type: string
-                                      operator:
-                                        description: operator represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists and DoesNotExist.
-                                        type: string
-                                      values:
-                                        description: values is an array of string
-                                          values. If the operator is In or NotIn,
-                                          the values array must be non-empty. If the
-                                          operator is Exists or DoesNotExist, the
-                                          values array must be empty. This array is
-                                          replaced during a strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  description: matchLabels is a map of {key,value}
-                                    pairs. A single {key,value} in the matchLabels
-                                    map is equivalent to an element of matchExpressions,
-                                    whose key field is "key", the operator is "In",
-                                    and the values array contains only "value". The
-                                    requirements are ANDed.
-                                  type: object
-                              type: object
-                            namespaceSelector:
-                              description: A label query over the set of namespaces
-                                that the term applies to. The term is applied to the
-                                union of the namespaces selected by this field and
-                                the ones listed in the namespaces field. null selector
-                                and null or empty namespaces list means "this pod's
-                                namespace". An empty selector ({}) matches all namespaces.
-                                This field is beta-level and is only honored when
-                                PodAffinityNamespaceSelector feature is enabled.
-                              properties:
-                                matchExpressions:
-                                  description: matchExpressions is a list of label
-                                    selector requirements. The requirements are ANDed.
-                                  items:
-                                    description: A label selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: key is the label key that the
-                                          selector applies to.
-                                        type: string
-                                      operator:
-                                        description: operator represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists and DoesNotExist.
-                                        type: string
-                                      values:
-                                        description: values is an array of string
-                                          values. If the operator is In or NotIn,
-                                          the values array must be non-empty. If the
-                                          operator is Exists or DoesNotExist, the
-                                          values array must be empty. This array is
-                                          replaced during a strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  description: matchLabels is a map of {key,value}
-                                    pairs. A single {key,value} in the matchLabels
-                                    map is equivalent to an element of matchExpressions,
-                                    whose key field is "key", the operator is "In",
-                                    and the values array contains only "value". The
-                                    requirements are ANDed.
-                                  type: object
-                              type: object
-                            namespaces:
-                              description: namespaces specifies a static list of namespace
-                                names that the term applies to. The term is applied
-                                to the union of the namespaces listed in this field
-                                and the ones selected by namespaceSelector. null or
-                                empty namespaces list and null namespaceSelector means
-                                "this pod's namespace"
-                              items:
-                                type: string
-                              type: array
-                            topologyKey:
-                              description: This pod should be co-located (affinity)
-                                or not co-located (anti-affinity) with the pods matching
-                                the labelSelector in the specified namespaces, where
-                                co-located is defined as running on a node whose value
-                                of the label with key topologyKey matches that of
-                                any node on which any of the selected pods is running.
-                                Empty topologyKey is not allowed.
-                              type: string
-                          required:
-                          - topologyKey
-                          type: object
-                        type: array
-                    type: object
-                  podAntiAffinity:
-                    description: Describes pod anti-affinity scheduling rules (e.g.
-                      avoid putting this pod in the same node, zone, etc. as some
-                      other pod(s)).
-                    properties:
-                      preferredDuringSchedulingIgnoredDuringExecution:
-                        description: The scheduler will prefer to schedule pods to
-                          nodes that satisfy the anti-affinity expressions specified
-                          by this field, but it may choose a node that violates one
-                          or more of the expressions. The node that is most preferred
-                          is the one with the greatest sum of weights, i.e. for each
-                          node that meets all of the scheduling requirements (resource
-                          request, requiredDuringScheduling anti-affinity expressions,
-                          etc.), compute a sum by iterating through the elements of
-                          this field and adding "weight" to the sum if the node has
-                          pods which matches the corresponding podAffinityTerm; the
-                          node(s) with the highest sum are the most preferred.
-                        items:
-                          description: The weights of all of the matched WeightedPodAffinityTerm
-                            fields are added per-node to find the most preferred node(s)
-                          properties:
-                            podAffinityTerm:
-                              description: Required. A pod affinity term, associated
-                                with the corresponding weight.
-                              properties:
-                                labelSelector:
-                                  description: A label query over a set of resources,
-                                    in this case pods.
-                                  properties:
-                                    matchExpressions:
-                                      description: matchExpressions is a list of label
-                                        selector requirements. The requirements are
-                                        ANDed.
-                                      items:
-                                        description: A label selector requirement
-                                          is a selector that contains values, a key,
-                                          and an operator that relates the key and
-                                          values.
-                                        properties:
-                                          key:
-                                            description: key is the label key that
-                                              the selector applies to.
-                                            type: string
-                                          operator:
-                                            description: operator represents a key's
-                                              relationship to a set of values. Valid
-                                              operators are In, NotIn, Exists and
-                                              DoesNotExist.
-                                            type: string
-                                          values:
-                                            description: values is an array of string
-                                              values. If the operator is In or NotIn,
-                                              the values array must be non-empty.
-                                              If the operator is Exists or DoesNotExist,
-                                              the values array must be empty. This
-                                              array is replaced during a strategic
-                                              merge patch.
-                                            items:
-                                              type: string
-                                            type: array
-                                        required:
-                                        - key
-                                        - operator
-                                        type: object
-                                      type: array
-                                    matchLabels:
-                                      additionalProperties:
-                                        type: string
-                                      description: matchLabels is a map of {key,value}
-                                        pairs. A single {key,value} in the matchLabels
-                                        map is equivalent to an element of matchExpressions,
-                                        whose key field is "key", the operator is
-                                        "In", and the values array contains only "value".
-                                        The requirements are ANDed.
-                                      type: object
-                                  type: object
-                                namespaceSelector:
-                                  description: A label query over the set of namespaces
-                                    that the term applies to. The term is applied
-                                    to the union of the namespaces selected by this
-                                    field and the ones listed in the namespaces field.
-                                    null selector and null or empty namespaces list
-                                    means "this pod's namespace". An empty selector
-                                    ({}) matches all namespaces. This field is beta-level
-                                    and is only honored when PodAffinityNamespaceSelector
-                                    feature is enabled.
-                                  properties:
-                                    matchExpressions:
-                                      description: matchExpressions is a list of label
-                                        selector requirements. The requirements are
-                                        ANDed.
-                                      items:
-                                        description: A label selector requirement
-                                          is a selector that contains values, a key,
-                                          and an operator that relates the key and
-                                          values.
-                                        properties:
-                                          key:
-                                            description: key is the label key that
-                                              the selector applies to.
-                                            type: string
-                                          operator:
-                                            description: operator represents a key's
-                                              relationship to a set of values. Valid
-                                              operators are In, NotIn, Exists and
-                                              DoesNotExist.
-                                            type: string
-                                          values:
-                                            description: values is an array of string
-                                              values. If the operator is In or NotIn,
-                                              the values array must be non-empty.
-                                              If the operator is Exists or DoesNotExist,
-                                              the values array must be empty. This
-                                              array is replaced during a strategic
-                                              merge patch.
-                                            items:
-                                              type: string
-                                            type: array
-                                        required:
-                                        - key
-                                        - operator
-                                        type: object
-                                      type: array
-                                    matchLabels:
-                                      additionalProperties:
-                                        type: string
-                                      description: matchLabels is a map of {key,value}
-                                        pairs. A single {key,value} in the matchLabels
-                                        map is equivalent to an element of matchExpressions,
-                                        whose key field is "key", the operator is
-                                        "In", and the values array contains only "value".
-                                        The requirements are ANDed.
-                                      type: object
-                                  type: object
-                                namespaces:
-                                  description: namespaces specifies a static list
-                                    of namespace names that the term applies to. The
-                                    term is applied to the union of the namespaces
-                                    listed in this field and the ones selected by
-                                    namespaceSelector. null or empty namespaces list
-                                    and null namespaceSelector means "this pod's namespace"
-                                  items:
-                                    type: string
-                                  type: array
-                                topologyKey:
-                                  description: This pod should be co-located (affinity)
-                                    or not co-located (anti-affinity) with the pods
-                                    matching the labelSelector in the specified namespaces,
-                                    where co-located is defined as running on a node
-                                    whose value of the label with key topologyKey
-                                    matches that of any node on which any of the selected
-                                    pods is running. Empty topologyKey is not allowed.
-                                  type: string
-                              required:
-                              - topologyKey
-                              type: object
-                            weight:
-                              description: weight associated with matching the corresponding
-                                podAffinityTerm, in the range 1-100.
-                              format: int32
-                              type: integer
-                          required:
-                          - podAffinityTerm
-                          - weight
-                          type: object
-                        type: array
-                      requiredDuringSchedulingIgnoredDuringExecution:
-                        description: If the anti-affinity requirements specified by
-                          this field are not met at scheduling time, the pod will
-                          not be scheduled onto the node. If the anti-affinity requirements
-                          specified by this field cease to be met at some point during
-                          pod execution (e.g. due to a pod label update), the system
-                          may or may not try to eventually evict the pod from its
-                          node. When there are multiple elements, the lists of nodes
-                          corresponding to each podAffinityTerm are intersected, i.e.
-                          all terms must be satisfied.
-                        items:
-                          description: Defines a set of pods (namely those matching
-                            the labelSelector relative to the given namespace(s))
-                            that this pod should be co-located (affinity) or not co-located
-                            (anti-affinity) with, where co-located is defined as running
-                            on a node whose value of the label with key <topologyKey>
-                            matches that of any node on which a pod of the set of
-                            pods is running
-                          properties:
-                            labelSelector:
-                              description: A label query over a set of resources,
-                                in this case pods.
-                              properties:
-                                matchExpressions:
-                                  description: matchExpressions is a list of label
-                                    selector requirements. The requirements are ANDed.
-                                  items:
-                                    description: A label selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: key is the label key that the
-                                          selector applies to.
-                                        type: string
-                                      operator:
-                                        description: operator represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists and DoesNotExist.
-                                        type: string
-                                      values:
-                                        description: values is an array of string
-                                          values. If the operator is In or NotIn,
-                                          the values array must be non-empty. If the
-                                          operator is Exists or DoesNotExist, the
-                                          values array must be empty. This array is
-                                          replaced during a strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  description: matchLabels is a map of {key,value}
-                                    pairs. A single {key,value} in the matchLabels
-                                    map is equivalent to an element of matchExpressions,
-                                    whose key field is "key", the operator is "In",
-                                    and the values array contains only "value". The
-                                    requirements are ANDed.
-                                  type: object
-                              type: object
-                            namespaceSelector:
-                              description: A label query over the set of namespaces
-                                that the term applies to. The term is applied to the
-                                union of the namespaces selected by this field and
-                                the ones listed in the namespaces field. null selector
-                                and null or empty namespaces list means "this pod's
-                                namespace". An empty selector ({}) matches all namespaces.
-                                This field is beta-level and is only honored when
-                                PodAffinityNamespaceSelector feature is enabled.
-                              properties:
-                                matchExpressions:
-                                  description: matchExpressions is a list of label
-                                    selector requirements. The requirements are ANDed.
-                                  items:
-                                    description: A label selector requirement is a
-                                      selector that contains values, a key, and an
-                                      operator that relates the key and values.
-                                    properties:
-                                      key:
-                                        description: key is the label key that the
-                                          selector applies to.
-                                        type: string
-                                      operator:
-                                        description: operator represents a key's relationship
-                                          to a set of values. Valid operators are
-                                          In, NotIn, Exists and DoesNotExist.
-                                        type: string
-                                      values:
-                                        description: values is an array of string
-                                          values. If the operator is In or NotIn,
-                                          the values array must be non-empty. If the
-                                          operator is Exists or DoesNotExist, the
-                                          values array must be empty. This array is
-                                          replaced during a strategic merge patch.
-                                        items:
-                                          type: string
-                                        type: array
-                                    required:
-                                    - key
-                                    - operator
-                                    type: object
-                                  type: array
-                                matchLabels:
-                                  additionalProperties:
-                                    type: string
-                                  description: matchLabels is a map of {key,value}
-                                    pairs. A single {key,value} in the matchLabels
-                                    map is equivalent to an element of matchExpressions,
-                                    whose key field is "key", the operator is "In",
-                                    and the values array contains only "value". The
-                                    requirements are ANDed.
-                                  type: object
-                              type: object
-                            namespaces:
-                              description: namespaces specifies a static list of namespace
-                                names that the term applies to. The term is applied
-                                to the union of the namespaces listed in this field
-                                and the ones selected by namespaceSelector. null or
-                                empty namespaces list and null namespaceSelector means
-                                "this pod's namespace"
-                              items:
-                                type: string
-                              type: array
-                            topologyKey:
-                              description: This pod should be co-located (affinity)
-                                or not co-located (anti-affinity) with the pods matching
-                                the labelSelector in the specified namespaces, where
-                                co-located is defined as running on a node whose value
-                                of the label with key topologyKey matches that of
-                                any node on which any of the selected pods is running.
-                                Empty topologyKey is not allowed.
-                              type: string
-                          required:
-                          - topologyKey
-                          type: object
-                        type: array
-                    type: object
-                type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                description: Define which Nodes the Pods are scheduled on.
-                type: object
-              tolerations:
-                description: If specified, the pod's tolerations.
-                items:
-                  description: The pod this Toleration is attached to tolerates any
-                    taint that matches the triple <key,value,effect> using the matching
-                    operator <operator>.
-                  properties:
-                    effect:
-                      description: Effect indicates the taint effect to match. Empty
-                        means match all taint effects. When specified, allowed values
-                        are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: Key is the taint key that the toleration applies
-                        to. Empty means match all taint keys. If the key is empty,
-                        operator must be Exists; this combination means to match all
-                        values and all keys.
-                      type: string
-                    operator:
-                      description: Operator represents a key's relationship to the
-                        value. Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod
-                        can tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: TolerationSeconds represents the period of time
-                        the toleration (which must be of effect NoExecute, otherwise
-                        this field is ignored) tolerates the taint. By default, it
-                        is not set, which means tolerate the taint forever (do not
-                        evict). Zero and negative values will be treated as 0 (evict
-                        immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: Value is the taint value the toleration matches
-                        to. If the operator is Exists, the value should be empty,
-                        otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
-              domain:
-                description: domain name
+              # common configuration
+              nameOverride:
+                description: |
+                  String to partially override kdl-usertools.fullname template while
+                  maintaining the release name. This allows for customization of resource
+                  names while preserving the release identity.
+
+                  This is particularly useful when:
+                  - Implementing specific naming conventions
+                  - Avoiding resource name conflicts
+                  - Supporting multiple deployments in the same namespace
+                  - Maintaining consistent resource naming patterns
                 type: string
-              ingress:
-                type: object
-                properties:
-                  className:
-                    description: "The name of the IngressClass cluster resource. The associated IngressClass defines which controller will implement the resource."
-                    type: string
-                  annotations:
-                    additionalProperties:
-                      type: string
-                    description: "Ingress annotations"
-                    type: object
-              sharedVolume:
-                type: object
-                properties:
-                  name:
-                    description: name of shared volume
-                    type: string
-                required:
-                - name
-              storage:
-                type: object
-                properties:
-                  className:
-                    description: name of the storage class
-                    type: string
-                  size:
-                    description: size of the storage
-                    type: string
-              tls:
-                type: object
-                properties:
-                  enabled:
-                    description: enable or disable tls
-                    type: boolean
-                  secretName:
-                    description: the tls secret name in which the certificate is stored
-                    type: string
+              fullnameOverride:
+                description: |
+                  String to fully override kdl-usertools.fullname template. This provides
+                  complete control over the resource naming, replacing the default naming
+                  convention entirely.
+
+                  Use this when:
+                  - Complete control over resource naming is required
+                  - Implementing strict naming conventions
+                  - Migrating from existing systems
+                  - Ensuring compatibility with external tools
+                type: string
               username:
-                description: username to create tools
+                description: |
+                  Username for whom the tools environment is being created. This value
+                  is used across various components to ensure proper ownership and access
+                  control.
+
+                  The username:
+                  - Must be unique within the platform
+                  - Is used for resource naming and labeling
+                  - Determines access permissions
+                  - Is integrated with authentication systems
+                  - Forms part of the environment's identity
+
+                  This value is typically synchronized with the organization's identity
+                  management system and should follow consistent naming conventions.
                 type: string
               usernameSlug:
-                description: username slug to create tools
+                description: |
+                  Slugified version of the username, used for resource naming where
+                  stricter naming conventions apply. Created using the gosimple/slug
+                  library for consistency across the platform.
+
+                  The slug version:
+                  - Contains only lowercase letters, numbers, and hyphens
+                  - Is used for Kubernetes resource names
+                  - Ensures DNS compatibility
+                  - Maintains consistency across the platform
+                  - Preserves username recognition while ensuring compatibility
+
+                  Example: if username is "John.Doe", the slug might be "john-doe"
                 type: string
-              serviceAccountName:
-                description: serviceAccount name to attach generated roles
-                type: string
-              vscode:
+              sharedVolume:
+                description: |
+                  SharedVolume configuration defines how the user tools environment
+                  accesses shared storage. This component is crucial for enabling
+                  collaboration between team members and maintaining persistent data
+                  across development sessions.
+
+                  The shared volume system serves multiple purposes:
+                  - Facilitates team collaboration on shared datasets
+                  - Provides persistent storage for project artifacts
+                  - Enables sharing of development resources
+                  - Maintains data consistency across user sessions
+                  - Supports workflow integration with external tools
+
+                  Proper configuration of shared storage is essential for:
+                  - Data persistence across container restarts
+                  - Team collaboration capabilities
+                  - Resource sharing between team members
+                  - Integration with data pipelines
+                  - Backup and disaster recovery
                 type: object
-                properties:
-                  enabled:
-                    type: boolean
-                    description: enable or disable vscode
-                  image:
-                    type: object
-                    properties:
-                      repository:
-                        description: image repository
-                        type: string
-                      tag:
-                        description: image tag
-                        type: string
-                      pullPolicy:
-                        description: image pull policy
-                        type: string
-              repoCloner:
-                type: object
-                properties:
-                  image:
-                    type: object
-                    properties:
-                      repository:
-                        description: image repository
-                        type: string
-                      tag:
-                        description: image tag
-                        type: string
-                      pullPolicy:
-                        description: image pull policy
-                        type: string
-                  mongodbURI:
-                    description: MongoDB URI
-                    type: string
                 required:
-                - mongodbURI
-              oauth2Proxy:
-                type: object
+                  - name
                 properties:
-                  image:
-                    type: object
-                    properties:
-                      repository:
-                        description: image repository
-                        type: string
-                      tag:
-                        description: image tag
-                        type: string
-                      pullPolicy:
-                        description: image pull policy
-                        type: string
-              kubeconfig:
+                  enabled:
+                    description: |
+                      Controls whether shared volume functionality is enabled. When enabled,
+                      a persistent volume will be mounted for sharing data between different
+                      components and users.
+
+                      Enabling shared volumes:
+                      - Creates necessary PersistentVolumeClaims
+                      - Configures mount points in containers
+                      - Sets up appropriate permissions
+                      - Establishes sharing boundaries
+                      - Initializes collaborative workspace
+                    type: boolean
+                  name:
+                    description: |
+                      Name of the shared volume PersistentVolumeClaim. This volume
+                      will be mounted in the user's workspace and must exist in the
+                      same namespace.
+
+                      The volume name:
+                      - Must be unique within the namespace
+                      - Should follow naming conventions
+                      - Is used for volume identification
+                      - Helps in resource tracking
+                      - Facilitates access control
+                    type: string
+              persistentVolume:
+                description: |
+                  Configuration for the user's persistent storage that maintains
+                  data across sessions and restarts. This storage is dedicated to
+                  individual user data and configurations, separate from shared storage.
+
+                  Persistent storage is crucial for:
+                  - Maintaining user preferences and settings
+                  - Storing personal development artifacts
+                  - Caching development tools and dependencies
+                  - Ensuring workspace continuity
+                  - Supporting offline development capabilities
+
+                  The persistent volume configuration impacts:
+                  - Development environment performance
+                  - Data durability and availability
+                  - Resource usage and costs
+                  - Backup and restore capabilities
+                  - User experience and productivity
                 type: object
                 properties:
                   enabled:
+                    description: |
+                      Controls whether persistent storage should be enabled for MLflow.
+                      When enabled, MLflow data persists across pod restarts and
+                      rescheduling. When disabled, data is stored in ephemeral storage
+                      and will be lost when pods are terminated.
+
+                      Enable this for any non-testing environment where experiment
+                      data needs to be preserved.
                     type: boolean
-                    description: if the kubeconfig for external connections is enabled
-                  externalServerUrl:
+                  accessModes:
+                    description: |
+                      Defines how the persistent volume can be accessed. The chosen
+                      mode must be supported by your storage class and infrastructure:
+
+                      - ReadWriteOnce: Volume can be mounted as read-write by a single node
+                      - ReadOnlyMany: Volume can be mounted read-only by many nodes
+                      - ReadWriteMany: Volume can be mounted as read-write by many nodes
+
+                      For multi-replica deployments, ReadWriteMany is required unless
+                      using a separate backing store like S3.
+                    type: array
+                    items:
+                      type: string
+                      enum: ["ReadWriteOnce", "ReadWriteOncePod", "ReadOnlyMany", "ReadWriteMany"]
+                  size:
+                    description: |
+                      Size of the persistent volume to request. Choose a size that
+                      accommodates your expected data volume including:
+
+                      - Experiment metadata
+                      - Metrics and parameters
+                      - Model artifacts
+                      - Associated files and data
+
+                      Can use standard Kubernetes size notation (e.g., "10Gi", "500Mi").
                     type: string
-                    description: the external url to connect to the cluster
-              vscodeRuntime:
+                    pattern: '^([0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'
+                  storageClass:
+                    description: |
+                      Name of the StorageClass to use for the persistent volume.
+                      The storage class determines the provisioner and characteristics
+                      of the allocated storage.
+
+                      Special values:
+                      - "": Use cluster's default storage class
+                      - "-": Disable dynamic provisioning
+
+                      Choose based on your requirements for:
+                      - Performance
+                      - Availability
+                      - Data durability
+                      - Cost considerations
+                    type: string
+              kubeconfig:
+                description: |
+                  Kubeconfig configuration enables external tool integration with the
+                  development environment. This allows users to connect their local
+                  IDEs and tools to their remote development workspace.
+
+                  The kubeconfig feature supports:
+                  - Local IDE integration
+                  - Custom tool connections
+                  - CI/CD pipeline integration
+                  - Development workflow automation
+                  - Remote debugging capabilities
+
+                  Benefits of kubeconfig access:
+                  - Enhanced development flexibility
+                  - Support for preferred local tools
+                  - Improved debugging capabilities
+                  - Custom workflow integration
+                  - Automated testing support
                 type: object
                 properties:
-                  runtimeId:
+                  enabled:
+                    description: |
+                      Controls whether kubeconfig generation and access is enabled.
+                      When enabled, users can download a kubeconfig file for external
+                      access to their development environment.
+
+                      Enabling this feature:
+                      - Generates secure credentials
+                      - Creates role-based access control
+                      - Sets up network policies
+                      - Configures service accounts
+                      - Establishes security boundaries
+                    type: boolean
+                  externalServerUrl:
+                    description: |
+                      External cluster address used for connecting to the cluster from
+                      outside. This URL should be accessible from wherever the user's
+                      tools will connect from.
+
+                      Configuration considerations:
+                      - Must be publicly accessible
+                      - Should use HTTPS protocol
+                      - Requires valid SSL certificates
+                      - Network firewall configuration
+                      - Load balancer integration
+
+                      Example: https://k8s-api.example.com:6443
                     type: string
-                    description: runtime identifier
-                  capabilityId:
+              podAnnotations:
+                description: |
+                  Pod annotations provide a flexible mechanism for attaching non-identifying metadata
+                  to pods in the development environment. Unlike labels, annotations can store
+                  arbitrary metadata that enriches pods with additional information and can influence
+                  system behavior.
+
+                  Annotations serve multiple crucial purposes in a Kubernetes environment:
+                  - They can trigger specific behaviors in other systems and tools
+                  - They store build and release information
+                  - They configure monitoring and logging systems
+                  - They maintain deployment history and tracking
+                  - They enable integration with external tools and services
+
+                  In the context of development environments, annotations can be used to:
+                  - Store information about the environment's configuration
+                  - Track deployment timestamps and versions
+                  - Configure service mesh behaviors
+                  - Enable specific monitoring patterns
+                  - Store documentation links and references
+                  - Maintain audit and compliance information
+
+                  Common annotation patterns include:
+                  - kubernetes.io/change-cause: Records the reason for the latest update
+                  - prometheus.io/scrape: Configures metric collection
+                  - sidecar.istio.io/inject: Controls service mesh injection
+                  - environment.tools/last-updated: Tracks configuration updates
+                  - docs.tools/environment-guide: Links to relevant documentation
+
+                  When using annotations, consider:
+                  - They are not used for object selection (use labels instead)
+                  - They can store larger data chunks than labels
+                  - They can include non-alphanumeric characters
+                  - They support structured data in their values
+                  - They can be automatically modified by system components
+                type: object
+                additionalProperties:
+                  type: string
+              podLabels:
+                description: |
+                  Custom labels that will be added to the pods in the development
+                  environment. These labels serve multiple important purposes in
+                  the Kubernetes ecosystem and are crucial for pod identification
+                  and management.
+
+                  Pod labels enable:
+                  - Runtime identification and tracking
+                  - Capability management
+                  - Service discovery
+                  - Resource grouping
+                  - Policy application
+                  - Monitoring and metrics
+
+                  In the KDL context, labels are particularly important for:
+                  - Associating pods with specific runtimes
+                  - Tracking capability versions
+                  - Enabling selective service routing
+                  - Supporting audit requirements
+                  - Facilitating resource management
+
+                  Example labels include:
+                  - runtimeId: Identifies the specific runtime version
+                  - capabilityId: Tracks enabled capabilities
+                  - environmentType: Distinguishes development environments
+                  - userTier: Indicates resource tier allocation
+                type: object
+                additionalProperties:
+                  type: string
+              podSecurityContext:
+                description: |
+                  Pod-level security context defines fundamental security settings
+                  that apply to all containers within the pod. These settings are
+                  crucial for maintaining a secure development environment while
+                  ensuring proper access to resources.
+
+                  The security context controls:
+                  - File system permissions
+                  - User and group IDs
+                  - Security policies
+                  - Volume ownership
+                  - Process privileges
+
+                  Security considerations include:
+                  - Principle of least privilege
+                  - Resource access control
+                  - Data protection
+                  - Process isolation
+                  - Compliance requirements
+                type: object
+                properties:
+                  fsGroup:
+                    description: |
+                      The GID that will own any mounted volumes. This setting ensures
+                      proper file system permissions for persistent and shared storage.
+
+                      fsGroup configuration:
+                      - Controls volume access permissions
+                      - Enables collaborative development
+                      - Maintains security boundaries
+                      - Facilitates proper backup operations
+                      - Supports audit requirements
+                    type: integer
+                  runAsUser:
+                    description: |
+                      The UID to run containers as. Specifies the user ID for
+                      processes within the containers.
+                    type: integer
+                  runAsGroup:
+                    description: |
+                      The GID to run containers as. Specifies the primary group ID
+                      for processes within the containers.
+                    type: integer
+                  supplementalGroups:
+                    description: |
+                      Additional group IDs that processes will run as. Provides
+                      access to additional resources and capabilities.
+                    type: array
+                    items:
+                      type: integer
+              securityContext:
+                description: |
+                  Container-level security context defines security settings that
+                  apply to individual containers. These settings provide granular
+                  control over container behavior and security posture.
+
+                  Security context manages:
+                  - Container privileges
+                  - Root access controls
+                  - Filesystem permissions
+                  - Capability management
+                  - Security compliance
+
+                  Important aspects include:
+                  - Container isolation
+                  - Resource protection
+                  - Attack surface reduction
+                  - Compliance enforcement
+                  - Vulnerability mitigation
+                type: object
+                properties:
+                  capabilities:
+                    description: |
+                      Linux capabilities configuration for fine-grained privilege
+                      control. Allows specific privileges while maintaining security.
+                    type: object
+                    properties:
+                      drop:
+                        description: |
+                          Capabilities to remove from the container. Follows the
+                          principle of least privilege by removing unnecessary
+                          capabilities.
+                        type: array
+                        items:
+                          type: string
+                      add:
+                        description: |
+                          Capabilities to add to the container. Only add capabilities
+                          that are strictly necessary for operation.
+                        type: array
+                        items:
+                          type: string
+                  readOnlyRootFilesystem:
+                    description: |
+                      Controls whether the container can write to its root filesystem.
+                      Enabling this provides additional security by preventing
+                      modifications to the container's base filesystem.
+                    type: boolean
+                  runAsNonRoot:
+                    description: |
+                      Requires the container to run as a non-root user. This is a
+                      crucial security measure that prevents privilege escalation.
+                    type: boolean
+                  runAsUser:
+                    description: |
+                      Specific UID to run the container processes as. Provides
+                      explicit control over process ownership.
+                    type: integer
+              podDisruptionBudget:
+                description: |
+                  Pod Disruption Budget configuration ensures availability during
+                  voluntary disruptions like node maintenance or cluster updates.
+                  This helps maintain service continuity for development environments.
+
+                  The PDB helps manage:
+                  - High availability requirements
+                  - Maintenance windows
+                  - Update strategies
+                  - Service reliability
+                  - User experience consistency
+
+                  Configuration impacts:
+                  - Cluster maintenance operations
+                  - Service availability guarantees
+                  - Resource management flexibility
+                  - Update scheduling
+                  - Cost considerations
+                type: object
+                properties:
+                  enabled:
+                    description: |
+                      Controls whether a PodDisruptionBudget should be created.
+                      Enable this to maintain availability during cluster operations.
+                    type: boolean
+                  maxUnavailable:
+                    description: |
+                      Maximum number of pods that can be unavailable during
+                      voluntary disruptions. Balances availability with maintenance
+                      flexibility.
+                    type: integer
+                  minAvailable:
+                    description: |
+                      Minimum number of pods that must remain available during
+                      voluntary disruptions. Ensures service continuity.
+                    type: integer
+              autoscaling:
+                description: |
+                  Horizontal Pod Autoscaling configuration enables automatic scaling
+                  based on resource utilization. This ensures efficient resource
+                  usage while maintaining performance under varying loads.
+
+                  Autoscaling manages:
+                  - Resource efficiency
+                  - Performance optimization
+                  - Cost management
+                  - Load handling
+                  - Service reliability
+
+                  Configuration considerations:
+                  - Resource metrics
+                  - Scaling thresholds
+                  - Response times
+                  - Cost implications
+                  - Performance requirements
+                type: object
+                properties:
+                  enabled:
+                    description: |
+                      Controls whether automatic scaling is enabled. Enable this
+                      for environments with variable resource demands.
+                    type: boolean
+                  minReplicas:
+                    description: |
+                      Minimum number of replicas to maintain, even during low
+                      demand periods. Ensures basic availability.
+                    type: integer
+                  maxReplicas:
+                    description: |
+                      Maximum number of replicas allowed during high demand.
+                      Controls resource consumption and costs.
+                    type: integer
+                  targetCPUUtilizationPercentage:
+                    description: |
+                      Target CPU utilization percentage for scaling decisions.
+                      Balances resource efficiency with performance.
+                    type: integer
+                  targetMemoryUtilizationPercentage:
+                    description: |
+                      Target memory utilization percentage for scaling decisions.
+                      Helps maintain consistent performance.
+                    type: integer
+              initContainers:
+                description: |
+                  Configuration for initialization containers that run before the
+                  main usertools container starts. Init containers are crucial for
+                  proper setup and validation of the environment before usertools
+                  begins operation.
+
+                  Common uses include:
+                  - Database schema initialization
+                  - Secret distribution
+                  - Permission setup
+                  - Resource validation
+                  - Service dependency checks
+                type: array
+                items:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              terminationGracePeriodSeconds:
+                description: |
+                  Duration in seconds Kubernetes should wait for the container to
+                  terminate gracefully. During this time, the container can perform
+                  cleanup operations before being forcefully terminated.
+                type: integer
+                minimum: 0
+              updateStrategy:
+                description: |
+                  StatefulSet update strategy configuration
+                type: object
+                properties:
+                  type:
                     type: string
-                    description: capability identifier
+                    enum: [RollingUpdate, OnDelete]
+                  rollingUpdate:
+                    type: object
+                    properties:
+                      partition:
+                        type: integer
+                      maxUnavailable:
+                        type: integer
+              podManagementPolicy:
+                description: |
+                  Pod management policy for StatefulSet
+                type: string
+                enum: [OrderedReady, Parallel]
+              networkPolicy:
+                description: |
+                  Network policies for usertools control pod-to-pod and external
+                  communication. These policies are essential for securing the
+                  usertools service and controlling data access.
+                type: object
+                properties:
+                  enabled:
+                    description: |
+                      Enables or disables network policy creation. When enabled,
+                      only explicitly allowed traffic can reach the usertools pods.
+                    type: boolean
+                  policyTypes:
+                    description: |
+                      Types of policies to enforce:
+                      - Ingress: Controls incoming traffic
+                      - Egress: Controls outgoing traffic
+
+                      Specify both for complete network control.
+                    type: array
+                    items:
+                      type: string
+                      enum: [Ingress, Egress]
+                  ingress:
+                    description: |
+                      Rules specifying allowed incoming traffic to usertools pods.
+                      Configure these rules to allow necessary access while
+                      maintaining security.
+                    type: array
+                    items:
+                      x-kubernetes-preserve-unknown-fields: true
+                  egress:
+                    description: |
+                      Rules specifying allowed outgoing traffic from usertools pods.
+                      Important for controlling access to external services and
+                      artifact storage.
+                    type: array
+                    items:
+                      x-kubernetes-preserve-unknown-fields: true
+              minReadySeconds:
+                type: integer
+                minimum: 0
+                description: "Minimum number of seconds for which a newly created pod should be ready without any containers crashing"
+              replicaCount:
+                description: |
+                  Number of usertools server replicas to deploy. Multiple replicas
+                  provide high availability and load balancing capabilities.
+
+                  When setting this value, consider:
+                  - Expected load from concurrent users
+                  - High availability requirements
+                  - Resource availability in your cluster
+                  - Storage backend capabilities (must support concurrent access)
+                type: integer
+                minimum: 0
+              imagePullSecrets:
+                description: |
+                  List of secrets containing credentials for pulling images
+                  from private registries. Each secret should be created in
+                  the same namespace and referenced here by name.
+                type: array
+                items:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      description: "Name of the secret containing registry credentials"
+                      type: string
+              serviceAccount:
+                description: |
+                  ServiceAccount configuration for the usertools service.
+                  ServiceAccounts are used to provide an identity for the usertools
+                  pods and control their permissions through RBAC rules.
+                type: object
+                properties:
+                  create:
+                    description: |
+                      Whether to create a dedicated ServiceAccount for usertools.
+                      If false, the default ServiceAccount will be used unless a
+                      name is specified.
+                    type: boolean
+                  automount:
+                    description: |
+                      Controls whether the ServiceAccount token should be automatically
+                      mounted into the pod. For security, disable this if the service
+                      doesn't need to interact with the Kubernetes API.
+                    type: boolean
+                  annotations:
+                    description: |
+                      Annotations to add to the ServiceAccount. This is useful for
+                      integration with cloud providers or other services that rely
+                      on ServiceAccount annotations.
+                    type: object
+                    additionalProperties:
+                      type: string
+                  name:
+                    description: |
+                      Name of the ServiceAccount to use. If not set and create is
+                      true, a name is generated using the fullname template. If set
+                      and create is false, references an existing ServiceAccount.
+                    type: string
+              extraContainers:
+                description: |
+                  Additional containers to run alongside the main usertools container
+                  in the same pod. These sidecar containers can provide supporting
+                  functionality without modifying the main usertools container.
+
+                  Typical use cases include:
+                  - Logging aggregation
+                  - Monitoring agents
+                  - Service mesh proxies
+                  - Security scanners
+                  - Data synchronization
+                type: array
+                items:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+              resources:
+                description: |
+                  Resource requirements and limits for the containers define how
+                  Kubernetes should allocate and restrict computational resources.
+                  Proper resource management is crucial for ensuring optimal
+                  performance while maintaining efficient cluster utilization.
+
+                  Resource configuration impacts:
+                  - Development environment performance
+                  - Cluster resource efficiency
+                  - Cost optimization
+                  - User experience
+                  - System stability
+
+                  Resource management helps:
+                  - Prevent resource starvation
+                  - Optimize cost allocation
+                  - Ensure fair resource sharing
+                  - Maintain service quality
+                  - Support capacity planning
+                type: object
+                properties:
+                  limits:
+                    description: |
+                      Maximum amount of compute resources allowed for the containers.
+                      Limits prevent containers from consuming excessive resources
+                      that could impact other workloads.
+
+                      Setting appropriate limits:
+                      - Prevents resource monopolization
+                      - Protects cluster stability
+                      - Manages costs effectively
+                      - Ensures predictable performance
+                      - Facilitates capacity planning
+                    type: object
+                    properties:
+                      cpu:
+                        description: |
+                          Maximum CPU resources the container can use. Can be
+                          specified in cores (e.g., "1") or millicores (e.g., "1000m").
+
+                          CPU limits consideration:
+                          - Development tool requirements
+                          - Build and compilation needs
+                          - Language server demands
+                          - Extension resource usage
+                          - Background task processing
+                        type: string
+                      memory:
+                        description: |
+                          Maximum memory the container can use. Can be specified
+                          in bytes or with SI suffixes (e.g., "2Gi", "512Mi").
+
+                          Memory limits should account for:
+                          - IDE memory requirements
+                          - Language server needs
+                          - Extension memory usage
+                          - Cache requirements
+                          - Buffer allocations
+                        type: string
+                  requests:
+                    description: |
+                      Minimum amount of compute resources required for the containers.
+                      Requests help Kubernetes make informed scheduling decisions
+                      and ensure resources are available when needed.
+
+                      Request configuration affects:
+                      - Pod scheduling decisions
+                      - Resource guarantees
+                      - Performance baseline
+                      - Cost allocation
+                      - Service reliability
+                    type: object
+                    properties:
+                      cpu:
+                        description: |
+                          Minimum CPU resources needed for proper operation.
+                          These resources are guaranteed to be available.
+
+                          CPU requests should consider:
+                          - Baseline IDE performance
+                          - Minimal tool requirements
+                          - Basic development needs
+                          - Response time requirements
+                          - Background service needs
+                        type: string
+                      memory:
+                        description: |
+                          Minimum memory required for operation. These resources
+                          are guaranteed to be available to the container.
+
+                          Memory requests should account for:
+                          - Base IDE memory needs
+                          - Minimum tool requirements
+                          - Essential extension memory
+                          - Working set size
+                          - System stability
+                        type: string
+              nodeSelector:
+                description: |
+                  Node labels for pod assignment determine which cluster nodes
+                  can run the development environment. This allows for precise
+                  control over workload placement based on node characteristics.
+
+                  Node selection enables:
+                  - Hardware-specific placement
+                  - Zone-based distribution
+                  - Resource optimization
+                  - Performance tuning
+                  - Cost management
+
+                  Selection criteria might include:
+                  - Hardware capabilities
+                  - Geographic location
+                  - Cost considerations
+                  - Performance requirements
+                  - Security requirements
+                type: object
+                additionalProperties:
+                  type: string
+              tolerations:
+                description: |
+                  Pod tolerations define which node taints the development environment
+                  can tolerate. This provides fine-grained control over pod placement
+                  and enables specialized node configurations.
+
+                  Tolerations enable:
+                  - Dedicated node usage
+                  - Special hardware access
+                  - Zone-based deployment
+                  - Resource isolation
+                  - Performance optimization
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key:
+                      description: |
+                        The taint key that the toleration applies to. Keys define
+                        the type of restriction being addressed.
+                      type: string
+                    operator:
+                      description: |
+                        Defines the matching rule for the toleration. Determines
+                        how the key and value are interpreted.
+                      type: string
+                    value:
+                      description: |
+                        The taint value to match. Works in conjunction with the
+                        operator to determine toleration behavior.
+                      type: string
+                    effect:
+                      description: |
+                        Defines what type of taint effect is being tolerated:
+                        NoSchedule, PreferNoSchedule, or NoExecute.
+                      type: string
+                    tolerationSeconds:
+                      description: |
+                        Duration in seconds the pod can tolerate the taint.
+                        Only applies to NoExecute effect.
+                      type: integer
+              affinity:
+                description: |
+                  Pod affinity and anti-affinity rules provide sophisticated
+                  control over pod placement in relation to other pods and nodes.
+                  This enables complex scheduling scenarios for optimal workload
+                  distribution.
+
+                  Affinity rules can:
+                  - Co-locate related pods
+                  - Separate competing workloads
+                  - Optimize resource usage
+                  - Enhance availability
+                  - Improve performance
+
+                  Common use cases:
+                  - High availability deployment
+                  - Performance optimization
+                  - Resource isolation
+                  - Cost optimization
+                  - Security enforcement
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              topologySpreadConstraints:
+                description: |
+                  Topology spread constraints control how usertools pods are distributed
+                  across your cluster's topology domains (nodes, zones, regions).
+                  This ensures proper distribution for availability and performance.
+                type: array
+                items:
+                  type: object
+                  required:
+                    - maxSkew
+                    - topologyKey
+                    - whenUnsatisfiable
+                  properties:
+                    maxSkew:
+                      description: |
+                        Maximum difference in number of pods between topology domains.
+                        Lower values ensure more even distribution but may constrain
+                        scheduling.
+                      type: integer
+                      minimum: 1
+                    topologyKey:
+                      description: |
+                        The key of node labels representing the topology domain.
+                        Common topology keys:
+                        - kubernetes.io/hostname: Node-level spreading
+                        - topology.kubernetes.io/zone: Zone-level spreading
+                        - topology.kubernetes.io/region: Region-level spreading
+                      type: string
+                    whenUnsatisfiable:
+                      description: |
+                        Behavior when constraints cannot be satisfied:
+                        - DoNotSchedule: Enforces constraints strictly
+                        - ScheduleAnyway: Allows scheduling with preference
+
+                        Choose based on your availability requirements vs.
+                        scheduling flexibility needs.
+                      type: string
+                      enum: [DoNotSchedule, ScheduleAnyway]
+                    labelSelector:
+                      description: |
+                        Label selector to identify usertools pods for spreading.
+                        This allows precise control over which pods are considered
+                        for topology spreading rules.
+                      x-kubernetes-preserve-unknown-fields: true
+              volumes:
+                description: |
+                  Additional volumes to mount in the usertools pods. These volumes can
+                  be used for various purposes beyond the main persistent storage,
+                  such as:
+
+                  - Configuration files
+                  - Temporary storage
+                  - Shared data
+                  - Certificates and secrets
+                  - Custom scripts or plugins
+                type: array
+                items:
+                  description: |
+                    Volume definition following the Kubernetes volume specification.
+                    Supports all standard Kubernetes volume types including:
+
+                    - configMap
+                    - secret
+                    - emptyDir
+                    - hostPath
+                    - persistentVolumeClaim
+                  x-kubernetes-preserve-unknown-fields: true
+              # vscodeRuntime configuration
+              vscodeRuntime:
+                description: |
+                  VSCode Runtime configuration defines the containerized development
+                  environment that provides the IDE and associated tools. This component
+                  is the primary interface through which data scientists interact with
+                  their development environment.
+
+                  The runtime environment provides:
+                  - Web-based VSCode IDE access
+                  - Language support and extensions
+                  - Debugging capabilities
+                  - Terminal access
+                  - Git integration
+                  - Custom tool integration
+
+                  The configuration ensures:
+                  - Consistent development environments
+                  - Proper resource allocation
+                  - Tool availability and versioning
+                  - Security and isolation
+                  - Performance optimization
+                type: object
+                properties:
                   image:
+                    description: |
+                      Container image configuration for the VSCode runtime environment.
+                      The image contains all necessary development tools, extensions,
+                      and configurations required for the development workflow.
+
+                      Image configuration impacts:
+                      - Available development tools
+                      - Runtime performance
+                      - Security posture
+                      - Resource requirements
+                      - User experience
                     type: object
                     properties:
                       repository:
-                        description: image repository
+                        description: |
+                          Docker image repository for the VSCode runtime. This should
+                          point to a properly maintained and secured image repository.
+
+                          Repository considerations:
+                          - Image availability and reliability
+                          - Security scanning and updates
+                          - Version control
+                          - Access controls
+                          - Compliance requirements
                         type: string
                       tag:
-                        description: image tag
+                        description: |
+                          Docker image tag specifying the version of the VSCode runtime.
+                          Using specific version tags ensures consistency and
+                          reproducibility across deployments.
+
+                          Tag selection affects:
+                          - Feature availability
+                          - Security patches
+                          - Tool versions
+                          - Performance characteristics
+                          - Compatibility with extensions
                         type: string
                       pullPolicy:
-                        description: image pull policy
+                        description: |
+                          Image pull policy determines when Kubernetes should attempt
+                          to pull the container image. This affects deployment behavior
+                          and update patterns.
+
+                          Policy options:
+                          - Always: Pull on every pod creation
+                          - IfNotPresent: Use cached image if available
+                          - Never: Requires pre-pulled images
+
+                          Selection impacts:
+                          - Deployment speed
+                          - Network usage
+                          - Version control
+                          - Update management
+                          - Resource utilization
                         type: string
-            required:
-            - sharedVolume
+                        enum: [Always, Never, IfNotPresent]
+                  homePath:
+                    description: |
+                      Path where user home directory will be mounted inside the container.
+                      This path is crucial for proper configuration persistence and
+                      user data management.
+
+                      The home path configuration:
+                      - Determines file system layout
+                      - Affects tool configurations
+                      - Impacts backup locations
+                      - Influences permission settings
+                      - Controls workspace organization
+                    type: string
+                  command:
+                    description: |
+                      Container startup command defining how the VSCode server is
+                      initialized. This can be customized to modify startup behavior
+                      and configuration.
+
+                      Command configuration affects:
+                      - Startup sequence
+                      - Environment initialization
+                      - Service configuration
+                      - Debug capabilities
+                      - Resource preparation
+                    type: array
+                    items:
+                      type: string
+                  args:
+                    description: |
+                      Arguments passed to the container command. These parameters
+                      fine-tune the VSCode server behavior and configuration.
+
+                      Arguments can control:
+                      - Server settings
+                      - Extension behavior
+                      - Authentication methods
+                      - Network configuration
+                      - Resource limitations
+                      - Debug options
+                      - Performance tuning
+                    type: array
+                    items:
+                      type: string
+                  lifecycle:
+                    description: |
+                      Container lifecycle hooks allow you to execute commands or make
+                      HTTP requests at specific points in a container's lifecycle.
+                      This enables proper initialization and graceful shutdown procedures.
+                    type: object
+                    properties:
+                      preStop:
+                        description: |
+                          Commands or HTTP requests to execute before stopping the container.
+                          This enables graceful shutdown procedures, ensuring all requests
+                          are properly handled before termination.
+                        x-kubernetes-preserve-unknown-fields: true
+                      postStart:
+                        description: |
+                          Commands or HTTP requests to execute after the container starts.
+                          This can be used for additional setup or verification steps
+                          after container initialization.
+                        x-kubernetes-preserve-unknown-fields: true
+                  env:
+                    description: |
+                      Environment variables for the VSCode runtime container. These
+                      variables configure various aspects of the development environment
+                      and tool behavior.
+
+                      Environment variables control:
+                      - Tool configurations
+                      - Service endpoints
+                      - Authentication tokens
+                      - Proxy settings
+                      - Feature flags
+                      - Debug options
+                      - Resource paths
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  envFromSecrets:
+                    description: |
+                      Configuration for environment variables that should be populated
+                      from Kubernetes Secrets. This is the recommended way to handle
+                      sensitive configuration data such as:
+
+                      - Database credentials
+                      - API keys
+                      - Access tokens
+                      - Encryption keys
+                      - Authentication credentials
+
+                      Each key in this object represents an environment variable, and
+                      the value specifies which Secret and key to use.
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - name
+                        - key
+                      properties:
+                        name:
+                          description: |
+                            Name of the Kubernetes Secret containing the desired value.
+                            The Secret must exist in the same namespace as usertools.
+                          type: string
+                        key:
+                          description: |
+                            Key within the Secret that contains the value to use.
+                            This value will be mounted as an environment variable.
+                          type: string
+                  envFromConfigMap:
+                    description: |
+                      Configuration for environment variables that should be populated
+                      from ConfigMaps. This is ideal for non-sensitive configuration
+                      data that might need to be updated independently of the
+                      deployment.
+
+                      Common uses include:
+                      - Feature flags
+                      - Logging configurations
+                      - Service endpoints
+                      - Runtime parameters
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - name
+                        - key
+                      properties:
+                        name:
+                          description: |
+                            Name of the ConfigMap containing the desired value.
+                            The ConfigMap must exist in the same namespace as usertools.
+                          type: string
+                        key:
+                          description: |
+                            Key within the ConfigMap that contains the value to use.
+                            This value will be mounted as an environment variable.
+                          type: string
+                  envFromFiles:
+                    description: |
+                      List of Secrets or ConfigMaps to mount as environment variables.
+                      This allows bulk import of configuration values from files,
+                      useful when you have many related configuration items or
+                      complex configurations.
+
+                      This approach is particularly useful for:
+                      - Large configuration sets
+                      - Dynamic configurations
+                      - Shared configurations across containers
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        secretRef:
+                          description: |
+                            Reference to a Secret to mount as environment variables.
+                            All keys in the Secret will become environment variables.
+                          type: object
+                          properties:
+                            name:
+                              description: "Name of the Secret to mount"
+                              type: string
+                        configMapRef:
+                          description: |
+                            Reference to a ConfigMap to mount as environment variables.
+                            All keys in the ConfigMap will become environment variables.
+                          type: object
+                          properties:
+                            name:
+                              description: "Name of the ConfigMap to mount"
+                              type: string
+                  volumeMounts:
+                    description: |
+                      Additional volume mounts for the VSCode container. These mounts
+                      provide access to persistent storage, shared data, and
+                      configuration volumes.
+
+                      Volume mounts can provide:
+                      - Configuration files
+                      - Shared libraries
+                      - Cache directories
+                      - Temporary storage
+                      - Certificates and secrets
+                      - Development tools
+                      - Custom extensions
+                    type: array
+                    items:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+              # repoCloner configuration
+              repoCloner:
+                description: |
+                  Repository Cloner configuration defines how the system manages and
+                  synchronizes git repositories for the user. This component ensures
+                  that all relevant project repositories are available in the workspace
+                  and kept up to date.
+
+                  The repo cloner provides:
+                  - Automatic repository synchronization
+                  - Git credential management
+                  - Repository access control
+                  - Workspace initialization
+                  - Code availability management
+
+                  Key responsibilities:
+                  - Initial repository setup
+                  - Periodic synchronization
+                  - Access control enforcement
+                  - Storage management
+                  - Version control integration
+                type: object
+                properties:
+                  image:
+                    description: |
+                      Container image configuration for the repository cloner component.
+                      This image contains the tools needed for git operations and repository
+                      synchronization.
+
+                      Image requirements include:
+                      - Git and related tools
+                      - Authentication utilities
+                      - Network tools
+                      - Storage utilities
+                      - Security components
+                    type: object
+                    properties:
+                      repository:
+                        description: |
+                          Docker image repository for the repo cloner. The image should
+                          include all necessary tools for git operations and authentication.
+
+                          Repository considerations:
+                          - Tool availability
+                          - Security updates
+                          - Performance optimization
+                          - Size management
+                          - Compatibility requirements
+                        type: string
+                      tag:
+                        description: |
+                          Docker image tag for version control. Using specific versions
+                          ensures consistent behavior and security updates.
+
+                          Version management impacts:
+                          - Feature availability
+                          - Bug fixes
+                          - Security patches
+                          - Performance improvements
+                          - Tool compatibility
+                        type: string
+                      pullPolicy:
+                        description: |
+                          Image pull policy for the container. Determines when new
+                          images should be pulled from the registry.
+
+                          Policy considerations:
+                          - Update frequency
+                          - Network usage
+                          - Cache utilization
+                          - Deployment speed
+                          - Version control
+                        type: string
+                        enum: [Always, Never, IfNotPresent]
+                  homePath:
+                    description: |
+                      Path where repositories will be cloned inside the container.
+                      This directory serves as the root for all managed repositories.
+
+                      Path configuration affects:
+                      - Repository organization
+                      - Access patterns
+                      - Permission management
+                      - Storage utilization
+                      - Backup procedures
+                    type: string
+                  command:
+                    description: |
+                      Container startup command for the repo cloner. Defines how the
+                      cloning service is initialized and managed.
+
+                      Command configuration controls:
+                      - Service initialization
+                      - Error handling
+                      - Logging setup
+                      - Resource preparation
+                      - Monitoring integration
+                    type: array
+                    items:
+                      type: string
+                  args:
+                    description: |
+                      Arguments passed to the repo cloner command. These parameters
+                      control the behavior of the cloning and synchronization process.
+
+                      Arguments can configure:
+                      - Sync frequency
+                      - Timeout values
+                      - Retry logic
+                      - Resource limits
+                      - Logging verbosity
+                      - Error handling
+                      - Authentication methods
+                    type: array
+                    items:
+                      type: string
+                  # Environment and Secrets Management
+                  env:
+                    description: |
+                      Environment variables configuration for usertools defines the runtime
+                      configuration of the service. These variables control usertools's
+                      behavior, integration with other services, and operational parameters.
+
+                      Environment variables are crucial for configuring:
+                      - Backend store settings
+                      - Artifact store locations
+                      - Authentication parameters
+                      - Logging configuration
+                      - Service endpoints
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                    example:
+                      KDL_SERVER_MONGODB_URI: "mongodb://user:pass@mongodb:27017/db?authSource=user&authMechanism=SCRAM-SHA-256"
+                  envFromSecrets:
+                    description: |
+                      Configuration for environment variables that should be populated
+                      from Kubernetes Secrets. This is the recommended way to handle
+                      sensitive configuration data such as:
+
+                      - Database credentials
+                      - API keys
+                      - Access tokens
+                      - Encryption keys
+                      - Authentication credentials
+
+                      Each key in this object represents an environment variable, and
+                      the value specifies which Secret and key to use.
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - name
+                        - key
+                      properties:
+                        name:
+                          description: |
+                            Name of the Kubernetes Secret containing the desired value.
+                            The Secret must exist in the same namespace as usertools.
+                          type: string
+                        key:
+                          description: |
+                            Key within the Secret that contains the value to use.
+                            This value will be mounted as an environment variable.
+                          type: string
+                  envFromConfigMap:
+                    description: |
+                      Configuration for environment variables that should be populated
+                      from ConfigMaps. This is ideal for non-sensitive configuration
+                      data that might need to be updated independently of the
+                      deployment.
+
+                      Common uses include:
+                      - Feature flags
+                      - Logging configurations
+                      - Service endpoints
+                      - Runtime parameters
+                    type: object
+                    additionalProperties:
+                      type: object
+                      required:
+                        - name
+                        - key
+                      properties:
+                        name:
+                          description: |
+                            Name of the ConfigMap containing the desired value.
+                            The ConfigMap must exist in the same namespace as usertools.
+                          type: string
+                        key:
+                          description: |
+                            Key within the ConfigMap that contains the value to use.
+                            This value will be mounted as an environment variable.
+                          type: string
+                  envFromFiles:
+                    description: |
+                      List of Secrets or ConfigMaps to mount as environment variables.
+                      This allows bulk import of configuration values from files,
+                      useful when you have many related configuration items or
+                      complex configurations.
+
+                      This approach is particularly useful for:
+                      - Large configuration sets
+                      - Dynamic configurations
+                      - Shared configurations across containers
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        secretRef:
+                          description: |
+                            Reference to a Secret to mount as environment variables.
+                            All keys in the Secret will become environment variables.
+                          type: object
+                          properties:
+                            name:
+                              description: "Name of the Secret to mount"
+                              type: string
+                        configMapRef:
+                          description: |
+                            Reference to a ConfigMap to mount as environment variables.
+                            All keys in the ConfigMap will become environment variables.
+                          type: object
+                          properties:
+                            name:
+                              description: "Name of the ConfigMap to mount"
+                              type: string
+                  volumeMounts:
+                      description: |
+                        Additional volume mounts for the repo cloner container. These mounts
+                        provide access to persistent storage, shared data, and
+                        configuration volumes.
+
+                        Volume mounts can provide:
+                        - Configuration files
+                        - Shared libraries
+                        - Cache directories
+                        - Temporary storage
+                        - Certificates and secrets
+                        - Development tools
+                        - Custom extensions
+                      type: array
+                      items:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                  lifecycle:
+                    description: |
+                      Container lifecycle hooks allow you to execute commands or make
+                      HTTP requests at specific points in a container's lifecycle.
+                      This enables proper initialization and graceful shutdown procedures.
+                    type: object
+                    properties:
+                      preStop:
+                        description: |
+                          Commands or HTTP requests to execute before stopping the container.
+                          This enables graceful shutdown procedures, ensuring all requests
+                          are properly handled before termination.
+                        x-kubernetes-preserve-unknown-fields: true
+                      postStart:
+                        description: |
+                          Commands or HTTP requests to execute after the container starts.
+                          This can be used for additional setup or verification steps
+                          after container initialization.
+                        x-kubernetes-preserve-unknown-fields: true
           status:
-            description: Status defines the observed state of UserTools
+            description: |
+              Status defines the observed state of UserTools. It provides real-time
+              information about the current state of the development environment
+              and its components.
+
+              The status section enables:
+              - Health monitoring
+              - Troubleshooting
+              - State tracking
+              - Progress monitoring
+              - Resource management
+
+              Status information helps:
+              - Track deployment progress
+              - Identify issues
+              - Monitor health
+              - Manage lifecycle
+              - Plan maintenance
             type: object
-            x-kubernetes-preserve-unknown-fields: true
-    subresources:
-      status: {}
+            properties:
+              conditions:
+                description: |
+                  List of status conditions provides detailed information about
+                  various aspects of the UserTools instance. Each condition
+                  represents a specific aspect of the system's state.
+
+                  Conditions track:
+                  - Component health
+                  - Resource availability
+                  - Configuration status
+                  - Operation progress
+                  - Error states
+                type: array
+                items:
+                  type: object
+                  required:
+                    - type
+                    - status
+                  properties:
+                    type:
+                      description: |
+                        Type of condition being reported. Common types include:
+                        - Ready: Overall environment readiness
+                        - VSCodeAvailable: IDE accessibility
+                        - StorageProvisioned: Volume status
+                        - NetworkConfigured: Network readiness
+                        - RepositoriesSynced: Code availability
+                      type: string
+                    status:
+                      description: |
+                        Current status of the condition:
+                        - "True": Condition is met
+                        - "False": Condition is not met
+                        - "Unknown": Status cannot be determined
+                      type: string
+                    lastTransitionTime:
+                      description: |
+                        Timestamp of when the condition last changed state.
+                        Used for tracking state changes and troubleshooting.
+                      type: string
+                      format: date-time
+                    reason:
+                      description: |
+                        Machine-readable reason for the condition's last state
+                        change. Used for automated processing and analysis.
+                      type: string
+                    message:
+                      description: |
+                        Human-readable message providing additional context about
+                        the condition's current state and any relevant details.
+                      type: string
+              phase:
+                description: |
+                  Current phase of the UserTools instance lifecycle. Provides
+                  a high-level summary of the environment's current state.
+
+                  Common phases include:
+                  - Pending: Initial setup
+                  - Provisioning: Resource creation
+                  - Running: Fully operational
+                  - Failed: Error state
+                  - Terminating: Cleanup
+                type: string
+              lastUpdateTime:
+                description: |
+                  Timestamp of the last status update. Used for tracking the
+                  freshness of status information and monitoring update frequency.
+                type: string
+                format: date-time

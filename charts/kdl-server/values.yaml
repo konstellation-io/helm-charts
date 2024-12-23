@@ -1463,16 +1463,48 @@ userToolsOperator:
   # -- Configure args
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   args:
+    - --enable-http2
     - --health-probe-bind-address=:8081
-    - --metrics-bind-address=127.0.0.1:8080
-    # - --leader-elect
-    # - --leader-election-id=user-tools-operator
+    - --leader-elect
+    - --leader-election-id=user-tools-operator
+    - --metrics-bind-address=:8080
+    - --zap-log-level=error
+    - --zap-stacktrace-level=error
 
   # -- Configure command
   # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
   command: []
     # - echo
     # - "Hello, World!"
+
+  # -- Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service:
+    # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
+    type: ClusterIP
+    # -- Kubernetes Service port
+    port: 8081
+    # -- Kubernetes Service health check path
+    # healthPath: ""
+    # -- NodePort port (only when type is NodePort)
+    # nodePort: 32000
+    # -- Pod expose port
+    targetPort: 8081
+    # -- Pod extra ports
+    extraPorts:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+
+  # -- Enable ServiceMonitor to get metrics
+  # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
+  serviceMonitor:
+    # -- Enable or disable
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    metricRelabelings: []
+    relabelings: []
 
   # -- Configure lifecycle hooks
   # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
@@ -1563,85 +1595,45 @@ userToolsOperator:
   ### Following values are used to configure the User Tools Operator
   ### This config pass on ConfigMap to KDL API create UserTools CRD with the
   ### desired configuration.
-  # ref: https://github.com/konstellation-io/kdl-server/blob/main/user-tools-operator/helm-charts/usertools/values.yaml
+  # ref: https://github.com/konstellation-io/kdl-server/blob/main/user-tools-operator/helm-charts/kdl-user-tools/values.yaml
 
-  # -- Storage configuration
-  storage:
-    # -- The storage size for the persistent volume claim
-    size: 10Gi
-    # -- Storage class to use for persistence
-    storageClassName: ""
+  templateCustomResource: |
+    apiVersion: kdl.konstellation.io/v1
+    kind: KDLUserTools
+    metadata:
+      name: replaced-by-kdl-api
+      namespace: replaced-by-kdl-api
+    spec:
+      username: replaced-by-kdl-api
+      usernameSlug: replaced-by-kdl-api
 
-  # -- repo-cloner configuration
-  # The following components are managed by the manager container when `usertool` custom resources are detected
-  repoCloner:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-repo-cloner
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: "0.19.0"
+      sharedVolume:
+        enabled: true
+        name: ""
 
-  # -- vscode configuration
-  vscode:
-    # -- Enable or disable vscode
-    enabled: false
+      persistentVolume:
+        enabled: true
+        size: "1Gi"
+        accessModes:
+          - ReadWriteOnce
+        storageClass: ""
 
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-vscode
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: "0.16.0"
+      repoCloner:
+        image:
+          repository: konstellation/kdl-repo-cloner
+          tag: "latest"
+          pullPolicy: IfNotPresent
 
-  # -- vscodeRuntime configuration
-  vscodeRuntime:
-    # -- Image registry
-    # The image configuration for the base service
-    image:
-      # The repository of the image
-      repository: konstellation/kdl-py
-      # The pull policy for the image
-      pullPolicy: IfNotPresent
-      # The image tag
-      tag: "3.9"
+        env: {}
+          # KDL_SERVER_MONGODB_URI: "mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256"
 
-  # Default ingress config for all deployed User Tools.
-  #
-  # This Chart has been developed using Nginx Ingress Controller by default.
-  # Using the following default annotations ensures its correct operation.
-  # Ref: https://kubernetes.github.io/ingress-nginx/
-  #
-  ingress:
-    enabled: false
-    className: "nginx"
-    annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: "1000000m"
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        more_set_headers "Content-Security-Policy: frame-ancestors 'self' *";
-      # In case of additional security to be required set the previous annotation as follows
-      #
-      # nginx.ingress.kubernetes.io/configuration-snippet: |
-      #   more_set_headers "Content-Security-Policy: frame-ancestors 'self' https://kdlapp.kdl.local";
-    tls:
-      # -- The TLS secret name that will be used. It takes precedence over `.Values.global.ingress.tls.secretName`.
-      secretName: null
+      vscodeRuntime:
+        image:
+          repository: konstellation/kdl-py
+          tag: "3.9"
+          pullPolicy: IfNotPresent
 
-  # If enabled, users will be able to download a kubeconfig file, so they can attach an external terminal/IDE to
-  # the vscodeRuntime running inside KST.
-  # Ref: https://code.visualstudio.com/docs/remote/remote-overview
-  kubeconfig:
-    # -- Whether to enable kubeconfig for using with VSCode remote development.
-    enabled: false
-    # -- The Kube API Server URL for using with VSCode remote development
-    externalServerUrl: ""
-    ## Example:
-    ##
-    # enabled: true
-    # externalServerUrl: https://192.168.0.21:16443
+        env: {}
+          # MINIO_ACCESS_KEY: ""
+          # MINIO_SECRET_KEY: ""
+          # MINIO_ENDPOINT: "http://minio:9000"

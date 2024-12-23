@@ -98,10 +98,10 @@ spec:
               containerPort: {{ $port.targetPort }}
               protocol: TCP
             {{- end }}
+          {{- with .Values.lifecycle }}
           lifecycle:
-            {{- with .Values.lifecycle }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}
+          {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             {{- if .Values.livenessProbeCustom }}

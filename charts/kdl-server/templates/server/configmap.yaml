@@ -30,42 +30,11 @@ data:
   # KDL URL Setup
   PROJECT_FILEBROWSER_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/filebrowser/PROJECT_ID/"
   PROJECT_MLFLOW_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/mlflow/PROJECT_ID/"
-  USER_TOOLS_VSCODE_URL: "{{ include "http.protocol" . }}://USERNAME-code.{{ .Values.global.domain }}/?folder=/home/coder/repos/REPO_FOLDER"
 
   ##
   # Knowledge Galaxy
   KNOWLEDGE_GALAXY_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg/projects/PROJECT_ID/"
   KNOWLEDGE_GALAXY_ENABLED: "{{ .Values.knowledgeGalaxy.enabled }}"
-
-  ##
-  # User Tools Operator
-  VSCODE_IMG_REPO: "{{ .Values.userToolsOperator.vscode.image.repository }}"
-  VSCODE_IMG_TAG: "{{ .Values.userToolsOperator.vscode.image.tag }}"
-  VSCODE_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.vscode.image.pullPolicy }}"
-
-  REPO_CLONER_IMG_REPO: "{{ .Values.userToolsOperator.repoCloner.image.repository }}"
-  REPO_CLONER_IMG_TAG: "{{ .Values.userToolsOperator.repoCloner.image.tag }}"
-  REPO_CLONER_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.repoCloner.image.pullPolicy }}"
-
-  USER_TOOLS_VSCODE_RUNTIME_IMG_REPO: "{{ .Values.userToolsOperator.vscodeRuntime.image.repository }}"
-  USER_TOOLS_VSCODE_RUNTIME_IMG_TAG: "{{ .Values.userToolsOperator.vscodeRuntime.image.tag }}"
-  USER_TOOLS_VSCODE_RUNTIME_IMG_PULLPOLICY: "{{ .Values.userToolsOperator.vscodeRuntime.image.pullPolicy }}"
-
-  USER_TOOLS_KUBECONFIG_DOWNLOAD_ENABLED: "{{ .Values.userToolsOperator.kubeconfig.enabled }}"
-  USER_TOOLS_KUBECONFIG_EXTERNAL_SERVER_URL: "{{ .Values.userToolsOperator.kubeconfig.externalServerUrl }}"
-
-  USER_TOOLS_STORAGE_SIZE: {{ .Values.userToolsOperator.storage.size }}
-  USER_TOOLS_STORAGE_CLASSNAME: {{ .Values.userToolsOperator.storage.storageClassName }}
-  {{- if .Values.userToolsOperator.ingress.className }}
-  USER_TOOLS_INGRESS_CLASS_NAME: {{ .Values.userToolsOperator.ingress.className }}
-  {{- end }}
-  # Base64 encoded string of the user-tools ingress annotations
-  USER_TOOLS_ENCODED_INGRESS_ANNOTATIONS: |+
-    {{- toYaml .Values.userToolsOperator.ingress.annotations | b64enc | nindent 4 }}
-  {{- if and .Values.global.ingress.tls.enabled (or (not (kindIs "invalid" .Values.userToolsOperator.ingress.tls.secretName )) (not (kindIs "invalid" .Values.global.ingress.tls.secretName ))) }}
-  USER_TOOLS_TLS_SECRET_NAME: "{{ include "userTools.tlsSecretName" . }}"
-  {{- end }}
-  USER_TOOLS_VSCODE_ENABLED: "{{ .Values.userToolsOperator.vscode.enabled }}"
 
   ##
   # Labels

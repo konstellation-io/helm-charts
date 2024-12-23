@@ -1,10 +1,10 @@
-{{- if .Values.projectOperator.enabled }}
+{{ if .Values.userToolsOperator.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "kdl-server.project-operator.name" . }}-metrics-auth
+  name: {{ include "kdl-server.user-tools-operator.name" . }}-metrics-auth
   labels:
-    {{- include "kdl-server.projectOperatorLabels" . | nindent 4 }}
+    {{- include "kdl-server.userToolsOperatorLabels" . | nindent 4 }}
 rules:
 - apiGroups:
   - authentication.k8s.io
