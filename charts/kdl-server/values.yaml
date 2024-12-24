@@ -103,9 +103,9 @@ testConnection:
 
 # -- Environment variables to configure application
 env: {}
-  # KDL_ADMIN_EMAIL: admin@admin.com
-  # KDL_ADMIN_USERNAME: admin
   # MINIO_ENDPOINT: test
+  # KUBECONFIG_DOWNLOAD_ENABLED: "" # required
+  # KUBECONFIG_EXTERNAL_SERVER_URL: "" # required
 
 # -- Variables from secrets
 envFromSecrets: {}
@@ -1620,6 +1620,10 @@ userToolsOperator:
         accessModes:
           - ReadWriteOnce
         storageClass: ""
+
+      kubeconfig:
+        enabled: false
+        # externalServerUrl: https://192.168.0.21:16443
 
       repoCloner:
         image:
