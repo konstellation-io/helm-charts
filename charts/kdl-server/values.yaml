@@ -1611,6 +1611,9 @@ userToolsOperator:
         enabled: true
         name: ""
 
+      # must be declared
+      podLabels: {}
+
       persistentVolume:
         enabled: true
         size: "1Gi"
@@ -1621,19 +1624,25 @@ userToolsOperator:
       repoCloner:
         image:
           repository: konstellation/kdl-repo-cloner
-          tag: "latest"
           pullPolicy: IfNotPresent
+          tag: "latest"
 
         env: {}
           # KDL_SERVER_MONGODB_URI: "mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256"
 
+      # must be declared
       vscodeRuntime:
         image:
           repository: konstellation/kdl-py
-          tag: "3.9"
           pullPolicy: IfNotPresent
+          tag: "3.9"
 
         env: {}
           # MINIO_ACCESS_KEY: ""
           # MINIO_SECRET_KEY: ""
           # MINIO_ENDPOINT: "http://minio:9000"
+
+      # must be declared
+      nodeSelector: {}
+      tolerations: []
+      affinity: {}

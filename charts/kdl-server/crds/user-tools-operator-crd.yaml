@@ -115,7 +115,6 @@ spec:
             required:
               - username
               - usernameSlug
-              - sharedVolume
             x-kubernetes-preserve-unknown-fields: true
             properties:
               # common configuration
@@ -195,8 +194,6 @@ spec:
                   - Integration with data pipelines
                   - Backup and disaster recovery
                 type: object
-                required:
-                  - name
                 properties:
                   enabled:
                     description: |
