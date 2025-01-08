@@ -158,12 +158,12 @@ spec:
             {{- end }}
           env:
             # Default environment
-            - name: SSH_KNOWN_HOSTS
-              value: /app/.ssh/known_hosts
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: SSH_KNOWN_HOSTS
+              value: /app/.ssh/known_hosts
             # This variable uses on KDL API to load configMap
             # to operators: <release-name>-server-project-template
             - name: RELEASE_NAME

@@ -10,12 +10,6 @@ metadata:
 data:
   ##
   # KDL APP configuration
-  KDL_SERVER_PORT: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) | quote }}
-  BASE_DOMAIN_NAME: {{ .Values.global.domain }}
-  SHARED_VOLUME: {{ .Values.sharedVolume.name }}
-
-  TLS_ENABLED: "{{ .Values.global.ingress.tls.enabled }}"
-
   config.json: |+
     {
       "DESCRIPTION_MIN_WORDS": {{ default "50" .Values.knowledgeGalaxy.config.descriptionMinWords }},
@@ -27,7 +21,7 @@ data:
     }
 
   ##
-  # KDL URL Setup
+  # Project Operator
   PROJECT_FILEBROWSER_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/filebrowser/PROJECT_ID/"
   PROJECT_MLFLOW_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/mlflow/PROJECT_ID/"
 

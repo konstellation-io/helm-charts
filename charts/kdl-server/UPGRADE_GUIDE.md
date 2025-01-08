@@ -147,6 +147,14 @@ The new `global` section consolidates commonly shared configurations across all 
 * **MinIO legacy Configurations**
   * Deprecated older ingress and volume configurations
 
+Execute the following actions to update the CRDs before applying the upgrade.
+
+* Run the following script to update CRDs:
+
+  ```bash
+  kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.0.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
+  ```
+
 CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
 
 ### From `6.0.1` to `6.0.2`

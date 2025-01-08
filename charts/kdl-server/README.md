@@ -20,22 +20,26 @@ A Helm chart to deploy KDL server
 | Release ↓ / Kubernetes → | 1.24 | 1.25 | 1.26 | 1.27 | 1.28 | 1.29 | 1.30 | 1.31 |
 |:------------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 | 6.0.2                    | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
-| 6.1.0                    | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
+| 6.1.0                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
+| 6.2.0                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
 
-| Release ↓ / kdl-app → | 1.38.0 | 1.38.1 | 1.39.0 |
-|:---------------------:|:------:|:------:|:------:|
-| 6.0.2                 | ✅     | ✅     | ❌     |
-| 6.1.0                 | ❌     | ❌     | ✅     |
+| Release ↓ / kdl-app → | 1.38.0 | 1.38.1 | 1.39.0 | 1.40.0 |
+|:---------------------:|:------:|:------:|:------:|:------:|
+| 6.0.2                 | ✅     | ✅     | ❌     | ❌     |
+| 6.1.0                 | ❌     | ❌     | ✅     | ❌     |
+| 6.2.0                 | ❌     | ❌     | ❌     | ✅     |
 
-| Release ↓ / project-operator → | 0.19.0 | 0.20.0 |
-|:------------------------------:|:------:|:------:|
-| 6.0.2                          | ✅     | ❌     |
-| 6.1.0                          | ❌     | ✅     |
+| Release ↓ / project-operator → | 0.19.0 | 0.20.0 | 0.21.0 |
+|:------------------------------:|:------:|:------:|:------:|
+| 6.0.2                          | ✅     | ❌     | ❌     |
+| 6.1.0                          | ❌     | ✅     | ❌     |
+| 6.2.0                          | ❌     | ❌     | ✅     |
 
-| Release ↓ / user-tools-operator → | 0.30.0 | 0.31.0 |
-|:---------------------------------:|:------:|:------:|
-| 6.0.2                             | ✅     | ❌     |
-| 6.1.0                             | ❌     | ✅     |
+| Release ↓ / user-tools-operator → | 0.30.0 | 0.31.0 | 0.32.0 |
+|:---------------------------------:|:------:|:------:|:------:|
+| 6.0.2                             | ✅     | ❌     | ❌     |
+| 6.1.0                             | ❌     | ✅     | ❌     |
+| 6.2.0                             | ❌     | ❌     | ✅     |
 
 | Symbol | Description |
 |:------:|-------------|
@@ -240,6 +244,14 @@ The new `global` section consolidates commonly shared configurations across all 
 * **MinIO legacy Configurations**
   * Deprecated older ingress and volume configurations
 
+Execute the following actions to update the CRDs before applying the upgrade.
+
+* Run the following script to update CRDs:
+
+  ```bash
+  kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.0.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
+  ```
+
 CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
 
 ### From `6.0.1` to `6.0.2`
@@ -429,40 +441,23 @@ helm show values konstellation-io/kdl-server
 | affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | args | list | `[]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
-| cleaner | object | `{"activeDeadlineSeconds":86400,"backoffLimit":3,"concurrencyPolicy":"Forbid","enabled":false,"failedJobsHistoryLimit":5,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-cleaner","tag":"0.16.0"},"imagePullSecrets":[],"resources":{},"schedule":"0 1 * * 0","startingDeadlineSeconds":60,"successfulJobsHistoryLimit":2,"threshold":5,"trashPath":"/shared-storage/.trash","volumeMounts":[],"volumes":[]}` | Cleaner job configuration |
-| cleaner.activeDeadlineSeconds | int | `86400` | Specifies the duration in seconds relative to the start time that the job may be active before the system tries to terminate it. ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup |
-| cleaner.backoffLimit | int | `3` | Specifies the number of retries before marking a job as failed. ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy |
-| cleaner.concurrencyPolicy | string | `"Forbid"` | Specifies how to treat concurrent executions of a Job. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy |
-| cleaner.enabled | bool | `false` | Whether to enable cleaner cronjob |
-| cleaner.failedJobsHistoryLimit | int | `5` | Specifies the maximum number of failed finished jobs to retain. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
-| cleaner.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-cleaner","tag":"0.16.0"}` | Image registry The image configuration for the base service |
-| cleaner.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
-| cleaner.resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
-| cleaner.schedule | string | `"0 1 * * 0"` | Schedule for the cleaner cronjob example: every sunday at 1:00 AM |
-| cleaner.startingDeadlineSeconds | int | `60` | Optional deadline in seconds for starting the job if it misses its scheduled time for any reason. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-job-limitations |
-| cleaner.successfulJobsHistoryLimit | int | `2` | Specifies the maximum number of successful finished jobs to retain. ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits |
-| cleaner.threshold | int | `5` | The minimun age of files to be removed |
-| cleaner.trashPath | string | `"/shared-storage/.trash"` | The name of the trash path |
-| cleaner.volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition |
-| cleaner.volumes | list | `[]` | Additional volumes on the output Deployment definition </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/ </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume |
 | command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
-| env | object | `{}` | Environment variables to configure application |
+| env | object | `{}` | Environment variables to configure application </br> Ref: https://github.com/konstellation-io/kdl-server/tree/main/app/api |
 | envFromConfigMap | object | `{}` | Variables from configMap |
 | envFromFiles | list | `[]` | Load all variables from files </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
 | envFromSecrets | object | `{}` | Variables from secrets |
 | extraContainers | list | `[]` | Configure extra containers |
 | fullnameOverride | string | `""` | String to fully override kdl-server.fullname template |
 | global.domain | string | `"kdl.local"` | The DNS domain name that will serve the application |
+| global.enableHttps | bool | `false` | Enable HTTPs Use to enable or disable HTTPS on the endpoints |
 | global.env | object | `{}` | Environment variables to configure application |
 | global.envFromConfigMap | object | `{}` | Variables from configMap |
 | global.envFromFiles | list | `[]` | Load all variables from files </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
 | global.envFromSecrets | object | `{}` | Variables from secrets |
 | global.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | global.imageRegistry | string | `""` | Specifies the registry to pull images from. Leave empty for the default registry |
-| global.ingress.tls.enabled | bool | `false` |  |
-| global.ingress.tls.secretName | string | `""` |  |
 | global.serverName | string | `"local-server"` | KDL Server instance name |
-| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.39.0"}` | Image registry The image configuration for the base service |
+| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.40.0"}` | Image registry The image configuration for the base service |
 | imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"chart-example.local","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}],"tls":[]}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
@@ -544,13 +539,13 @@ helm show values konstellation-io/kdl-server
 | podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | postgresql | object | `{"auth":{"database":"kdl","password":"ChangeMe","username":"user"},"enabled":true,"primary":{"persistence":{"enabled":false}},"replicaCount":1}` | PostgreSQL subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml |
 | postgresql.enabled | bool | `true` | Enable or disable PostgreSQL subchart |
-| projectOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":"apiVersion: kdl.konstellation.io/v1\nkind: KDLProject\nmetadata:\n  name: replaced-by-kdl-api\n  namespace: replaced-by-kdl-api\nspec:\n  projectId: replaced-by-kdl-api\n  domain: kdl.local\n  mlflow:\n    image:\n      repository: konstellation/kdl-mlflow\n      pullPolicy: IfNotPresent\n      tag: \"0.14.18\"\n  filebrowser:\n    image:\n      repository: filebrowser/filebrowser\n      pullPolicy: IfNotPresent\n      tag: \"v2\"\n","terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
+| projectOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.21.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":"apiVersion: kdl.konstellation.io/v1\nkind: KDLProject\nmetadata:\n  name: replaced-by-kdl-api\n  namespace: replaced-by-kdl-api\nspec:\n  projectId: replaced-by-kdl-api\n  domain: kdl.local\n\n  mlflow:\n    image:\n      repository: konstellation/kdl-mlflow\n      pullPolicy: IfNotPresent\n      tag: \"0.15.0\"\n\n  filebrowser:\n    image:\n      repository: konstellation/kdl-filebrowser\n      pullPolicy: IfNotPresent\n      tag: \"1.0.0\"\n","terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
 | projectOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | projectOperator.args | list | `["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | projectOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
 | projectOperator.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | projectOperator.enabled | bool | `true` | Enable or disable project-operator |
-| projectOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.20.0"}` | Image registry The image configuration for the base service |
+| projectOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.21.0"}` | Image registry The image configuration for the base service |
 | projectOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | projectOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
 | projectOperator.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
@@ -586,8 +581,8 @@ helm show values konstellation-io/kdl-server
 | resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
 | secrets | list | `[]` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
 | securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
-| service | object | `{"port":80,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
-| service.port | int | `80` | Kubernetes Service port |
+| service | object | `{"port":8080,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
+| service.port | int | `8080` | Kubernetes Service port |
 | service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
 | serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
 | serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |
@@ -608,13 +603,13 @@ helm show values konstellation-io/kdl-server
 | testConnection | object | `{"enabled":false,"repository":"busybox","tag":"latest"}` | Enable or disable test connection |
 | tolerations | list | `[]` | Tolerations for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/ |
 | topologySpreadConstraints | list | `[]` | Control how Pods are spread across your cluster </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints |
-| userToolsOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=user-tools-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.31.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":"apiVersion: kdl.konstellation.io/v1\nkind: KDLUserTools\nmetadata:\n  name: replaced-by-kdl-api\n  namespace: replaced-by-kdl-api\nspec:\n  username: replaced-by-kdl-api\n  usernameSlug: replaced-by-kdl-api\n\n  sharedVolume:\n    enabled: true\n    name: \"\"\n\n  # must be declared\n  podLabels: {}\n\n  persistentVolume:\n    enabled: true\n    size: \"1Gi\"\n    accessModes:\n      - ReadWriteOnce\n    storageClass: \"\"\n\n  kubeconfig:\n    enabled: false\n    # externalServerUrl: https://192.168.0.21:16443\n\n  repoCloner:\n    image:\n      repository: konstellation/kdl-repo-cloner\n      pullPolicy: IfNotPresent\n      tag: \"latest\"\n\n    env: {}\n      # KDL_SERVER_MONGODB_URI: \"mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256\"\n\n  # must be declared\n  vscodeRuntime:\n    image:\n      repository: konstellation/kdl-py\n      pullPolicy: IfNotPresent\n      tag: \"3.9\"\n\n    env: {}\n      # MINIO_ACCESS_KEY: \"\"\n      # MINIO_SECRET_KEY: \"\"\n      # MINIO_ENDPOINT: \"http://minio:9000\"\n\n  # must be declared\n  nodeSelector: {}\n  tolerations: []\n  affinity: {}\n","terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | User Tools Operator deployment ref: https://github.com/konstellation-io/kdl-server/tree/main/user-tools-operator |
+| userToolsOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=user-tools-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.32.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":"apiVersion: kdl.konstellation.io/v1\nkind: KDLUserTools\nmetadata:\n  name: replaced-by-kdl-api\n  namespace: replaced-by-kdl-api\nspec:\n  username: replaced-by-kdl-api\n  usernameSlug: replaced-by-kdl-api\n\n  sharedVolume:\n    enabled: true\n    name: \"\"\n\n  # must be declared\n  podLabels: {}\n\n  persistentVolume:\n    enabled: true\n    size: \"1Gi\"\n    accessModes:\n      - ReadWriteOnce\n    storageClass: \"\"\n\n  kubeconfig:\n    enabled: false\n    # externalServerUrl: https://192.168.0.21:16443\n\n  repoCloner:\n    image:\n      repository: konstellation/kdl-repo-cloner\n      pullPolicy: IfNotPresent\n      tag: \"0.19.0\"\n\n    # ref: https://github.com/konstellation-io/kdl-server/tree/main/repo-cloner\n    env: {}\n      # KDL_SERVER_MONGODB_URI: \"mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256\"\n\n  # must be declared\n  vscodeRuntime:\n    image:\n      repository: konstellation/kdl-py\n      pullPolicy: IfNotPresent\n      tag: \"3.9\"\n\n    env: {}\n      # MINIO_ACCESS_KEY: \"\"\n      # MINIO_SECRET_KEY: \"\"\n      # MINIO_ENDPOINT: \"http://minio:9000\"\n\n  # must be declared\n  nodeSelector: {}\n  tolerations: []\n  affinity: {}\n","terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | User Tools Operator deployment ref: https://github.com/konstellation-io/kdl-server/tree/main/user-tools-operator |
 | userToolsOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | userToolsOperator.args | list | `["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=user-tools-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | userToolsOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |
 | userToolsOperator.command | list | `[]` | Configure command </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | userToolsOperator.enabled | bool | `true` | Enable or disable User Tools Operator deployment |
-| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.31.0"}` | Image registry The image configuration for the base service |
+| userToolsOperator.image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-user-tools-operator","tag":"0.32.0"}` | Image registry The image configuration for the base service |
 | userToolsOperator.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | userToolsOperator.initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
 | userToolsOperator.lifecycle | object | `{}` | Configure lifecycle hooks </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/ </br> Ref: https://learnk8s.io/graceful-shutdown |
