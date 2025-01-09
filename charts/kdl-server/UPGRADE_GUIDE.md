@@ -1,6 +1,74 @@
 > [!IMPORTANT]
 > Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
 
+### From `6.1.0` to `6.2.0`
+
+> [!IMPORTANT]
+> Execute the following actions to update the CRDs before applying the upgrade.
+> ```bash
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/project-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
+> ```
+
+This release introduces several architectural improvements and updates to core components. The main changes include enhanced security configurations, streamlined HTTPS management, and updated component versions.
+
+#### Breaking Changes
+
+* **Global HTTPS Configuration**
+  - The `global.ingress.tls.enabled` has been replaced with `global.enableHttps`
+  - TLS secret configurations have been moved to individual component sections
+  - All components now use the new global HTTPS configuration for consistent behavior
+
+* **Component Version Updates**
+  - KDL Server updated to version `1.40.0`
+  - Project Operator updated to version `0.21.0`
+  - User Tools Operator updated to version `0.32.0`
+  - MLflow updated to version `0.15.0`
+  - Filebrowser updated to version `1.0.0`
+
+* **Filebrowser Changes**
+  - Repository changed from `filebrowser/filebrowser` to `konstellation/kdl-filebrowser`
+  - Added comprehensive S3 integration configurations
+  - New security context settings for FUSE mount support
+
+#### Deprecations
+
+* **Cleaner Job**
+  - The cleaner cronjob configuration has been removed
+  - Users should migrate to alternative cleanup solutions
+
+* **Legacy Helpers**
+  - Removed deprecated TLS helper functions
+  - Removed legacy global TLS configurations
+
+#### Other Changes
+
+* **Enhanced S3 Integration**
+  - Added detailed S3 configuration for Filebrowser
+  - Improved S3 mount options for better performance
+  - Added cache configuration for S3 operations
+
+* **Security Improvements**
+  - Added pod security context configurations for Filebrowser
+  - Enhanced FUSE device mounting capabilities
+  - Improved S3 credential management
+
+#### Default Changes
+
+The following components are now disabled by default to allow better integration with existing infrastructure:
+- Keycloak
+- MinIO
+- PostgreSQL
+- MongoDB
+
+Users should enable these components explicitly if needed or configure external services.
+
+#### Migration Steps
+
+* [KDL - From 6.1.0 to 6.2.0](https://intelygenz.atlassian.net/wiki/spaces/K/pages/420446216/KDL+-+From+6.1.0+to+6.2.0)
+
+CHANGELOG: [6.2.0](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.2.0)
+
 ### From `6.0.2` to `6.1.0`
 
 **global**
@@ -147,15 +215,11 @@ The new `global` section consolidates commonly shared configurations across all 
 * **MinIO legacy Configurations**
   * Deprecated older ingress and volume configurations
 
-Execute the following actions to update the CRDs before applying the upgrade.
+#### Migration Steps
 
-* Run the following script to update CRDs:
+* [KDL - From 6.0.2 to 6.1.0](https://intelygenz.atlassian.net/wiki/spaces/K/pages/420446216/KDL+-+From+6.0.2+to+6.1.0)
 
-  ```bash
-  kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.0.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
-  ```
-
-CHANGELOG: [6.0.2](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
+CHANGELOG: [6.1.0](https://github.com/konstellation-io/helm-charts/releases/tag/kdl-server-6.1.0)
 
 ### From `6.0.1` to `6.0.2`
 
