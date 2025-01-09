@@ -142,6 +142,12 @@ spec:
                   - Migrating from existing systems
                   - Ensuring compatibility with external tools
                 type: string
+              inputData:
+                description: "Optional key-value pairs for storing arbitrary data"
+                type: object
+                additionalProperties:
+                  type: string
+                nullable: true
               username:
                 description: |
                   Username for whom the tools environment is being created. This value

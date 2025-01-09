@@ -51,6 +51,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Add the protocol part to the uri
+*/}}
+{{- define "http.protocol" -}}
+{{ ternary "https" "http" .Values.global.enableHttps }}
+{{- end -}}
+
+{{/*
 #######################
 # SERVER SECTION
 #######################
@@ -364,85 +371,3 @@ This works because Helm treats dictionaries as mutable objects and allows passin
 {{- include "kdl-server.patchSelectorProjectOperatorLabels" (merge (dict "_target" $constraint (include "kdl-server.selectorProjectOperatorLabels" $)) $) }}
 {{- end }}
 {{- end }}
-
-{{/*
-##############
-# WIP LEGACY
-##############
-*/}}
-
-{{/*
-Add the protocol part to the uri
-*/}}
-{{- define "http.protocol" -}}
-  {{ ternary "https" "http" .Values.global.ingress.tls.enabled }}
-{{- end -}}
-
-{{/*
-Global tls secret name
-*/}}
-{{- define "global.tlsSecretName" -}}
-{{-  if kindIs "invalid" .Values.global.ingress.tls.secretName -}}
-  {{- printf "%s-%s-tls" $.Values.global.domain $.appName -}}
-{{- else -}}
-  {{- .Values.global.ingress.tls.secretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create minio tls secret name
-*/}}
-{{- define "minio.tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.minio.ingress.tls.secretName -}}
-  {{- $_ := set $ "appName" "minio" }}
-  {{- include "global.tlsSecretName" . -}}
-{{- else -}}
-  {{- .Values.minio.ingress.tls.secretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create minio tls secret name
-*/}}
-{{- define "minioConsole.tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.minio.consoleIngress.tls.secretName -}}
-  {{- $_ := set $ "appName" "minio-console" }}
-  {{- include "global.tlsSecretName" . -}}
-{{- else -}}
-  {{- .Values.minio.consoleIngress.tls.secretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create kdlServer tls secret name
-*/}}
-{{- define "tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.ingress.tls.secretName -}}
-  {{- $_ := set $ "appName" "kdlapp" }}
-  {{- include "global.tlsSecretName" . -}}
-{{- else -}}
-  {{- .Values.ingress.tls.secretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create user-tools tls secret name
-*/}}
-{{- define "userTools.tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.userToolsOperator.ingress.tls.secretName -}}
-  {{- .Values.global.ingress.tls.secretName -}}
-{{- else -}}
-  {{- .Values.userToolsOperator.ingress.tls.secretName -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create projectOperator mlflow tls secret name
-*/}}
-{{- define "projectOperator.mlflow.tlsSecretName" -}}
-{{- if kindIs "invalid" .Values.projectOperator.mlflow.ingress.tls.secretName -}}
-  {{- .Values.global.ingress.tls.secretName -}}
-{{- else -}}
-  {{- .Values.projectOperator.mlflow.ingress.tls.secretName -}}
-{{- end -}}
-{{- end -}}

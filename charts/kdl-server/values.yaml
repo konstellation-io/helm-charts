@@ -13,6 +13,16 @@ global:
   #   - name: myRegistryKeySecretName
   imagePullSecrets: []
 
+  # -- The DNS domain name that will serve the application
+  domain: kdl.local
+
+  # -- KDL Server instance name
+  serverName: "local-server"
+
+  # -- Enable HTTPs
+  # Use to enable or disable HTTPS on the endpoints
+  enableHttps: true
+
   # -- Environment variables to configure application
   env: {}
     # MY_VARIABLE: value
@@ -37,18 +47,11 @@ global:
     # - configMapRef:
     #     name: <name-configmap>
 
-  # TODO: legacy values, remove in future versions
-  # -- KDL Server instance name
-  serverName: "local-server"
+# -- String to partially override kdl-server.fullname template (will maintain the release name)
+nameOverride: ""
 
-  # -- The DNS domain name that will serve the application
-  domain: kdl.local
-
-  # (DEPRECATION) Clean _helpers.tpl
-  ingress:
-    tls:
-      enabled: false
-      secretName: ""
+# -- String to fully override kdl-server.fullname template
+fullnameOverride: ""
 
 # -- Image registry
 # The image configuration for the base service
@@ -58,13 +61,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: "1.39.0"
-
-# -- String to partially override kdl-server.fullname template (will maintain the release name)
-nameOverride: ""
-
-# -- String to fully override kdl-server.fullname template
-fullnameOverride: ""
+  tag: "1.40.0"
 
 # -- Specifies the secrets to use for pulling images from private registries
 # Leave empty if no secrets are required
@@ -102,6 +99,7 @@ testConnection:
   tag: "latest"
 
 # -- Environment variables to configure application
+# </br> Ref: https://github.com/konstellation-io/kdl-server/tree/main/app/api
 env: {}
   # MINIO_ENDPOINT: test
   # KUBECONFIG_DOWNLOAD_ENABLED: "" # required
@@ -488,93 +486,11 @@ topologySpreadConstraints: []
 #   topologyKey: zone
 #   whenUnsatisfiable: DoNotSchedule
 
-# -- Cleaner job configuration
-cleaner:
-  # -- Whether to enable cleaner cronjob
-  enabled: false
-
-  # -- Image registry
-  # The image configuration for the base service
-  image:
-    # The repository of the image
-    repository: konstellation/kdl-cleaner
-    # The pull policy for the image
-    pullPolicy: IfNotPresent
-    # The image tag
-    tag: "0.16.0"
-
-  # -- Specifies the secrets to use for pulling images from private registries
-  # Leave empty if no secrets are required
-  # E.g.
-  # imagePullSecrets:
-  #   - name: myRegistryKeySecretName
-  imagePullSecrets: []
-
-  # -- Specifies how to treat concurrent executions of a Job.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy
-  concurrencyPolicy: "Forbid"
-
-  # -- Specifies the maximum number of failed finished jobs to retain.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits
-  failedJobsHistoryLimit: 5
-
-  # -- Specifies the maximum number of successful finished jobs to retain.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#jobs-history-limits
-  successfulJobsHistoryLimit: 2
-
-  # -- Optional deadline in seconds for starting the job if it misses its scheduled time for any reason.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-job-limitations
-  startingDeadlineSeconds: 60
-
-  # -- Specifies the number of retries before marking a job as failed.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy
-  backoffLimit: 3
-
-  # -- Specifies the duration in seconds relative to the start time that the job may be active before the system tries to terminate it.
-  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup
-  activeDeadlineSeconds: 86400
-
-  # -- Schedule for the cleaner cronjob
-  # example: every sunday at 1:00 AM
-  schedule: "0 1 * * 0"
-
-  # -- The name of the trash path
-  trashPath: /shared-storage/.trash
-
-  # -- The minimun age of files to be removed
-  threshold: 5 # minimun age of files to be removed
-
-  # -- Additional volumes on the output Deployment definition
-  # </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/
-  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
-  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume
-  volumes: []
-  # - name: foo
-  #   secret:
-  #     secretName: mysecret
-  #     optional: false
-
-  # -- Additional volumeMounts on the output Deployment definition
-  volumeMounts: []
-  # - name: foo
-  #   mountPath: "/etc/foo"
-  #   readOnly: true
-
-  # -- Resources limits and requested
-  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-  resources: {}
-    # limits:
-    #   cpu: "100m"
-    #   memory: "128Mi"
-    # requests:
-    #   cpu: "50m"
-    #   memory: "64Mi"
-
 # -- Keycloak subchart deployment
 # </br> Ref: https://github.com/konstellation-io/helm-charts/blob/kdl-server-1.0.2/charts/kdl-server/values.yaml
 keycloak:
   # -- Enable or disable Keycloak subchart
-  enabled: true
+  enabled: false
 
   # Force keycloak name
   fullnameOverride: keycloak
@@ -963,10 +879,9 @@ knowledgeGalaxy:
 
 # -- MinIO subchart deployment
 # </br> Ref: https://github.com/minio/minio/blob/RELEASE.2021-10-13T00-23-17Z/helm/minio/values.yaml
-# TODO: pending to remove legacy minio
 minio:
   # -- Enable or disable MinIO subchart
-  enabled: true
+  enabled: false
 
   # mode MinIO server mode (`standalone` or `distributed`)
   # </br> Ref: https://docs.minio.io/docs/distributed-minio-quickstart-guide
@@ -1142,7 +1057,7 @@ oauth2proxy:
 # </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 postgresql:
     # -- Enable or disable PostgreSQL subchart
-  enabled: true
+  enabled: false
 
   # Number of PostgreSQL replicas to deploy
   replicaCount: 1
@@ -1179,7 +1094,7 @@ projectOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: "0.20.0"
+    tag: "0.21.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1345,7 +1260,7 @@ projectOperator:
   ### This config pass on ConfigMap to KDL API create Project CRD with the
   ### desired configuration.
   # ref: https://github.com/konstellation-io/kdl-server/blob/main/project-operator/helm-charts/kdl-project/values.yaml
-  templateCustomResource: |
+  templateCustomResource:
     apiVersion: kdl.konstellation.io/v1
     kind: KDLProject
     metadata:
@@ -1354,16 +1269,89 @@ projectOperator:
     spec:
       projectId: replaced-by-kdl-api
       domain: kdl.local
+
       mlflow:
         image:
           repository: konstellation/kdl-mlflow
           pullPolicy: IfNotPresent
-          tag: "0.14.18"
+          tag: "0.15.0"
+
+        ingress:
+          enabled: false
+          tls:
+            enabled: true
+          className: "replace-class-name"
+          annotations: {}
+            # cert-manager.io/cluster-issuer: selfsigned-clusterissuer
+            # nginx.ingress.kubernetes.io/proxy-body-size: "4096m"
+
+        persistentVolume:
+          enabled: true
+          size: "1Gi"
+          accessModes:
+            - ReadWriteOnce
+          storageClass: "replace-storage-class-name"
+
+        env:
+          AWS_ACCESS_KEY_ID: "replace-minio-access-key"
+          AWS_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
+          MLFLOW_S3_ENDPOINT_URL: "http://minio.kdl:9000"
+          MLFLOW_BACKEND_STORE_URI: "sqlite:////home/mlflow/database.db"
+
       filebrowser:
         image:
-          repository: filebrowser/filebrowser
+          repository: konstellation/kdl-filebrowser
           pullPolicy: IfNotPresent
-          tag: "v2"
+          tag: "1.0.0"
+
+        podSecurityContext:
+          fsGroup: 1000
+
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+
+        env:
+          AWS_S3_ACCESS_KEY_ID: "replace-minio-access-key"
+          AWS_S3_MOUNT: "/srv"
+          AWS_S3_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
+          AWS_S3_URL: "http://minio:9000"
+          FB_ADDRESS: "0.0.0.0"
+          FB_DATABASE: "/home/filebrowser/database.db"
+          FB_LOG: stdout
+          FB_ROOT: /srv
+          S3FS_ARGS: >-
+            -o use_path_request_style
+            -o use_cache=/cache
+            -o ensure_diskfree=2048
+            -o max_stat_cache_size=100000
+            -o stat_cache_expire=300
+            -o enable_noobj_cache
+            -o dbglevel=warn
+            -o multipart_size=52
+            -o parallel_count=32
+            -o max_dirty_data=512
+            -o multireq_max=30
+            -o complement_stat
+            -o notsup_compat_dir
+            -o enable_content_md5
+            -o ro
+
+        volumes:
+          - name: cache-volume
+            emptyDir: {}
+          - name: fuse-device
+            hostPath:
+              path: /dev/fuse
+              type: CharDevice
+
+        volumeMounts:
+          - name: cache-volume
+            mountPath: /cache
+          - name: fuse-device
+            mountPath: /dev/fuse
 
 # -- Shared Volume configuration
 # Mount volume to share data between components
@@ -1431,7 +1419,7 @@ userToolsOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: "0.31.0"
+    tag: "0.32.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -1595,9 +1583,8 @@ userToolsOperator:
   ### Following values are used to configure the User Tools Operator
   ### This config pass on ConfigMap to KDL API create UserTools CRD with the
   ### desired configuration.
-  # ref: https://github.com/konstellation-io/kdl-server/blob/main/user-tools-operator/helm-charts/kdl-user-tools/values.yaml
-
-  templateCustomResource: |
+  # </br> Ref: https://github.com/konstellation-io/kdl-server/blob/main/user-tools-operator/helm-charts/kdl-user-tools/values.yaml
+  templateCustomResource:
     apiVersion: kdl.konstellation.io/v1
     kind: KDLUserTools
     metadata:
@@ -1606,10 +1593,6 @@ userToolsOperator:
     spec:
       username: replaced-by-kdl-api
       usernameSlug: replaced-by-kdl-api
-
-      sharedVolume:
-        enabled: true
-        name: ""
 
       # must be declared
       podLabels: {}
@@ -1629,8 +1612,9 @@ userToolsOperator:
         image:
           repository: konstellation/kdl-repo-cloner
           pullPolicy: IfNotPresent
-          tag: "latest"
+          tag: "0.20.0"
 
+        # ref: https://github.com/konstellation-io/kdl-server/tree/main/repo-cloner
         env: {}
           # KDL_SERVER_MONGODB_URI: "mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256"
 

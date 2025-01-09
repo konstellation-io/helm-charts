@@ -9,4 +9,6 @@ metadata:
     {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 data:
   template: |
-    {{- .Values.userToolsOperator.templateCustomResource | nindent 4 }}
+    {{- with .Values.userToolsOperator.templateCustomResource }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

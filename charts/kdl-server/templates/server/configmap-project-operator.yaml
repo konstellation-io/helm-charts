@@ -9,4 +9,6 @@ metadata:
     {{- include "kdl-server.kdlServerLabels" . | nindent 4 }}
 data:
   template: |
-    {{- .Values.projectOperator.templateCustomResource | nindent 4 }}
+    {{- with .Values.projectOperator.templateCustomResource }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

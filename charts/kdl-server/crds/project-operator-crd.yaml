@@ -76,6 +76,12 @@ spec:
                   complete control over the resource naming, replacing the default naming
                   convention entirely.
                 type: string
+              inputData:
+                description: "Optional key-value pairs for storing arbitrary data"
+                type: object
+                additionalProperties:
+                  type: string
+                nullable: true
               projectId:
                 description: |
                   Unique identifier for the KDL project. This ID is used across all
