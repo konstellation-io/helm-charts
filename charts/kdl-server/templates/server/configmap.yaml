@@ -26,6 +26,10 @@ data:
   PROJECT_MLFLOW_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/mlflow/PROJECT_ID/"
 
   ##
+  # User Tools Operator (deprecate)
+  USER_TOOLS_VSCODE_URL: "{{ include "http.protocol" . }}://USERNAME-code.{{ .Values.global.domain }}/?folder=/home/coder/repos/REPO_FOLDER"
+
+  ##
   # Knowledge Galaxy
   KNOWLEDGE_GALAXY_URL: "{{ include "http.protocol" . }}://kdlapp.{{ .Values.global.domain }}/kg/projects/PROJECT_ID/"
   KNOWLEDGE_GALAXY_ENABLED: "{{ .Values.knowledgeGalaxy.enabled }}"
