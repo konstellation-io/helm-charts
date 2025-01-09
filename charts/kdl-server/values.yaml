@@ -1277,11 +1277,82 @@ projectOperator:
           pullPolicy: IfNotPresent
           tag: "0.15.0"
 
+        ingress:
+          enabled: true
+          tls:
+            enabled: true
+          className: "replace-class-name"
+          annotations:
+            cert-manager.io/cluster-issuer: selfsigned-clusterissuer
+            nginx.ingress.kubernetes.io/proxy-body-size: "4096m"
+
+        persistentVolume:
+          enabled: true
+          size: "1Gi"
+          accessModes:
+            - ReadWriteOnce
+          storageClass: "replace-storage-class-name"
+
+        env:
+          AWS_ACCESS_KEY_ID: "replace-minio-access-key"
+          AWS_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
+          MLFLOW_S3_ENDPOINT_URL: "http://minio.kdl:9000"
+          MLFLOW_TRACKING_URI: "sqlite:///database.db"
+
       filebrowser:
         image:
           repository: konstellation/kdl-filebrowser
           pullPolicy: IfNotPresent
           tag: "1.0.0"
+
+        podSecurityContext:
+          fsGroup: 1000
+
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+
+        env:
+          AWS_S3_ACCESS_KEY_ID: "replace-minio-access-key"
+          AWS_S3_MOUNT: "/srv"
+          AWS_S3_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
+          AWS_S3_URL: "http://minio:9000"
+          FB_ADDRESS: "0.0.0.0"
+          FB_DATABASE: "/home/filebrowser/database.db"
+          FB_LOG: stdout
+          FB_ROOT: /srv
+          S3FS_ARGS: >-
+            -o use_path_request_style
+            -o use_cache=/cache
+            -o ensure_diskfree=2048
+            -o max_stat_cache_size=100000
+            -o stat_cache_expire=300
+            -o enable_noobj_cache
+            -o dbglevel=warn
+            -o multipart_size=52
+            -o parallel_count=32
+            -o max_dirty_data=512
+            -o multireq_max=30
+            -o complement_stat
+            -o notsup_compat_dir
+            -o enable_content_md5
+            -o ro
+
+        volumes:
+          - name: cache-volume
+            emptyDir: {}
+          - name: fuse-device
+            hostPath:
+              path: /dev/fuse
+              type: CharDevice
+
+        volumeMounts:
+          - name: cache-volume
+            mountPath: /cache
+          - name: fuse-device
+            mountPath: /dev/fuse
 
 # -- Shared Volume configuration
 # Mount volume to share data between components
