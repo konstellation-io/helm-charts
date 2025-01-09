@@ -91,7 +91,7 @@ spec:
           {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) }}
+              containerPort: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) }}
               protocol: TCP
             {{- range $port := .Values.service.extraPorts }}
             - name: {{ $port.name }}
@@ -176,6 +176,8 @@ spec:
                   fieldPath: metadata.labels['app.kubernetes.io/version']
             - name: RELEASE_CHART_VERSION
               value: {{ .Chart.Version | quote }}
+            - name: KDL_SERVER_PORT
+              value: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) | quote }}
             # Variables from secrets have precedence
             {{- $envList := dict }}
             {{- if .Values.envFromSecrets }}

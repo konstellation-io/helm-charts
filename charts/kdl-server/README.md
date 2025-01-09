@@ -449,7 +449,7 @@ helm show values konstellation-io/kdl-server
 | extraContainers | list | `[]` | Configure extra containers |
 | fullnameOverride | string | `""` | String to fully override kdl-server.fullname template |
 | global.domain | string | `"kdl.local"` | The DNS domain name that will serve the application |
-| global.enableHttps | bool | `false` | Enable HTTPs Use to enable or disable HTTPS on the endpoints |
+| global.enableHttps | bool | `true` | Enable HTTPs Use to enable or disable HTTPS on the endpoints |
 | global.env | object | `{}` | Environment variables to configure application |
 | global.envFromConfigMap | object | `{}` | Variables from configMap |
 | global.envFromFiles | list | `[]` | Load all variables from files </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables |
@@ -581,8 +581,8 @@ helm show values konstellation-io/kdl-server
 | resources | object | `{}` | Resources limits and requested </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/ |
 | secrets | list | `[]` | Secrets values to create credentials and reference by envFromSecrets Generate Secret with following name: <release-name>-<name> </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/ |
 | securityContext | object | `{}` | Defines privilege and access control settings for a Container </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
-| service | object | `{"port":8080,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
-| service.port | int | `8080` | Kubernetes Service port |
+| service | object | `{"port":80,"type":"ClusterIP"}` | Kubernetes service to expose Pod </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/ |
+| service.port | int | `80` | Kubernetes Service port |
 | service.type | string | `"ClusterIP"` | Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP |
 | serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
 | serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |

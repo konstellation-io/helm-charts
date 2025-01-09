@@ -21,7 +21,7 @@ global:
 
   # -- Enable HTTPs
   # Use to enable or disable HTTPS on the endpoints
-  enableHttps: false
+  enableHttps: true
 
   # -- Environment variables to configure application
   env: {}
@@ -166,7 +166,7 @@ service:
   # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
   type: ClusterIP
   # -- Kubernetes Service port
-  port: 8080
+  port: 80
   # -- Kubernetes Service health check path
   # healthPath: ""
   # -- NodePort port (only when type is NodePort)

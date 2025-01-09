@@ -8,7 +8,7 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.env.KDL_SERVER_PORT | default (int .Values.service.targetPort | default .Values.service.port) }}
+      targetPort: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) }}
       protocol: TCP
       name: http
       {{- if and (eq "NodePort" .Values.service.type) .Values.service.nodePort }}
