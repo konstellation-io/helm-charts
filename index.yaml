@@ -1,5 +1,53 @@
 apiVersion: v1
 entries:
+  kai:
+  - apiVersion: v2
+    appVersion: 0.3.0-develop.17
+    created: "2025-01-28T13:50:42.374509064Z"
+    dependencies:
+    - name: minio
+      repository: https://charts.min.io/
+      version: 5.0.14
+    - condition: grafana.enabled
+      name: grafana
+      repository: https://grafana.github.io/helm-charts
+      version: 7.0.3
+    - condition: loki.enabled
+      name: loki
+      repository: https://grafana.github.io/helm-charts
+      version: 5.36.3
+    - condition: prometheus.enabled
+      name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 25.4.0
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 18.2.1
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts
+      version: 1.1.9
+    description: A Helm chart to deploy KAI
+    digest: 654bbd704f68c3391c808183e21b1b1653648d0a7c1b0e43e70e0a867f9f86e7
+    keywords:
+    - ai
+    - kai
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    - email: angelluis.piquero@intelygenz.com
+      name: alpiquero
+    name: kai
+    sources:
+    - https://gitlab.intelygenz.com/konstellation-io/kai/kai
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kai-0.2.0/kai-0.2.0.tgz
+    version: 0.2.0
   kdl-server:
   - apiVersion: v2
     appVersion: 1.40.0
@@ -1868,4 +1916,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2025-01-09T10:46:20.241019609Z"
+generated: "2025-01-28T13:50:42.569606694Z"
