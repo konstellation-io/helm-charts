@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admin-api.fullname" . }}
+  labels:
+    {{- include "admin-api.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "admin-api.selectorLabels" . | nindent 6 }}
+  {{- with .Values.adminApi.deploymentStrategy}}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "admin-api.labels" . | nindent 8 }}
+        type: admin
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/admin-api/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/admin-api/secret.yaml") . | sha256sum }}
+        checksum/keycloak-secret: {{ include (print $.Template.BasePath "/keycloak/secret.yaml") . | sha256sum }}
+        checksum/redis-secret: {{ include (print $.Template.BasePath "/redis/redis-secret.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.adminApi.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.affinity }}
+      serviceAccountName: {{ include "admin-api.serviceAccountName" . }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        fsGroup: 10001
+      containers:
+        - name: admin-api
+          image: {{ .Values.adminApi.image.repository }}:{{ .Values.adminApi.image.tag }}
+          imagePullPolicy: {{ .Values.adminApi.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "admin-api.fullname" . }}
+            - secretRef:
+                name: {{ include "admin-api.fullname" . }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KAI_MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.mongodb.connectionString.secretName }}
+                  key: {{ .Values.config.mongodb.connectionString.secretKey }}
+            - name: KAI_KEYCLOAK_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.secretName" . }}
+                  key: {{ include "keycloak.secretUserKey" . }}
+            - name: KAI_KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.secretName" . }}
+                  key: {{ include "keycloak.secretPasswordKey" . }}
+            - name: KAI_MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" .Subcharts.minio }}
+                  key: rootUser
+            - name: KAI_MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "minio.secretName" .Subcharts.minio }}
+                  key: rootPassword
+            {{- if or (and .Values.redis.enabled .Values.redis.auth.enabled) .Values.config.redis.auth.enabled }}
+            - name: KAI_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redis.auth.secretName" . }}
+                  key: {{ include "redis.auth.secretPasswordKey" . }}
+            {{- end }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: grpc
+          resources:
+            {{- toYaml .Values.adminApi.resources | nindent 12 }}

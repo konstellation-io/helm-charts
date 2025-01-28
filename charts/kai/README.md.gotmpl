@@ -1,0 +1,94 @@
+# {{ template "chart.name" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+## Prerequisites
+
+* Helm 3+
+* Kubernetes 1.26+
+* Nginx ingress controller. See [Ingress Controller](#ingress-controller).
+
+{{ .Files.Get "COMPATIBILITY_MATRIX.md" }}
+
+{{ template "chart.requirementsSection" . }}
+
+## Add repository
+
+```console
+helm repo add konstellation-io https://charts.konstellation.io
+helm repo update
+```
+
+## Install Helm chart (repository mode)
+
+```console
+helm install [RELEASE_NAME] konstellation-io/{{ template "chart.name" . }}
+```
+
+This install all the Kubernetes components associated with the chart and creates the release.
+
+_See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
+
+## Install Helm chart (OCI mode)
+
+Charts are also available in OCI format. The list of available charts can be found [here](https://github.com/konstellation-io/helm-charts/pkgs/container/helm-charts%2Fkai).
+
+```console
+helm install [RELEASE_NAME] oci://ghcr.io/konstellation-io/helm-charts/kai --version=[version]
+```
+
+## Included dependencies
+
+* minio
+* grafana
+* loki
+* prometheus
+* redis
+
+## Uninstall Helm chart
+
+```console
+helm uninstall [RELEASE_NAME]
+```
+
+This removes all the Kubernetes components associated with the chart and deletes the release.
+
+_See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command documentation._
+
+## Upgrading Chart
+
+{{ .Files.Get "UPGRADE_GUIDE.md" }}
+
+## Configuration
+
+See [Customizing the chart before installing](https://helm.sh/docs/intro/using_helm/#customizing-the-chart-before-installing). To see all configurable options with comments:
+
+```console
+helm show values konstellation-io/{{ template "chart.name" . }}
+```
+
+{{ template "chart.valuesSection" . }}
+
+## Ingress controller
+
+This Chart has been developed using **Nginx Ingress Controller**. So using the default ingress annotations ensures its correct operation. .
+
+*See [values.yaml](values.yaml) file and [Nginx Ingress controller](https://kubernetes.github.io/ingress-nginx/) for additional documentation**.
+
+However, users could use any other ingress controller (for example, [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/)). In that case, ingress configurations equivalent to the default ones must be povided.
+
+Notice that even using equivalent ingress configurations the correct operation of the appliance is not guaranteed.
+
+## MongoDB
+
+This chart needs an external MongoDB compatible database to work. Following user and permissions are recomended for a correct and secure application opration:
+
+* User **kai**
+  * Purposse: KAI main database user
+  * Database: **admin**
+  * Attached Roles:
+    * *userAdminAnyDatabase* (admin)
+    * *readWriteAnyDatabase* (admin)
+    * *dbAdminAnyDatabase* (admin)
