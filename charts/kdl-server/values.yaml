@@ -53,6 +53,10 @@ nameOverride: ""
 # -- String to fully override kdl-server.fullname template
 fullnameOverride: ""
 
+# -- Number of replicas
+# Specifies the number of replicas for the service
+replicaCount: 1
+
 # -- Image registry
 # The image configuration for the base service
 image:
@@ -61,7 +65,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: "1.40.1"
+  tag: "1.41.0"
 
 # -- Specifies the secrets to use for pulling images from private registries
 # Leave empty if no secrets are required
@@ -1247,8 +1251,8 @@ projectOperator:
         env:
           AWS_ACCESS_KEY_ID: "replace-minio-access-key"
           AWS_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
-          MLFLOW_S3_ENDPOINT_URL: "http://minio.kdl:9000"
-          MLFLOW_BACKEND_STORE_URI: "sqlite:////home/mlflow/database.db"
+          MLFLOW_BACKEND_STORE_URI: "sqlite:////mlflow/tracking/mlflow.db"
+          MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
 
       filebrowser:
         image:

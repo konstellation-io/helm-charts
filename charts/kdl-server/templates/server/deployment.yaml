@@ -108,7 +108,7 @@ spec:
             {{- else }}
             httpGet:
               path: {{ .Values.service.healthPath | default "/" | quote }}
-              port: {{ .Values.service.targetPort | default .Values.service.port }}
+              port: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
@@ -123,7 +123,7 @@ spec:
             {{- else }}
             httpGet:
               path: {{ .Values.service.healthPath | default "/" | quote }}
-              port: {{ .Values.service.targetPort | default .Values.service.port }}
+              port: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
@@ -138,7 +138,7 @@ spec:
             {{- else }}
             httpGet:
               path: {{ .Values.service.healthPath | default "/" | quote }}
-              port: {{ .Values.service.targetPort | default .Values.service.port }}
+              port: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) }}
             failureThreshold: {{ .Values.startupProbe.failureThreshold }}
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
@@ -156,6 +156,7 @@ spec:
             {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
             {{- end }}
           env:
+            {{- $envList := dict }}
             # Default environment
             - name: POD_NAMESPACE
               valueFrom:
@@ -177,8 +178,8 @@ spec:
               value: {{ .Chart.Version | quote }}
             - name: KDL_SERVER_PORT
               value: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) | quote }}
+            {{- $_ := set $envList "KDL_SERVER_PORT" true }}
             # Variables from secrets have precedence
-            {{- $envList := dict }}
             {{- if .Values.envFromSecrets }}
             {{- range $key, $value := .Values.envFromSecrets }}
             {{- if not (hasKey $envList $key) }}
