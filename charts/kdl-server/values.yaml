@@ -61,7 +61,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: "1.40.0"
+  tag: "1.40.1"
 
 # -- Specifies the secrets to use for pulling images from private registries
 # Leave empty if no secrets are required
