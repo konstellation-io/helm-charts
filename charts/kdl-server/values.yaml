@@ -1247,8 +1247,8 @@ projectOperator:
         env:
           AWS_ACCESS_KEY_ID: "replace-minio-access-key"
           AWS_SECRET_ACCESS_KEY: "replace-minio-secret-access-key"
-          MLFLOW_S3_ENDPOINT_URL: "http://minio.kdl:9000"
-          MLFLOW_BACKEND_STORE_URI: "sqlite:////home/mlflow/database.db"
+          MLFLOW_BACKEND_STORE_URI: "sqlite:////mlflow/tracking/mlflow.db"
+          MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
 
       filebrowser:
         image:
