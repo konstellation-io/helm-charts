@@ -2,7 +2,7 @@ apiVersion: v2
 type: application
 name: kdl-server
 description: A Helm chart to deploy KDL server
-version: 6.2.0
+version: 6.2.1
 appVersion: 1.40.0
 sources:
   - https://github.com/konstellation-io/kdl-server
@@ -15,7 +15,7 @@ maintainers:
   - name: danielchg
     email: daniel.chavero@intelygenz.com
 keywords:
-  - ia
+  - ai
   - kdl
   - kdl-server
   - konstellation

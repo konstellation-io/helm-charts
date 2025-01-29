@@ -21,25 +21,25 @@ A Helm chart to deploy KDL server
 |:------------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 | 6.0.2                    | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
 | 6.1.0                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
-| 6.2.0                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
+| 6.2.X                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
 
 | Release ↓ / kdl-app → | 1.38.0 | 1.38.1 | 1.39.0 | 1.40.0 |
 |:---------------------:|:------:|:------:|:------:|:------:|
 | 6.0.2                 | ✅     | ✅     | ❌     | ❌     |
 | 6.1.0                 | ❌     | ❌     | ✅     | ❌     |
-| 6.2.0                 | ❌     | ❌     | ❌     | ✅     |
+| 6.2.X                 | ❌     | ❌     | ❌     | ✅     |
 
-| Release ↓ / project-operator → | 0.19.0 | 0.20.0 | 0.21.0 |
+| Release ↓ / project-operator → | 0.19.0 | 0.20.0 | 0.21.X |
 |:------------------------------:|:------:|:------:|:------:|
 | 6.0.2                          | ✅     | ❌     | ❌     |
 | 6.1.0                          | ❌     | ✅     | ❌     |
-| 6.2.0                          | ❌     | ❌     | ✅     |
+| 6.2.X                          | ❌     | ❌     | ✅     |
 
-| Release ↓ / user-tools-operator → | 0.30.0 | 0.31.0 | 0.32.0 |
+| Release ↓ / user-tools-operator → | 0.30.0 | 0.31.0 | 0.32.X |
 |:---------------------------------:|:------:|:------:|:------:|
 | 6.0.2                             | ✅     | ❌     | ❌     |
 | 6.1.0                             | ❌     | ✅     | ❌     |
-| 6.2.0                             | ❌     | ❌     | ✅     |
+| 6.2.X                             | ❌     | ❌     | ✅     |
 
 | Symbol | Description |
 |:------:|-------------|
@@ -97,6 +97,10 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 
 > [!IMPORTANT]
 > Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
+
+### From `6.2.0` to `6.2.1`
+
+* Remove `PersistentVolumeClaim` values from KDL server. Don't need.
 
 ### From `6.1.0` to `6.2.0`
 
@@ -587,16 +591,6 @@ helm show values konstellation-io/kdl-server
 | nodeSelector | object | `{}` | Node labels for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector |
 | oauth2proxy | object | `{"clientID":"XXXXXXX","clientSecret":"XXXXXXXX","cookieName":"","cookieSecret":"XXXXXXXXXXXXXXXX","enabled":false,"extraContainers":[],"extraObjects":[],"extraVolumeMounts":[],"extraVolumes":[],"httpScheme":"http"}` | OAuth2-Proxy subchart deployment </br> Ref: https://github.com/oauth2-proxy/manifests/blob/main/helm/oauth2-proxy/values.yaml |
 | oauth2proxy.enabled | bool | `false` | Enable or disable OAuth2-Proxy subchart |
-| persistentVolume | object | `{"accessModes":["ReadWriteOnce"],"annotations":{},"enabled":false,"labels":{},"selector":{},"size":"8Gi","storageClass":"","volumeBindingMode":"","volumeName":""}` | Persistent Volume configuration </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
-| persistentVolume.accessModes | list | `["ReadWriteOnce"]` | Persistent Volume access modes Must match those of existing PV or dynamic provisioner </br> Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/ |
-| persistentVolume.annotations | object | `{}` | Persistent Volume annotations |
-| persistentVolume.enabled | bool | `false` | Enable or disable persistence |
-| persistentVolume.labels | object | `{}` | Persistent Volume labels |
-| persistentVolume.selector | object | `{}` | Persistent Volume Claim Selector Useful if Persistent Volumes have been provisioned in advance </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector |
-| persistentVolume.size | string | `"8Gi"` | Persistent Volume size |
-| persistentVolume.storageClass | string | `""` | Persistent Volume Storage Class If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
-| persistentVolume.volumeBindingMode | string | `""` | Persistent Volume Binding Mode If defined, volumeBindingMode: <volumeBindingMode> If undefined (the default) or set to null, no volumeBindingMode spec is set, choosing the default mode. |
-| persistentVolume.volumeName | string | `""` | Persistent Volume Name Useful if Persistent Volumes have been provisioned in advance and you want to use a specific one |
 | podAnnotations | object | `{}` | Configure annotations on Pods |
 | podDisruptionBudget | object | `{"enabled":false,"maxUnavailable":1,"minAvailable":null}` | Pod Disruption Budget </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/ |
 | podLabels | object | `{}` | Configure labels on Pods |
@@ -651,14 +645,14 @@ helm show values konstellation-io/kdl-server
 | serviceAccount | object | `{"annotations":{},"automount":true,"create":true,"name":""}` | Enable creation of ServiceAccount </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/ |
 | serviceMonitor | object | `{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"}` | Enable ServiceMonitor to get metrics </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor |
 | serviceMonitor.enabled | bool | `false` | Enable or disable |
-| sharedVolume | object | `{"accessModes":["ReadWriteMany"],"annotations":{},"enabled":false,"labels":{},"selector":{},"size":"10Gi","storageClass":"","volumeBindingMode":"","volumeName":""}` | Shared Volume configuration Mount volume to share data between components </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
+| sharedVolume | object | `{"accessModes":["ReadWriteMany"],"annotations":{},"enabled":false,"labels":{},"selector":{},"size":"10Gi","storageClassName":"","volumeBindingMode":"","volumeName":""}` | Shared Volume configuration Mount volume to share data between components </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/ |
 | sharedVolume.accessModes | list | `["ReadWriteMany"]` | Persistent Volume access modes Must match those of existing PV or dynamic provisioner </br> Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/ |
 | sharedVolume.annotations | object | `{}` | Persistent Volume annotations |
 | sharedVolume.enabled | bool | `false` | Enable or disable persistence |
 | sharedVolume.labels | object | `{}` | Persistent Volume labels |
 | sharedVolume.selector | object | `{}` | Persistent Volume Claim Selector Useful if Persistent Volumes have been provisioned in advance </br> Ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector |
 | sharedVolume.size | string | `"10Gi"` | Persistent Volume size |
-| sharedVolume.storageClass | string | `""` | Persistent Volume Storage Class If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
+| sharedVolume.storageClassName | string | `""` | Persistent Volume Storage Class If defined, storageClassName: <storageClass> If set to "-", storageClassName: "", which disables dynamic provisioning If undefined (the default) or set to null, no storageClassName spec is   set, choosing the default provisioner.  (gp2 on AWS, standard on   GKE, AWS & OpenStack) |
 | sharedVolume.volumeBindingMode | string | `""` | Persistent Volume Binding Mode If defined, volumeBindingMode: <volumeBindingMode> If undefined (the default) or set to null, no volumeBindingMode spec is set, choosing the default mode. |
 | sharedVolume.volumeName | string | `""` | Persistent Volume Name Useful if Persistent Volumes have been provisioned in advance and you want to use a specific one |
 | startupProbe | object | `{"enabled":false,"failureThreshold":30,"initialDelaySeconds":180,"periodSeconds":10,"successThreshold":1,"timeoutSeconds":5}` | Configure startupProbe checker </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes |

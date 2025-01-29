@@ -1,6 +1,10 @@
 > [!IMPORTANT]
 > Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
 
+### From `6.2.0` to `6.2.1`
+
+* Remove `PersistentVolumeClaim` values from KDL server. Don't need.
+
 ### From `6.1.0` to `6.2.0`
 
 > [!IMPORTANT]
