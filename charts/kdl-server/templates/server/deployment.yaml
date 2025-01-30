@@ -170,12 +170,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['app.kubernetes.io/instance']
-            - name: RELEASE_APP_VERSION
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['app.kubernetes.io/version']
-            - name: RELEASE_CHART_VERSION
-              value: {{ .Chart.Version | quote }}
             - name: KDL_SERVER_PORT
               value: {{ .Values.env.KDL_SERVER_PORT | default (.Values.service.targetPort | default .Values.service.port) | quote }}
             {{- $_ := set $envList "KDL_SERVER_PORT" true }}

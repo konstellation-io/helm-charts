@@ -36,5 +36,5 @@ data:
 
   ##
   # Labels
-  LABELS_COMMON_APP_RELEASE: {{ .Values.image.tag }}
+  LABELS_COMMON_APP_RELEASE: {{ .Chart.AppVersion }}
   LABELS_COMMON_CHART_RELEASE: {{ .Chart.Version }}

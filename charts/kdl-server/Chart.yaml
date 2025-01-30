@@ -2,7 +2,7 @@ apiVersion: v2
 type: application
 name: kdl-server
 description: A Helm chart to deploy KDL server
-version: 6.2.3
+version: 6.2.4
 appVersion: 1.41.0
 sources:
   - https://github.com/konstellation-io/kdl-server
