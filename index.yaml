@@ -51,6 +51,56 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: 1.41.0
+    created: "2025-01-30T17:23:33.414600921Z"
+    dependencies:
+    - alias: keycloak
+      condition: keycloak.enabled
+      name: konstellation-base
+      repository: oci://ghcr.io/konstellation-io/helm-charts
+      version: 1.1.2
+    - condition: minio.enabled
+      name: minio
+      repository: https://charts.min.io
+      version: 3.2.0
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 16.2.1
+    - alias: oauth2proxy
+      condition: oauth2proxy.enabled
+      name: oauth2-proxy
+      repository: oci://ghcr.io/oauth2-proxy/charts
+      version: 7.7.28
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 15.5.38
+    description: A Helm chart to deploy KDL server
+    digest: d17e12ead839c713ff2a3fcf961bda7bf11a32e510fa0f910f2363c4c3dca2aa
+    home: https://www.konstellation.io
+    keywords:
+    - ai
+    - kdl
+    - kdl-server
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    - email: angelluis.piquero@intelygenz.com
+      name: alpiquero
+    - email: daniel.chavero@intelygenz.com
+      name: danielchg
+    name: kdl-server
+    sources:
+    - https://github.com/konstellation-io/kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.2.4/kdl-server-6.2.4.tgz
+    version: 6.2.4
+  - apiVersion: v2
+    appVersion: 1.41.0
     created: "2025-01-30T15:26:28.442252402Z"
     dependencies:
     - alias: keycloak
@@ -2066,4 +2116,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2025-01-30T15:26:28.442512516Z"
+generated: "2025-01-30T17:23:33.415073428Z"
