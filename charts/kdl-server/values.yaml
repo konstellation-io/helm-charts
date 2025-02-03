@@ -1375,7 +1375,7 @@ userToolsOperator:
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: "0.32.0"
+    tag: "0.32.1"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
