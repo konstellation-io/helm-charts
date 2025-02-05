@@ -47,10 +47,6 @@ spec:
               Servers may infer this from the endpoint the client submits requests to.
               Cannot be updated. In CamelCase.
             type: string
-          status:
-            description: Status defines the observed state of KDLProject
-            type: object
-            x-kubernetes-preserve-unknown-fields: true
           metadata:
             type: object
           spec:
@@ -400,6 +396,39 @@ spec:
                       the base security posture for the Filebrowser deployment.
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
+                  initContainers:
+                    description: |
+                      Configuration for initialization containers that run before the
+                      main MLflow container starts. Init containers are crucial for
+                      proper setup and validation of the environment before MLflow
+                      begins operation.
+
+                      Common uses include:
+                      - Database schema initialization
+                      - Secret distribution
+                      - Permission setup
+                      - Resource validation
+                      - Service dependency checks
+                    type: array
+                    items:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                  extraContainers:
+                    description: |
+                      Additional containers to run alongside the main MLflow container
+                      in the same pod. These sidecar containers can provide supporting
+                      functionality without modifying the main MLflow container.
+
+                      Typical use cases include:
+                      - Logging aggregation
+                      - Monitoring agents
+                      - Service mesh proxies
+                      - Security scanners
+                      - Data synchronization
+                    type: array
+                    items:
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   networkPolicy:
                     description: |
                       Network Policy configuration for the Filebrowser service. NetworkPolicies
@@ -2622,39 +2651,6 @@ spec:
                           Maximum time allowed for a probe attempt before considering
                           it failed.
                         type: integer
-                  initContainers:
-                    description: |
-                      Configuration for initialization containers that run before the
-                      main MLflow container starts. Init containers are crucial for
-                      proper setup and validation of the environment before MLflow
-                      begins operation.
-
-                      Common uses include:
-                      - Database schema initialization
-                      - Secret distribution
-                      - Permission setup
-                      - Resource validation
-                      - Service dependency checks
-                    type: array
-                    items:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
-                  extraContainers:
-                    description: |
-                      Additional containers to run alongside the main MLflow container
-                      in the same pod. These sidecar containers can provide supporting
-                      functionality without modifying the main MLflow container.
-
-                      Typical use cases include:
-                      - Logging aggregation
-                      - Monitoring agents
-                      - Service mesh proxies
-                      - Security scanners
-                      - Data synchronization
-                    type: array
-                    items:
-                      type: object
-                      x-kubernetes-preserve-unknown-fields: true
           status:
             description: |
               Status defines the observed state of the KDL Project and its components.
@@ -2773,7 +2769,5 @@ spec:
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
             x-kubernetes-preserve-unknown-fields: true
-    served: true
-    storage: true
     subresources:
       status: {}

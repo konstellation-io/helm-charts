@@ -70,10 +70,6 @@ spec:
               resource represents a complete development environment for a single user
               within the KDL platform.
             type: string
-          status:
-            description: Status defines the observed state of KDLProject
-            type: object
-            x-kubernetes-preserve-unknown-fields: true
           metadata:
             type: object
           spec:
@@ -1657,7 +1653,5 @@ spec:
                   freshness of status information and monitoring update frequency.
                 type: string
                 format: date-time
-    served: true
-    storage: true
     subresources:
       status: {}
