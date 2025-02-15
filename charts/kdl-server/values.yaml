@@ -443,7 +443,7 @@ topologySpreadConstraints: []
 #   whenUnsatisfiable: DoNotSchedule
 
 # -- Keycloak subchart deployment
-# </br> Ref: https://github.com/konstellation-io/helm-charts/blob/kdl-server-1.0.2/charts/kdl-server/values.yaml
+# </br> Ref: https://github.com/konstellation-io/helm-charts/blob/konstellation-base-1.0.2/charts/konstellation-base/values.yaml
 keycloak:
   # -- Enable or disable Keycloak subchart
   enabled: false
