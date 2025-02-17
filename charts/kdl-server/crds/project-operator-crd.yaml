@@ -73,10 +73,9 @@ spec:
                   convention entirely.
                 type: string
               inputData:
-                description: "Optional key-value pairs for storing arbitrary data"
                 type: object
-                additionalProperties:
-                  type: string
+                description: "Optional key-value pairs for storing arbitrary data"
+                additionalProperties: {}
                 nullable: true
               projectId:
                 description: |

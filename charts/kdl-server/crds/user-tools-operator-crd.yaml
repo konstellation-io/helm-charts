@@ -139,10 +139,9 @@ spec:
                   - Ensuring compatibility with external tools
                 type: string
               inputData:
-                description: "Optional key-value pairs for storing arbitrary data"
                 type: object
-                additionalProperties:
-                  type: string
+                description: "Optional key-value pairs for storing arbitrary data"
+                additionalProperties: {}
                 nullable: true
               username:
                 description: |
