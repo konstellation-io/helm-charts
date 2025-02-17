@@ -17,11 +17,11 @@ spec:
     served: true
     storage: true
     additionalPrinterColumns:
-    - jsonPath: .spec.usernameSlug
-      name: User
-      type: string
     - jsonPath: .spec.vscodeRuntime.image.tag
       name: Runtime
+      type: string
+    - jsonPath: .spec.persistentVolume.size
+      name: Size
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -139,11 +139,9 @@ spec:
                   - Ensuring compatibility with external tools
                 type: string
               inputData:
-                description: "Optional key-value pairs for storing arbitrary data"
                 type: object
-                additionalProperties:
-                  type: string
-                nullable: true
+                description: "Optional key-value pairs for storing arbitrary data"
+                x-kubernetes-preserve-unknown-fields: true
               username:
                 description: |
                   Username for whom the tools environment is being created. This value

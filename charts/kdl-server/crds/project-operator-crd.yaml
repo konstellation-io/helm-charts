@@ -17,11 +17,14 @@ spec:
     served: true
     storage: true
     additionalPrinterColumns:
-    - jsonPath: .spec.projectId
-      name: Project
+    - jsonPath: .spec.mlflow.image.tag
+      name: MLflow version
       type: string
-    - jsonPath: .spec.domain
-      name: Domain
+    - jsonPath: .spec.mlflow.persistentVolume.size
+      name: MLflow size
+      type: string
+    - jsonPath: .spec.filebrowser.image.tag
+      name: Filebrowser version
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -73,11 +76,9 @@ spec:
                   convention entirely.
                 type: string
               inputData:
-                description: "Optional key-value pairs for storing arbitrary data"
                 type: object
-                additionalProperties:
-                  type: string
-                nullable: true
+                description: "Optional key-value pairs for storing arbitrary data"
+                x-kubernetes-preserve-unknown-fields: true
               projectId:
                 description: |
                   Unique identifier for the KDL project. This ID is used across all
