@@ -1,14 +1,13 @@
-{{- if .Values.rbac.create }}
+{{- if .Values.k8sManager.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: {{ .Release.Namespace }}
-  name: {{ include "k8s-manager.fullname" . }}
+  name: {{ include "kai.k8sManager.name" . }}
   labels:
-    {{- include "k8s-manager.labels" . | nindent 4 }}
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
 rules:
-  - apiGroups:
-      - ""
+  - apiGroups: [""]
     resources:
       - configmaps
       - pods
@@ -16,36 +15,20 @@ rules:
       - services
       - jobs
       - pods/log
-    verbs:
-      - "*"
-  - apiGroups:
-      - apps
+    verbs: ["*"]
+
+  - apiGroups: ["apps"]
     resources:
       - deployments
-    verbs:
-      - "*"
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
-    verbs:
-      - "*"
-  - apiGroups:
-      - extensions
-    resources:
-      - deployments
-    verbs:
-      - "*"
-  - apiGroups:
-      - networking.k8s.io
+    verbs: ["*"]
+
+  - apiGroups: ["networking.k8s.io"]
     resources:
       - ingresses
-    verbs:
-      - "*"
-  - apiGroups:
-      - autoscaling
+    verbs: ["*"]
+
+  - apiGroups: ["autoscaling"]
     resources:
       - horizontalpodautoscalers
-    verbs:
-      - "*"
+    verbs: ["*"]
 {{- end }}

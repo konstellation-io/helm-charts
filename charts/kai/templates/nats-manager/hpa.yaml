@@ -1,0 +1,32 @@
+{{- if .Values.natsManager.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "kai.natsManager.name" . }}
+  labels:
+    {{- include "kai.natsManagerLabels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "kai.natsManager.name" . }}
+  minReplicas: {{ .Values.natsManager.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.natsManager.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.natsManager.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.natsManager.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.natsManager.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.natsManager.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

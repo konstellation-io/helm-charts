@@ -1,0 +1,24 @@
+{{- if .Values.natsManager.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kai.natsManager.name" . }}
+  labels:
+    {{- include "kai.natsManagerLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorNatsManagerLabels" . | nindent 8 }}
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.natsManager.serviceMonitor.interval | quote }}
+    scrapeTimeout: {{ .Values.natsManager.serviceMonitor.scrapeTimeout | quote }}
+    {{- if .Values.natsManager.serviceMonitor.metricRelabelings }}
+    metricRelabelings:
+    {{- toYaml .Values.natsManager.serviceMonitor.metricRelabelings | nindent 4 }}
+    {{- end }}
+    {{- if .Values.natsManager.serviceMonitor.relabelings }}
+    relabelings:
+    {{- toYaml .Values.natsManager.serviceMonitor.relabelings | nindent 4 }}
+    {{- end }}
+{{- end }}

@@ -1,97 +1,278 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.adminApi.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "admin-api.fullname" . }}
+  name: {{ include "kai.adminApi.name" . }}
   labels:
-    {{- include "admin-api.labels" . | nindent 4 }}
+    {{- include "kai.adminApiLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if not .Values.adminApi.autoscaling.enabled }}
+  replicas: {{ .Values.adminApi.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      {{- include "admin-api.selectorLabels" . | nindent 6 }}
-  {{- with .Values.adminApi.deploymentStrategy}}
+      {{- include "kai.selectorKaiAdminApiLabels" . | nindent 6 }}
   strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    type: {{ .Values.adminApi.deploymentStrategy }}
   template:
     metadata:
-      labels:
-        {{- include "admin-api.labels" . | nindent 8 }}
-        type: admin
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/admin-api/configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/admin-api/secret.yaml") . | sha256sum }}
-        checksum/keycloak-secret: {{ include (print $.Template.BasePath "/keycloak/secret.yaml") . | sha256sum }}
-        checksum/redis-secret: {{ include (print $.Template.BasePath "/redis/redis-secret.yaml") . | sha256sum }}
+        checksum/admin-api-config: {{ include (print $.Template.BasePath "/admin-api/configmap.yaml") . | sha256sum }}
+        checksum/admin-api-secret: {{ include (print $.Template.BasePath "/admin-api/secret.yaml") . | sha256sum }}
+      {{- with .Values.adminApi.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kai.adminApiLabels" . | nindent 8 }}
+        {{- with .Values.adminApi.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
-      {{- with .Values.adminApi.imagePullSecrets }}
+      {{- if $combinedSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
       {{- end }}
-      {{- with .Values.adminApi.affinity }}
-      serviceAccountName: {{ include "admin-api.serviceAccountName" . }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.adminApi.nodeSelector }}
-      nodeSelector:
-        {{ toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.adminApi.tolerations }}
-      tolerations:
-        {{ toYaml . | nindent 8 }}
-      {{- end }}
+      serviceAccountName: {{ include "kai.adminApiServiceAccountName" . }}
       securityContext:
-        fsGroup: 10001
+        {{- toYaml .Values.adminApi.podSecurityContext | nindent 8 }}
+      initContainers:
+        {{- if .Values.adminApi.readyChecker.enabled }}
+        {{- range $service := .Values.adminApi.readyChecker.services }}
+        - name: ready-checker-{{ $service.name | replace "." "-" | trunc 63 | trimSuffix "-" }}
+          {{- if $.Values.global.imageRegistry }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.adminApi.readyChecker.repository }}:{{ $.Values.adminApi.readyChecker.tag }}"
+          {{- else }}
+          image: {{ $.Values.adminApi.readyChecker.repository }}:{{ $.Values.adminApi.readyChecker.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $.Values.adminApi.readyChecker.pullPolicy }}
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              RETRY=0;
+              until [ $RETRY -eq {{ $.Values.adminApi.readyChecker.retries }} ];
+              do
+                ADDRESS="{{ if $service.address }}{{ $service.address }}{{ else }}{{ $.Values.adminApi.fullnameOverride | default $.Release.Name }}-{{ $service.name }}{{ end }}";
+                if nc -zv $ADDRESS {{ $service.port }}; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is ready";
+                  exit 0;
+                fi;
+                echo "[$RETRY/{{ $.Values.adminApi.readyChecker.retries }}] waiting for service {{ $service.name }} with address $ADDRESS:{{ $service.port }} to become ready";
+                sleep {{ $.Values.adminApi.readyChecker.timeout }};
+                RETRY=$(($RETRY + 1));
+                if [ $RETRY -eq {{ $.Values.adminApi.readyChecker.retries }} ]; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is not ready";
+                  exit 1;
+                fi;
+              done
+        {{- end }}
+        {{- end }}
+        {{- with .Values.adminApi.initContainers }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: admin-api
-          image: {{ .Values.adminApi.image.repository }}:{{ .Values.adminApi.image.tag }}
+          securityContext:
+            {{- toYaml .Values.adminApi.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.adminApi.image.repository }}:{{ .Values.adminApi.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: {{ .Values.adminApi.image.repository }}:{{ .Values.adminApi.image.tag | default .Chart.AppVersion }}
+          {{- end }}
           imagePullPolicy: {{ .Values.adminApi.image.pullPolicy }}
+          {{- with .Values.adminApi.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.adminApi.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) }}
+              protocol: TCP
+            {{- range $port := .Values.adminApi.service.extraPorts }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.targetPort }}
+              protocol: TCP
+            {{- end }}
+          {{- with .Values.adminApi.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.adminApi.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.adminApi.livenessProbeCustom }}
+            {{- toYaml .Values.adminApi.livenessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.adminApi.service.healthPath | default "/" | quote }}
+              port: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) }}
+            failureThreshold: {{ .Values.adminApi.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.adminApi.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.adminApi.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.adminApi.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.adminApi.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.adminApi.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.adminApi.readinessProbeCustom }}
+            {{- toYaml .Values.adminApi.readinessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.adminApi.service.healthPath | default "/" | quote }}
+              port: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) }}
+            failureThreshold: {{ .Values.adminApi.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.adminApi.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.adminApi.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.adminApi.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.adminApi.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.adminApi.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.adminApi.startupProbeCustom }}
+            {{- toYaml .Values.adminApi.startupProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.adminApi.service.healthPath | default "/" | quote }}
+              port: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) }}
+            failureThreshold: {{ .Values.adminApi.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.adminApi.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.adminApi.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.adminApi.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.adminApi.startupProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
           envFrom:
-            - configMapRef:
-                name: {{ include "admin-api.fullname" . }}
-            - secretRef:
-                name: {{ include "admin-api.fullname" . }}
+            {{- if .Values.adminApi.envFromFiles }}
+            {{- tpl (toYaml .Values.adminApi.envFromFiles) . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.global.envFromFiles }}
+            {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
+            {{- end }}
           env:
+            {{- $envList := dict }}
+            # Default environment
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: KAI_MONGODB_URI
+            - name: KAI_RELEASE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/instance']
+            - name: KAI_ADMIN_API_PORT
+              value: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) | quote }}
+            {{- $_ := set $envList "KAI_ADMIN_API_PORT" true }}
+            # Variables from secrets have precedence
+            {{- if .Values.adminApi.envFromSecrets }}
+            {{- range $key, $value := .Values.adminApi.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.config.mongodb.connectionString.secretName }}
-                  key: {{ .Values.config.mongodb.connectionString.secretKey }}
-            - name: KAI_KEYCLOAK_ADMIN_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "keycloak.secretName" . }}
-                  key: {{ include "keycloak.secretUserKey" . }}
-            - name: KAI_KEYCLOAK_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "keycloak.secretName" . }}
-                  key: {{ include "keycloak.secretPasswordKey" . }}
-            - name: KAI_MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "minio.secretName" .Subcharts.minio }}
-                  key: rootUser
-            - name: KAI_MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "minio.secretName" .Subcharts.minio }}
-                  key: rootPassword
-            {{- if or (and .Values.redis.enabled .Values.redis.auth.enabled) .Values.config.redis.auth.enabled }}
-            - name: KAI_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "redis.auth.secretName" . }}
-                  key: {{ include "redis.auth.secretPasswordKey" . }}
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
             {{- end }}
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-              name: grpc
+            {{- end }}
+            {{- end }}
+            # Variables from configmap have precedence
+            {{- if .Values.adminApi.envFromConfigMap }}
+            {{- range $key, $value := .Values.adminApi.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables in plain text if they were not already added from secrets
+            {{- if .Values.adminApi.env }}
+            {{- range $key, $value := .Values.adminApi.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from secrets have precedence
+            {{- if .Values.global.envFromSecrets }}
+            {{- range $key, $value := .Values.global.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from configmap have precedence
+            {{- if .Values.global.envFromConfigMap }}
+            {{- range $key, $value := .Values.global.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables in plain text if they were not already added from secrets
+            {{- if .Values.global.env }}
+            {{- range $key, $value := .Values.global.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- with .Values.adminApi.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.adminApi.resources | nindent 12 }}
+        {{- if .Values.adminApi.extraContainers }}
+          {{- toYaml .Values.adminApi.extraContainers | nindent 8 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.adminApi.terminationGracePeriodSeconds }}
+      volumes:
+        - name: kai
+          configMap:
+            name: {{ include "kai.adminApi.name" . }}
+      {{- with .Values.adminApi.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.adminApi.topologySpreadConstraints }}
+      {{- $_ := include "kai.patchTopologySpreadConstraintsAdminApi" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

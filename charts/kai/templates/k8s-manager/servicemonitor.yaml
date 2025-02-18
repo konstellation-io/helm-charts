@@ -1,0 +1,24 @@
+{{- if .Values.k8sManager.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kai.k8sManager.name" . }}
+  labels:
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorK8sManagerLabels" . | nindent 8 }}
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.k8sManager.serviceMonitor.interval | quote }}
+    scrapeTimeout: {{ .Values.k8sManager.serviceMonitor.scrapeTimeout | quote }}
+    {{- if .Values.k8sManager.serviceMonitor.metricRelabelings }}
+    metricRelabelings:
+    {{- toYaml .Values.k8sManager.serviceMonitor.metricRelabelings | nindent 4 }}
+    {{- end }}
+    {{- if .Values.k8sManager.serviceMonitor.relabelings }}
+    relabelings:
+    {{- toYaml .Values.k8sManager.serviceMonitor.relabelings | nindent 4 }}
+    {{- end }}
+{{- end }}

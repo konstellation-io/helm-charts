@@ -1,0 +1,17 @@
+{{- if .Values.k8sManager.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "kai.k8sManager.name" . }}
+  labels:
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "kai.k8sManagerServiceAccountName" . }}
+    apiGroup: ""
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "kai.k8sManager.name" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

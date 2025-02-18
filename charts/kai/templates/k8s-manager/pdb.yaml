@@ -1,0 +1,18 @@
+{{- if .Values.k8sManager.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "kai.k8sManager.name" . }}
+  labels:
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorK8sManagerLabels" . | nindent 6 }}
+  {{- if .Values.k8sManager.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.k8sManager.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.k8sManager.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.k8sManager.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+{{- end }}

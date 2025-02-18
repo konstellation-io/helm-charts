@@ -1,15 +1,24 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "admin-api.fullname" . }}
+  name: {{ include "kai.adminApi.name" . }}
   labels:
-    {{- include "admin-api.labels" . | nindent 4 }}
+    {{- include "kai.adminApiLabels" . | nindent 4 }}
 spec:
-  clusterIP: None
+  type: {{ .Values.adminApi.service.type }}
   ports:
-    - name: grpc
-      port: 80
+    - port: {{ .Values.adminApi.service.port }}
+      targetPort: {{ .Values.adminApi.env.KAI_ADMIN_API_PORT | default (.Values.adminApi.service.targetPort | default .Values.adminApi.service.port) }}
       protocol: TCP
-      targetPort: grpc
+      name: grpc
+      {{- if and (eq "NodePort" .Values.adminApi.service.type) .Values.adminApi.service.nodePort }}
+      nodePort: {{ .Values.adminApi.service.nodePort }}
+      {{- end }}
+    {{- range $port := .Values.adminApi.service.extraPorts }}
+    - name: {{ $port.name }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.targetPort }}
+      protocol: TCP
+    {{- end }}
   selector:
-    {{- include "admin-api.selectorLabels" . | nindent 4 }}
+    {{- include "kai.selectorKaiAdminApiLabels" . | nindent 4 }}

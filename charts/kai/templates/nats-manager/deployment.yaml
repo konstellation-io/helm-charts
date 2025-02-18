@@ -1,50 +1,264 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.natsManager.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "nats-manager.fullname" . }}
+  name: {{ include "kai.natsManager.name" . }}
   labels:
-    {{- include "nats-manager.labels" . | nindent 4 }}
+    {{- include "kai.natsManagerLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if not .Values.natsManager.autoscaling.enabled }}
+  replicas: {{ .Values.natsManager.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      {{- include "nats-manager.selectorLabels" . | nindent 6 }}
-  {{- with .Values.natsManager.deploymentStrategy }}
+      {{- include "kai.selectorNatsManagerLabels" . | nindent 6 }}
   strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    type: {{ .Values.natsManager.deploymentStrategy }}
   template:
     metadata:
-      labels:
-        {{- include "nats-manager.labels" . | nindent 8 }}
       annotations:
-        helm.sh/restart-deployment: {{ randAlphaNum 5 | quote }}
-    spec:
-      {{- with .Values.natsManager.imagePullSecrets }}
-      imagePullSecrets:
+        checksum/nats-manager-config: {{ include (print $.Template.BasePath "/nats-manager/configmap.yaml") . | sha256sum }}
+        checksum/nats-manager-secret: {{ include (print $.Template.BasePath "/nats-manager/secret.yaml") . | sha256sum }}
+      {{- with .Values.natsManager.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "nats-manager.serviceAccountName" . }}
+      labels:
+        {{- include "kai.natsManagerLabels" . | nindent 8 }}
+        {{- with .Values.natsManager.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kai.natsManagerServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.natsManager.podSecurityContext | nindent 8 }}
+      initContainers:
+        {{- if .Values.natsManager.readyChecker.enabled }}
+        {{- range $service := .Values.natsManager.readyChecker.services }}
+        - name: ready-checker-{{ $service.name | replace "." "-" | trunc 63 | trimSuffix "-" }}
+          {{- if $.Values.global.imageRegistry }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.natsManager.readyChecker.repository }}:{{ $.Values.natsManager.readyChecker.tag }}"
+          {{- else }}
+          image: {{ $.Values.natsManager.readyChecker.repository }}:{{ $.Values.natsManager.readyChecker.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $.Values.natsManager.readyChecker.pullPolicy }}
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              RETRY=0;
+              until [ $RETRY -eq {{ $.Values.natsManager.readyChecker.retries }} ];
+              do
+                ADDRESS="{{ if $service.address }}{{ $service.address }}{{ else }}{{ $.Values.natsManager.fullnameOverride | default $.Release.Name }}-{{ $service.name }}{{ end }}";
+                if nc -zv $ADDRESS {{ $service.port }}; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is ready";
+                  exit 0;
+                fi;
+                echo "[$RETRY/{{ $.Values.natsManager.readyChecker.retries }}] waiting for service {{ $service.name }} with address $ADDRESS:{{ $service.port }} to become ready";
+                sleep {{ $.Values.natsManager.readyChecker.timeout }};
+                RETRY=$(($RETRY + 1));
+                if [ $RETRY -eq {{ $.Values.natsManager.readyChecker.retries }} ]; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is not ready";
+                  exit 1;
+                fi;
+              done
+        {{- end }}
+        {{- end }}
+        {{- with .Values.natsManager.initContainers }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - name: nats-manager
-          image: {{ .Values.natsManager.image.repository }}:{{ .Values.natsManager.image.tag }}
+          securityContext:
+            {{- toYaml .Values.natsManager.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.natsManager.image.repository }}:{{ .Values.natsManager.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: {{ .Values.natsManager.image.repository }}:{{ .Values.natsManager.image.tag | default .Chart.AppVersion }}
+          {{- end }}
           imagePullPolicy: {{ .Values.natsManager.image.pullPolicy }}
+          {{- with .Values.natsManager.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.natsManager.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.natsManager.env.KAI_NATS_MANAGER_PORT | default (.Values.natsManager.service.targetPort | default .Values.natsManager.service.port) }}
+              protocol: TCP
+            {{- range $port := .Values.natsManager.service.extraPorts }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.targetPort }}
+              protocol: TCP
+            {{- end }}
+          {{- with .Values.natsManager.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.natsManager.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.natsManager.livenessProbeCustom }}
+            {{- toYaml .Values.natsManager.livenessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.natsManager.service.healthPath | default "/" | quote }}
+              port: {{ .Values.natsManager.env.KAI_NATS_MANAGER_PORT | default (.Values.natsManager.service.targetPort | default .Values.natsManager.service.port) }}
+            failureThreshold: {{ .Values.natsManager.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.natsManager.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.natsManager.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.natsManager.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.natsManager.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.natsManager.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.natsManager.readinessProbeCustom }}
+            {{- toYaml .Values.natsManager.readinessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.natsManager.service.healthPath | default "/" | quote }}
+              port: {{ .Values.natsManager.env.KAI_NATS_MANAGER_PORT | default (.Values.natsManager.service.targetPort | default .Values.natsManager.service.port) }}
+            failureThreshold: {{ .Values.natsManager.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.natsManager.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.natsManager.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.natsManager.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.natsManager.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.natsManager.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.natsManager.startupProbeCustom }}
+            {{- toYaml .Values.natsManager.startupProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.natsManager.service.healthPath | default "/" | quote }}
+              port: {{ .Values.natsManager.env.KAI_NATS_MANAGER_PORT | default (.Values.natsManager.service.targetPort | default .Values.natsManager.service.port) }}
+            failureThreshold: {{ .Values.natsManager.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.natsManager.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.natsManager.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.natsManager.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.natsManager.startupProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
           envFrom:
-            - configMapRef:
-                name: {{ include "nats-manager.fullname" . }}
+            {{- if .Values.natsManager.envFromFiles }}
+            {{- tpl (toYaml .Values.natsManager.envFromFiles) . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.global.envFromFiles }}
+            {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
+            {{- end }}
           env:
-            - name: KAI_NATS_MANAGER_PORT
-              value: "50051"
+            {{- $envList := dict }}
+            # Default environment
             - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-          ports:
-            - containerPort: 50051
-              protocol: TCP
-              name: grpc
+            - name: KAI_RELEASE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/instance']
+            - name: KAI_NATS_MANAGER_PORT
+              value: {{ .Values.natsManager.env.KAI_NATS_MANAGER_PORT | default (.Values.natsManager.service.targetPort | default .Values.natsManager.service.port) | quote }}
+            {{- $_ := set $envList "KAI_NATS_MANAGER_PORT" true }}
+            # Variables from secrets have precedence
+            {{- if .Values.natsManager.envFromSecrets }}
+            {{- range $key, $value := .Values.natsManager.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables from configmap have precedence
+            {{- if .Values.natsManager.envFromConfigMap }}
+            {{- range $key, $value := .Values.natsManager.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables in plain text if they were not already added from secrets
+            {{- if .Values.natsManager.env }}
+            {{- range $key, $value := .Values.natsManager.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from secrets have precedence
+            {{- if .Values.global.envFromSecrets }}
+            {{- range $key, $value := .Values.global.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from configmap have precedence
+            {{- if .Values.global.envFromConfigMap }}
+            {{- range $key, $value := .Values.global.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables in plain text if they were not already added from secrets
+            {{- if .Values.global.env }}
+            {{- range $key, $value := .Values.global.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- with .Values.natsManager.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.natsManager.resources | nindent 12 }}
+        {{- if .Values.natsManager.extraContainers }}
+          {{- toYaml .Values.natsManager.extraContainers | nindent 8 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.natsManager.terminationGracePeriodSeconds }}
+      volumes:
+        - name: kai
+          configMap:
+            name: {{ include "kai.natsManager.name" . }}
+      {{- with .Values.natsManager.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.natsManager.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -55,5 +269,10 @@ spec:
       {{- end }}
       {{- with .Values.natsManager.tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.natsManager.topologySpreadConstraints }}
+      {{- $_ := include "kai.patchTopologySpreadConstraintsNatsManager" $ }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}

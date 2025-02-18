@@ -39,14 +39,6 @@ Charts are also available in OCI format. The list of available charts can be fou
 helm install [RELEASE_NAME] oci://ghcr.io/konstellation-io/helm-charts/kai --version=[version]
 ```
 
-## Included dependencies
-
-* minio
-* grafana
-* loki
-* prometheus
-* redis
-
 ## Uninstall Helm chart
 
 ```console
@@ -70,25 +62,3 @@ helm show values konstellation-io/{{ template "chart.name" . }}
 ```
 
 {{ template "chart.valuesSection" . }}
-
-## Ingress controller
-
-This Chart has been developed using **Nginx Ingress Controller**. So using the default ingress annotations ensures its correct operation. .
-
-*See [values.yaml](values.yaml) file and [Nginx Ingress controller](https://kubernetes.github.io/ingress-nginx/) for additional documentation**.
-
-However, users could use any other ingress controller (for example, [Traefik](https://doc.traefik.io/traefik/providers/kubernetes-ingress/)). In that case, ingress configurations equivalent to the default ones must be povided.
-
-Notice that even using equivalent ingress configurations the correct operation of the appliance is not guaranteed.
-
-## MongoDB
-
-This chart needs an external MongoDB compatible database to work. Following user and permissions are recomended for a correct and secure application opration:
-
-* User **kai**
-  * Purposse: KAI main database user
-  * Database: **admin**
-  * Attached Roles:
-    * *userAdminAnyDatabase* (admin)
-    * *readWriteAnyDatabase* (admin)
-    * *dbAdminAnyDatabase* (admin)

@@ -1,14 +1,14 @@
-{{- range .Values.adminApi.configMaps }}
+{{- range .Values.global.configMaps }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "kai.adminApi.name" $ }}-{{ .name }}
+  name: {{ include "kai.fullname" $ }}-global-{{ .name }}
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-weight: "0"
   labels:
-    {{- include "kai.adminApiLabels" . | nindent 4 }}
+    {{- include "kai.labels" $ | nindent 4 }}
 data:
   {{- range $key, $value := .data }}
   {{- if regexMatch "\n" $value }}

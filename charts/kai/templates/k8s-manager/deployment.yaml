@@ -1,74 +1,277 @@
+{{- $globalSecrets := .Values.global.imagePullSecrets | default list }}
+{{- $localSecrets := .Values.k8sManager.imagePullSecrets | default list }}
+{{- $combinedSecrets := concat $globalSecrets $localSecrets }}
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "k8s-manager.fullname" . }}
+  name: {{ include "kai.k8sManager.name" . }}
   labels:
-    {{- include "k8s-manager.labels" . | nindent 4 }}
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  {{- if not .Values.k8sManager.autoscaling.enabled }}
+  replicas: {{ .Values.k8sManager.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      {{- include "k8s-manager.selectorLabels" . | nindent 6 }}
-  {{- with .Values.k8sManager.deploymentStrategy }}
+      {{- include "kai.selectorK8sManagerLabels" . | nindent 6 }}
   strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    type: {{ .Values.k8sManager.deploymentStrategy }}
   template:
     metadata:
-      labels:
-        {{- include "k8s-manager.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/k8s-manager/configmap.yaml") . | sha256sum }}
-    spec:
-      {{- with .Values.k8sManager.imagePullSecrets }}
-      imagePullSecrets:
+        checksum/k8s-manager-config: {{ include (print $.Template.BasePath "/k8s-manager/configmap.yaml") . | sha256sum }}
+        checksum/k8s-manager-secret: {{ include (print $.Template.BasePath "/k8s-manager/secret.yaml") . | sha256sum }}
+      {{- with .Values.k8sManager.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "k8s-manager.serviceAccountName" . }}
-      {{- with .Values.k8sManager.affinity }}
-      affinity:
+      labels:
+        {{- include "kai.k8sManagerLabels" . | nindent 8 }}
+        {{- with .Values.k8sManager.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if $combinedSecrets }}
+      imagePullSecrets:
+        {{- range $combinedSecrets }}
+        - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kai.k8sManagerServiceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.k8sManager.podSecurityContext | nindent 8 }}
+      initContainers:
+        {{- if .Values.k8sManager.readyChecker.enabled }}
+        {{- range $service := .Values.k8sManager.readyChecker.services }}
+        - name: ready-checker-{{ $service.name | replace "." "-" | trunc 63 | trimSuffix "-" }}
+          {{- if $.Values.global.imageRegistry }}
+          image: "{{ $.Values.global.imageRegistry }}/{{ $.Values.k8sManager.readyChecker.repository }}:{{ $.Values.k8sManager.readyChecker.tag }}"
+          {{- else }}
+          image: {{ $.Values.k8sManager.readyChecker.repository }}:{{ $.Values.k8sManager.readyChecker.tag }}
+          {{- end }}
+          imagePullPolicy: {{ $.Values.k8sManager.readyChecker.pullPolicy }}
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              RETRY=0;
+              until [ $RETRY -eq {{ $.Values.k8sManager.readyChecker.retries }} ];
+              do
+                ADDRESS="{{ if $service.address }}{{ $service.address }}{{ else }}{{ $.Values.k8sManager.fullnameOverride | default $.Release.Name }}-{{ $service.name }}{{ end }}";
+                if nc -zv $ADDRESS {{ $service.port }}; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is ready";
+                  exit 0;
+                fi;
+                echo "[$RETRY/{{ $.Values.k8sManager.readyChecker.retries }}] waiting for service {{ $service.name }} with address $ADDRESS:{{ $service.port }} to become ready";
+                sleep {{ $.Values.k8sManager.readyChecker.timeout }};
+                RETRY=$(($RETRY + 1));
+                if [ $RETRY -eq {{ $.Values.k8sManager.readyChecker.retries }} ]; then
+                  echo "Service {{ $service.name }} with address $ADDRESS:{{ $service.port }} is not ready";
+                  exit 1;
+                fi;
+              done
+        {{- end }}
+        {{- end }}
+        {{- with .Values.k8sManager.initContainers }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: k8s-manager
+          securityContext:
+            {{- toYaml .Values.k8sManager.securityContext | nindent 12 }}
+          {{- if .Values.global.imageRegistry }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.k8sManager.image.repository }}:{{ .Values.k8sManager.image.tag | default .Chart.AppVersion }}"
+          {{- else }}
+          image: {{ .Values.k8sManager.image.repository }}:{{ .Values.k8sManager.image.tag | default .Chart.AppVersion }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.k8sManager.image.pullPolicy }}
+          {{- with .Values.k8sManager.command }}
+          command: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.k8sManager.args }}
+          args: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: grpc
+              containerPort: {{ default .Values.k8sManager.service.port .Values.k8sManager.service.targetPort  }}
+              protocol: TCP
+            {{- range $port := .Values.k8sManager.service.extraPorts }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.targetPort }}
+              protocol: TCP
+            {{- end }}
+          {{- with .Values.k8sManager.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.k8sManager.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.k8sManager.livenessProbeCustom }}
+            {{- toYaml .Values.k8sManager.livenessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.k8sManager.service.healthPath | default "/" | quote }}
+              port: {{ default .Values.k8sManager.service.port .Values.k8sManager.service.targetPort  }}
+            failureThreshold: {{ .Values.k8sManager.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.k8sManager.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.k8sManager.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.k8sManager.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.k8sManager.livenessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.k8sManager.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.k8sManager.readinessProbeCustom }}
+            {{- toYaml .Values.k8sManager.readinessProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.k8sManager.service.healthPath | default "/" | quote }}
+              port: {{ default .Values.k8sManager.service.port .Values.k8sManager.service.targetPort  }}
+            failureThreshold: {{ .Values.k8sManager.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.k8sManager.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.k8sManager.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.k8sManager.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.k8sManager.readinessProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.k8sManager.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.k8sManager.startupProbeCustom }}
+            {{- toYaml .Values.k8sManager.startupProbeCustom | nindent 12 }}
+            {{- else }}
+            httpGet:
+              path: {{ .Values.k8sManager.service.healthPath | default "/" | quote }}
+              port: {{ default .Values.k8sManager.service.port .Values.k8sManager.service.targetPort  }}
+            failureThreshold: {{ .Values.k8sManager.startupProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.k8sManager.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.k8sManager.startupProbe.periodSeconds }}
+            successThreshold: {{ .Values.k8sManager.startupProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.k8sManager.startupProbe.timeoutSeconds }}
+            {{- end }}
+          {{- end }}
+          envFrom:
+            {{- if .Values.k8sManager.envFromFiles }}
+            {{- tpl (toYaml .Values.k8sManager.envFromFiles) . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.global.envFromFiles }}
+            {{- tpl (toYaml .Values.global.envFromFiles) . | nindent 12 }}
+            {{- end }}
+          env:
+            {{- $envList := dict }}
+            # Default environment
+            - name: KAI_KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- $_ := set $envList "KAI_KUBERNETES_NAMESPACE" true }}
+            - name: KAI_RELEASE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/instance']
+            {{- $_ := set $envList "KAI_RELEASE_NAME" true }}
+            # Variables from secrets have precedence
+            {{- if .Values.k8sManager.envFromSecrets }}
+            {{- range $key, $value := .Values.k8sManager.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables from configmap have precedence
+            {{- if .Values.k8sManager.envFromConfigMap }}
+            {{- range $key, $value := .Values.k8sManager.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Variables in plain text if they were not already added from secrets
+            {{- if .Values.k8sManager.env }}
+            {{- range $key, $value := .Values.k8sManager.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from secrets have precedence
+            {{- if .Values.global.envFromSecrets }}
+            {{- range $key, $value := .Values.global.envFromSecrets }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables from configmap have precedence
+            {{- if .Values.global.envFromConfigMap }}
+            {{- range $key, $value := .Values.global.envFromConfigMap }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $value.name }}
+                  key: {{ $value.key | default $key }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            # Global variables in plain text if they were not already added from secrets
+            {{- if .Values.global.env }}
+            {{- range $key, $value := .Values.global.env }}
+            {{- if not (hasKey $envList $key) }}
+            - name: {{ $key | upper }}
+              value: {{ $value | quote }}
+            {{- $_ := set $envList $key true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- with .Values.k8sManager.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.k8sManager.resources | nindent 12 }}
+        {{- if .Values.k8sManager.extraContainers }}
+          {{- toYaml .Values.k8sManager.extraContainers | nindent 8 }}
+        {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.k8sManager.terminationGracePeriodSeconds }}
+      volumes:
+        - name: kai
+          configMap:
+            name: {{ include "kai.k8sManager.name" . }}
+      {{- with .Values.k8sManager.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.k8sManager.nodeSelector }}
       nodeSelector:
-        {{ toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.k8sManager.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.k8sManager.tolerations }}
       tolerations:
-        {{ toYaml . | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
-      containers:
-        - name: {{ include "k8s-manager.fullname" . }}
-          image: {{ .Values.k8sManager.image.repository }}:{{ .Values.k8sManager.image.tag }}
-          imagePullPolicy: {{ .Values.k8sManager.image.pullPolicy }}
-          envFrom:
-            - configMapRef:
-                name: {{ include "k8s-manager.fullname" . }}
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: KAI_MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "minio.secretName" .Subcharts.minio }}
-                  key: rootUser
-            - name: KAI_MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "minio.secretName" .Subcharts.minio }}
-                  key: rootPassword
-            - name: KAI_KEYCLOAK_MINIO_CLIENT_SECRET
-              value: "{{ .Values.keycloak.minio.oidcClient.secret }}"
-            - name: KAI_REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "redis.auth.secretName" . }}
-                  key: {{ include "redis.auth.secretPasswordKey" . }}
-          ports:
-            - containerPort: 50051
-              protocol: TCP
-              name: grpc
-          resources:
-            {{- toYaml .Values.k8sManager.resources | nindent 12 }}
+      {{- with .Values.k8sManager.topologySpreadConstraints }}
+      {{- $_ := include "kai.patchTopologySpreadConstraintsK8sManager" $ }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

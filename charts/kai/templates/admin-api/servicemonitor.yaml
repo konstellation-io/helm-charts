@@ -1,0 +1,24 @@
+{{- if .Values.adminApi.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kai.adminApi.name" . }}
+  labels:
+    {{- include "kai.adminApiLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorKaiAdminApiLabels" . | nindent 8 }}
+  endpoints:
+  - port: metrics
+    interval: {{ .Values.adminApi.serviceMonitor.interval | quote }}
+    scrapeTimeout: {{ .Values.adminApi.serviceMonitor.scrapeTimeout | quote }}
+    {{- if .Values.adminApi.serviceMonitor.metricRelabelings }}
+    metricRelabelings:
+    {{- toYaml .Values.adminApi.serviceMonitor.metricRelabelings | nindent 4 }}
+    {{- end }}
+    {{- if .Values.adminApi.serviceMonitor.relabelings }}
+    relabelings:
+    {{- toYaml .Values.adminApi.serviceMonitor.relabelings | nindent 4 }}
+    {{- end }}
+{{- end }}

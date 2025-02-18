@@ -1,0 +1,48 @@
+{{- if .Values.natsManager.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "kai.natsManager.name" . }}
+  labels:
+    {{- include "opencti.knowledgeGalaxyLabels" . | nindent 4 }}
+spec:
+  {{- if and (not .Values.natsManager.networkPolicy.policyTypes) (not .Values.natsManager.networkPolicy.ingress) (not .Values.natsManager.networkPolicy.egress) }}
+  podSelector: {}
+  {{- else }}
+  podSelector:
+    matchLabels:
+      {{- include "opencti.selectorWorkerLabels" . | nindent 6 }}
+  {{- end }}
+
+  {{- if .Values.natsManager.networkPolicy.policyTypes }}
+  {{- with .Values.natsManager.networkPolicy.policyTypes }}
+  policyTypes:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- end }}
+
+  {{- if .Values.natsManager.networkPolicy.ingress }}
+  {{- with .Values.natsManager.networkPolicy.ingress }}
+  ingress:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  ingress:
+  - {}
+  {{- end }}
+
+  {{- if .Values.natsManager.networkPolicy.egress }}
+  {{- with .Values.natsManager.networkPolicy.egress }}
+  egress:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else }}
+  egress:
+  - {}
+  {{- end }}
+
+{{- end }}

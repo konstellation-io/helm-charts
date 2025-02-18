@@ -1,0 +1,18 @@
+{{- if .Values.adminApi.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "kai.adminApi.name" . }}
+  labels:
+    {{- include "kai.adminApiLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorKaiAdminApiLabels" . | nindent 6 }}
+  {{- if .Values.adminApi.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.adminApi.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.adminApi.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.adminApi.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+{{- end }}

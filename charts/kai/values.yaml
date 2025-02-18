@@ -1,1094 +1,1533 @@
-# -- Provide a name in place of kai for `app.kubernetes.io/name` labels
+# Default values for kai
+# This is a YAML-formatted file
+# Declare variables to be passed into your templates
+
+global:
+  # -- Specifies the registry to pull images from. Leave empty for the default registry
+  imageRegistry: ""
+
+  # -- Specifies the secrets to use for pulling images from private registries
+  # Leave empty if no secrets are required
+  # E.g.
+  # imagePullSecrets:
+  #   - name: myRegistryKeySecretName
+  imagePullSecrets: []
+
+  # -- Environment variables to configure application
+  env: {}
+    # MY_VARIABLE: value
+
+  # -- Variables from secrets
+  envFromSecrets: {}
+    # MY_VARIABLE:
+    #   name: <name-secret>
+    #   key: secret_key
+
+  # -- Variables from configMap
+  envFromConfigMap: {}
+    # MY_VARIABLE:
+    #   name: <name-configmap>
+    #   key: key
+
+  # -- Load all variables from files
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+  envFromFiles: []
+    # - secretRef:
+    #     name: <name-secret>
+    # - configMapRef:
+    #     name: <name-configmap>
+
+# -- String to partially override kai.fullname template (will maintain the release name)
 nameOverride: ""
-# -- Whether to setup developement mode
-developmentMode: false
-rbac:
-  # -- Whether to create the roles for the services that could use custom Service Accounts
-  create: true
-config:
-  # -- Base domain name for Admin API and K8S Manager apps
-  baseDomainName: "kai.local"
-  tls:
-    # -- Whether to enable TLS
-    enabled: false
-    # -- An existing secret containing a valid wildcard certificate for the value provissioned in `.config.baseDomainName`. Required if `config.tls.enabled = true`
-    certSecretName: ""
-  admin:
-    # -- Whether to enable CORS on Admin API
-    corsEnabled: true
-  mongodb:
-    connectionString:
-      # -- The name of the secret that contains a key with the MongoDB connection string.
-      secretName: ""
-      # --The name of the secret key that contains the MongoDB connection string.
-      secretKey: ""
-  minio:
-    # -- Default region (only affect to Minio buckets)
-    # @default -- us-east-1
-    defaultRegion: ""
-    # Transition Objects from MinIO to remote storage
-    # @default: Only one type of tier can be set, otherwise the deployment will use the first set tier (1.aws 2.gcp 3.azure) ignoring the rest
-    tier:
-      # -- Whether to enable MinIO Tiering
-      # @default: If is disable MinIO will use only local storage
-      enabled: false
-      # -- Tier name
-      # @default -- KAI-REMOTE-STORAGE
-      name: ""
-      # -- Remote storage bucket name (must exist)
-      remoteBucketName: ""
-      # -- Prefix or path in bucket where object transition will happen (will be created if not exist)
-      # @default -- DATA
-      remotePrefix: ""
-      # -- Transition Objects from MinIO to AWS S3
-      aws:
-        # -- The Region where the remote bucket was created.
-        # @default -- us-east-1
-        region: ""
-        # -- S3 Service endpoint URL
-        # @default -- https://s3.amazonaws.com
-        endpointURL: ""
-        # -- AWS authentication config
-        # @default: first look for the keys in pre-existing kubernetes secret object (secretName and secretKeyNames), if not set, look for the keys in values.yaml (accessKeyID and secretAccessKey)
-        auth:
-          # -- Name of the secret that contains the credentials for S3
-          secretName: ""
-          # -- Secret reference for AWS access keys
-          secretKeyNames:
-            # -- Name of the key in the secret that contains the access key ID
-            accessKey: ""
-            # -- Name of the key in the secret that contains the secret access key
-            secretKey: ""
-          # -- S3 Access Key ID if no secret is used
-          accessKeyID: ""
-          # -- S3 Secret Access Key if no secret is used
-          secretAccessKey: ""
-  loki:
-    # -- Only when `loki.enabled: true` and `grafana.enabled: true`. Set loki as default datasource for Grafana.
-    isDefault: true
-    # -- Loki host. Change this to your own URL when `loki.enabled: false`
-    host: '{{ include "loki.singleBinaryFullname" .Subcharts.loki }}'
-    # -- Loki port. Change this to your own URL when `loki.enabled: false`
-    port: '{{ .Values.loki.loki.server.http_listen_port }}'
-    # -- Only when `loki.enabled: true` and `grafana.enabled: true`. Grafana datasource json data config.
-    datasource:
-      jsonData: "{}"
-      uid: ""
-  prometheus:
-    # -- Only when `prometheus.enabled: true` and `grafana.enabled: true`. Set prometheus as default datasource for Grafana.
-    isDefault: false
-    # -- Prometheus endpoint url. Change this to your own URL when `prometheus.enabled: false`
-    url: http://{{ include "prometheus.fullname" .Subcharts.prometheus }}-{{ .Values.prometheus.server.name }}:{{ .Values.prometheus.server.service.servicePort }}{{ .Values.prometheus.server.prefixURL }}
-    # -- Only when `prometheus.enabled: true` and `grafana.enabled: true`. Grafana datasource json data config.
-    datasource:
-      jsonData: "{}"
-    ## Scrape configs used by KAI
-    kaiScrapeConfigs:
-      # -- Enable creation of configmap that contains custom prometheus scrape configs for KAI metrics. Usefull to use with external prometheus instance. If `prometheus.enabled: true` this cannot be disabled
-      enabled: true
-      # -- configmap name for additional scrape configs
-      configmapName: prometheus-additional-scrape-configs
-  ## Use only when `redis.enabled: false`
-  ## Only apply when use your own redis (external)
-  redis:
-    # -- architecture. Allowed values: `standalone` or `replication`. Only apply when use your own redis. This config allow send replicas urls to admin-api when replication is activated
-    architecture: standalone
-    auth:
-      # -- Whether to enable auth to redis. Only apply when use your own redis. This allow send credentials to admin-api
-      enabled: false
-      # -- Name of the secret that contains the redis password
-      existingSecret: ""
-      # -- Name of the key in the secret that contains the redis password
-      existingSecretPasswordKey: ""
-      # -- Redis password if no existingSecret is used and `redis.enabled: false`. (create a secret with this password and send credentials to admin-api)
-      password: ""
-    master:
-      # -- Redis Master endpoint url. Change this to your own URL when `redis.enabled: false`
-      url: '{{ printf "%s-master" (include "common.names.fullname" .Subcharts.redis) }}:{{ .Values.redis.master.service.ports.redis }}'
-    replicas:
-      # -- Redis Replicas endpoint url. Change this to your own URL when `redis.enabled: false`
-      url: '{{ printf "%s-replicas" (include "common.names.fullname" .Subcharts.redis) }}:{{ .Values.redis.replica.service.ports.redis }}'
+
+# -- String to fully override kai.fullname template
+fullnameOverride: ""
+
+# -- Enable or disable test connection
+testConnection:
+  # Specifies whether a test connection should be created
+  enabled: false
+  # The repository of the image
+  repository: busybox
+  # Overrides the image tag
+  tag: "latest"
+
+# -- adminAPI
 adminApi:
-  # -- Default application log level
-  logLevel: INFO
+  # -- Number of replicas
+  # Specifies the number of replicas for the service
+  replicaCount: 1
+
+  # -- Deployment strategy
+  # Specifies the strategy used to replace old Pods by new ones
+  deploymentStrategy: Recreate
+
+  # -- Image registry
+  # The image configuration for the base service
   image:
-    # -- Image repository
-    repository: konstellation/kai-admin-api
-    # -- Image tag
-    tag: 0.3.0-develop.17
-    # -- Image pull policy
+    # The repository of the image
+    repository: konstellation/kai
+    # The pull policy for the image
     pullPolicy: IfNotPresent
-  # -- Image pull secrets
+    # The image tag
+    tag: 0.3.0-develop.17
+
+  # -- Specifies the secrets to use for pulling images from private registries
+  # Leave empty if no secrets are required
+  # E.g.
+  # imagePullSecrets:
+  #   - name: myRegistryKeySecretName
   imagePullSecrets: []
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
+
+  # -- Enable creation of ServiceAccount
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
   serviceAccount:
     # Specifies whether a service account should be created
     create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
     # Annotations to add to the service account
     annotations: {}
-    # The name of the service account to use.
+    # The name of the service account to use
     # If not set and create is true, a name is generated using the fullname template
     name: ""
-  # -- Hostname. This will be used to create the ingress rule and must be a subdomain of `.config.baseDomainName`
-  host: api.kai.local
-  ingress:
-    ## This Chart has been developed using Kong Ingress Controller by default.
-    ## Using the following default annotations ensures its correct operation.
-    ## Ref: https://kubernetes.github.io/ingress-Kong/
-    ##
-    # -- The name of the ingress class to use
-    className: kong
-    # -- Ingress annotations
-    # @default -- See `adminApi.ingress.annotations` in [values.yaml](./values.yaml)
-    annotations: {}
-  # -- Container resources
-  resources: {}
-  # -- Define which Nodes the Pods are scheduled on.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  # -- Assign custom affinity rules to the Admin API pods
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
-  affinity: {}
-  # nodeAffinity:
-  #   requiredDuringSchedulingIgnoredDuringExecution:
-  #     nodeSelectorTerms:
-  #     - matchExpressions:
-  #       - key: kubernetes.io/e2e-az-name
-  #         operator: In
-  #         values:
-  #         - e2e-az1
-  #         - e2e-az2
 
-  # -- Tolerations for use with node taints
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  # - key: "key"
-  #   operator: "Equal"
-  #   value: "value"
-  #   effect: "NoSchedule"
-k8sManager:
-  image:
-    # -- Image repository
-    repository: konstellation/kai-k8s-manager
-    # -- Image tag
-    tag: 0.3.0-develop.17
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
-  # -- Image pull secrets
-  imagePullSecrets: []
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
-  serviceAccount:
-    # -- Whether to create the Service Account
-    create: true
-    # -- The name of the service account.
-    # @default: A pre-generated name based on the chart relase fullname sufixed by `-k8s-manager`
-    name: ""
-    # -- The Service Account annotations
-    annotations: {}
-  # -- Container resources
-  resources: {}
-  imageBuilder:
-    # -- Log level for image builder's jobs
-    logLevel: info
-    image:
-      # -- Image repository for image builder's jobs
-      repository: gcr.io/kaniko-project/executor
-      # -- Image tag for image builder's jobs
-      tag: v1.18.0
-      # -- Image pull policy for image builder's jobs
-      pullPolicy: IfNotPresent
-    netrc:
-      # -- Whether to create .netrc file for authentication for private dependency repositories
-      enabled: false
-      # -- .netrc file content. Ref: https://everything.curl.dev/usingcurl/netrc
-      content: ""
-      ## example:
-      # content: |
-      #   machine booster    login baxter  password swordfish
-      #   machine wooster    login francis password sw0rdf1sh
-    pullCredentials:
-      # -- Whether to add pull credentials to the image builder's jobs (needed to pull base images from private registries or proxies)
-      enabled: false
-      # -- The registry server
-      registry: "https://index.docker.io/v1/"
-      # -- The registry username
-      username: ""
-      # -- The registry password
-      password: ""
-      ## Example:
-      # enabled: true
-      # server: registry.github.com
-      # username: github-username
-      # password: github-password
+  # -- Environment variables to configure application
+  # </br> Ref: https://github.com/konstellation-io/kdl-server/tree/main/app/api
+  env: {}
+    ## API
+    # KAI_ADMIN_API_PORT: "8080"
+    # KAI_ADMIN_CORS_ENABLED: "true"
+    # KAI_API_LOG_LEVEL: "INFO"
+    # KAI_SERVICES_K8S_MANAGER: "<release-name>-k8s-manager:50051"
+    # KAI_SERVICES_NATS_MANAGER: "<release-name>-nats-manager:50051"
 
-  processes:
-    triggers:
-      ingress:
-        # -- The ingressClassName to use for the enypoints' generated ingresses
-        className: "kong"
-        # -- The annotations that all the generated ingresses for the entrypoints will have
-        annotations: {}
-        # konghq.com/protocol: grpc,grpcs
-    sidecars:
-      fluentbit:
-        image:
-          # -- Image repository for Fuent Bit sidecar
-          repository: fluent/fluent-bit
-          # -- Image tag for Fuent Bit sidecar
-          tag: 2.2.0
-          # -- Image pull policy for Fuent Bit sidecar
-          pullPolicy: IfNotPresent
-      telegraf:
-        image:
-          # -- Image repository for Fuent Bit sidecar
-          repository: telegraf
-          # -- Image tag for Fuent Bit sidecar
-          tag: 1.28.5
-          # -- Image pull policy for Fuent Bit sidecar
-          pullPolicy: IfNotPresent
-  # -- Define which Nodes the Pods are scheduled on.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  # -- Assign custom affinity rules to the K8S Manager pods
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
-  affinity: {}
-  # nodeAffinity:
-  #   requiredDuringSchedulingIgnoredDuringExecution:
-  #     nodeSelectorTerms:
-  #     - matchExpressions:
-  #       - key: kubernetes.io/e2e-az-name
-  #         operator: In
-  #         values:
-  #         - e2e-az1
-  #         - e2e-az2
+    ## KEYCLOAK
+    # KAI_KEYCLOAK_ADMIN_CLIENT_ID: ""
+    # KAI_KEYCLOAK_ADMIN_PASSWORD: ""
+    # KAI_KEYCLOAK_ADMIN_USERNAME: ""
+    # KAI_KEYCLOAK_BASE_URL: ""
+    # KAI_KEYCLOAK_MASTER_REALM: ""
+    # KAI_KEYCLOAK_REALM: ""
 
-  # -- Tolerations for use with node taints
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  # - key: "key"
-  #   operator: "Equal"
-  #   value: "value"
-  #   effect: "NoSchedule"
-keycloak:
-  # -- Hostname. This will be used to create the ingress rulem and to configure Keycloak and must be a subdomain of `.config.baseDomainName`
-  host: "auth.kai.local"
-  auth:
-    # -- Keycloak admin username
-    adminUser: admin
-    # -- Keycloak admin password
-    adminPassword: "123456"
-    existingSecret:
-      # -- The name of the secret that contains a key with the Keycloak admin password. Existing secret takes precedence over `adminUser` and `adminPassword`
-      name: ""
-      # -- The name of the secret key that contains the Keycloak admin username.
-      userKey: ""
-      # -- The name of the secret key that contains the Keycloak admin password.
-      passwordKey: ""
-  # -- Args to pass to the Keycloak startup command. This takes precedence over options passed through env variables
-  argsOverride: {}
-  # argsOverride:
-  #  - "--hostname-strict-https"
+    ## REGISTRY
+    # KAI_REGISTRY_BASIC_AUTH: ""
+    # KAI_REGISTRY_HOST: ""
 
-  # -- Keycloak extra env vars in the form of a list of key-value pairs
-  extraEnv: {}
-  # extraEnv:
-  #  KC_HOSTNAME_STRICT_HTTPS: "false"
-  #  KC_FEATURES: "admin-fine-grained-authz"
+    ## MINIO
+    # KAI_MINIO_ENDPOINT_URL: ""
+    # KAI_MINIO_REGION: ""
+    # KAI_MINIO_ROOT_PASSWORD: ""
+    # KAI_MINIO_ROOT_USER: ""
+    # KAI_MINIO_TIER_ENABLED: ""
+    # KAI_MINIO_TIER_NAME: ""
 
-  # -- The name of the realm that will be crated on Keycloak first startup
-  realmName: "konstellation"
-  # -- The time in seconds that a user has to be inactive to expire the session
-  ssoSessionIdleTimeout: 14400
-  kong:
-    # -- The name of the OIDC Kong plugin that should be installed on Kong ingress controller
-    oidcPluginName: "oidc"
-    oidcClient:
-      # -- The name of the OIDC client in Keycloak for Kong
-      clientId: "kong-oidc"
-      # -- The secret for the OIDC client that will be created on Keycloak first startup
-      secret: ""
-  kli:
-    oidcClient:
-      # -- The name of the OIDC client in Keycloak for KLI
-      clientId: "kai-kli-oidc"
-  kliCI:
-    oidcClient:
-      # -- The name of the OIDC client in Keycloak for KLI CI
-      clientId: "kai-kli-ci-oidc"
-      # -- The secret for the OIDC client that will be created on Keycloak first startup
-      secret: ""
-  adminApi:
-    oidcClient:
-      # -- The name of the OIDC client in Keycloak for the master realm admin
-      clientId: "admin-cli"
-  minio:
-    # -- The name of the OIDC client in Keycloak for MinIO
-    oidcClient:
-      # -- The name of the OIDC client in Keycloak for Kong
-      clientId: "minio"
-      # -- The secret for the OIDC client that will be created on Keycloak first startup
-      secret: ""
-  config:
-    # -- Whether to enable metrics
-    metricsEnabled: "false"
-    # -- Whether to enable http
-    httpEnabled: "true"
-    # -- Disables dynamically resolving the hostname from request headers. Should always be set to true in production, unless proxy verifies the Host header.
-    hostnameStrict: "false"
-    # -- The proxy address forwarding mode if the server is behind a reverse proxy. Valid values are `none`, `edge`, `reencrypt` and `passthrough`
-    proxy: edge
-    # -- If the server should expose health check endpoints. If set to "false", container liveness and readiness probes should be disabled.
-    healthEnabled: "true"
-  db:
-    # -- Keycloak database type
-    type: postgres
-    auth:
-      # -- The database name
-      database: ""
-      # -- The database hostname
-      host: ""
-      # -- The database port
-      port: ""
-      # -- The name of the secret that contains the database connection config keys.
-      secretName: ""
-      # -- The name of the secret key that contains the database host.
-      secretHostKey: ""
-      # -- The name of the secret key that contains the database port. Takes precedence over `host`
-      secretPortKey: ""
-      # -- The name of the secret key that contains the database username. Takes precedence over `port`
-      secretUserKey: ""
-      # -- The name of the secret key that contains the database password.
-      secretPasswordKey: ""
-      # -- The name of the secret key that contains the database name. Takes precedence over `database`
-      secretDatabaseKey: ""
-      # -- The database username
-      username: ""
-      # -- The database password
-      password: ""
-  image:
-    # -- The image repository
-    repository: quay.io/keycloak/keycloak
-    # -- The image pull policy
-    pullPolicy: IfNotPresent
-    # -- The image tag
-    tag: "24.0.1"
-  # -- Image pull secrets
-  imagePullSecrets: []
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: true
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-  # -- Pod annotations
-  podAnnotations: {}
-  # -- Pod security context
-  podSecurityContext: {}
-  # fsGroup: 2000
+    ## MONGODB
+    # KAI_MONGODB_DATABASE: ""
+    # KAI_MONGODB_URI: ""
 
-  # Container security Context
-  securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+    ## LOKI
+    # KAI_LOKI_ADDRESS: ""
 
+    ## REDIS
+    # KAI_REDIS_MASTER_ADDRESS: ""
+
+    ## SECRET
+    # KAI_VAULT_ENDPOINT: ""
+    # KAI_VAULT_ROOT_PATH: ""
+    # KAI_VAULT_TOKEN: ""
+
+  # -- Variables from secrets
+  envFromSecrets: {}
+    # MY_VARIABLE:
+    #   name: <name-secret>
+    #   key: secret_key
+
+  # -- Variables from configMap
+  envFromConfigMap: {}
+    # MY_VARIABLE:
+    #   name: <name-configmap>
+    #   key: key
+
+  # -- Load all variables from files
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+  envFromFiles: []
+    # - secretRef:
+    #     name: <name-secret>
+    # - configMapRef:
+    #     name: <name-configmap>
+
+  # -- Secrets values to create credentials and reference by envFromSecrets
+  # Generate Secret with following name: <release-name>-<name>
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/
+  secrets: []
+    # - name: secret-name
+    #   data:
+    #     my.key: |-
+    #       my-content
+    #     my_var: my-value
+
+  # -- Configure extra containers
+  extraContainers: []
+    # - name: project-proxy
+    #   image: nginx:alpine
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure additional containers
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  initContainers: []
+    # - name: my-container
+    #   image: busybox
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure args
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  args: []
+    # - -c
+    # - echo "Hello, World!"
+
+  # -- Configure command
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  command: []
+    # - echo
+    # - "Hello, World!"
+
+  # -- Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
   service:
-    # -- Service type
+    # -- Kubernetes Service type. Allowed values: NodePort, LoadBalancer or ClusterIP
     type: ClusterIP
-    ports:
-      # -- The http port the service will listen on. Only
-      http: 8080
-      # -- The https port the service will listen on
-      https: 8443
-  ingress:
-    ## This Chart has been developed using Kong Ingress Controller by default.
-    ## Using the following default annotations ensures its correct operation.
-    ## Ref: https://kubernetes.github.io/ingress-Kong/
-    ##
+    # -- Kubernetes Service port
+    port: 8080
+    # -- Kubernetes Service health check path
+    # healthPath: ""
+    # -- NodePort port (only when type is NodePort)
+    # nodePort: 32000
+    # -- Pod expose port
+    # targetPort: 8080
+    # -- Pod extra ports
+    # extraPorts:
+    # - name: metrics
+    #   port: 9080
+    #   targetPort: 9080
 
-    # -- The name of the ingress class to use
-    className: kong
-    # -- Ingress annotations
-    # @default -- See `keycloak.ingress.annotations` in [values.yaml](./values.yaml)
+  # -- Ingress configuration to expose app
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ingress:
+    enabled: false
+    className: ""
     annotations: {}
-  # -- Container resources
-  resources: {}
-  # -- Container liveness probe
-  livinessProbe:
-    httpGet:
-      path: /health/live
-      port: http
-    initialDelaySeconds: 30
-    timeoutSeconds: 5
-    periodSeconds: 10
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+      # konghq.com/plugins: <release>-oidc
+      # konghq.com/strip-path: "false"
+    hosts:
+    - host: chart-example.kai.local
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #    - chart-example.kai.local
+
+  # -- NetworkPolicy configuration
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  networkPolicy:
+    # -- Enable or disable NetworkPolicy
+    enabled: false
+    # -- Policy types
+    policyTypes: []
+      # - Ingress
+      # - Egress
+    ingress: []
+      # - from:
+      #   - ipBlock:
+      #       cidr: 172.17.0.0/16
+      #       except:
+      #       - 172.17.1.0/24
+      #   - namespaceSelector:
+      #       matchLabels:
+      #         project: myproject
+      #   - podSelector:
+      #       matchLabels:
+      #         role: frontend
+      #   ports:
+      #   - protocol: TCP
+      #     port: 6379
+    egress: []
+      # - to:
+      #   - ipBlock:
+      #       cidr: 10.0.0.0/24
+      #   ports:
+      #   - protocol: TCP
+      #     port: 5978
+
+  # -- Configure lifecycle hooks
+  # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+  # </br> Ref: https://learnk8s.io/graceful-shutdown
+  lifecycle: {}
+    # preStop:
+    #   exec:
+    #     command: ["sh", "-c", "sleep 10"]
+
+  # -- Configure Pod termination grace period
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination
+  terminationGracePeriodSeconds: 30
+
+  # -- Configure liveness checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  livenessProbe:
+    enabled: false
     failureThreshold: 3
-  # -- Container readiness probe
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom livenessProbe
+  livenessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure readinessProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
   readinessProbe:
-    httpGet:
-      path: /health/ready
-      port: http
-    initialDelaySeconds: 30
-    timeoutSeconds: 5
-    periodSeconds: 10
+    enabled: false
     failureThreshold: 3
-  # -- Define which Nodes the Pods are scheduled on.
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+
+  # -- Custom readinessProbe
+  readinessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure startupProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  startupProbe:
+    enabled: false
+    failureThreshold: 30
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom startupProbe
+  startupProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Check if dependencies are ready
+  readyChecker:
+    # -- Enable or disable ready-checker
+    enabled: false
+    # -- Repository of the image
+    repository: busybox
+    # -- Pull policy for the image
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag
+    tag: "latest"
+    # -- Number of retries before giving up
+    retries: 30
+    # -- Timeout for each check
+    timeout: 5
+    # -- List services
+    services:
+    # - name: service_name
+    #   port: service_port
+    #   address: service_address  # (Optional) This parameter is optional. If
+    #   not specified, the address for the check will be automatically
+    #   determined assuming the service was installed using a subchart. It is
+    #   useful to specify it when the service is provisioned differently (e.g.,
+    #   an S3 bucket created in the Cloud or an Elasticsearch instance outside
+    #   the Kubernetes cluster). The address can be an IP address or a DNS name.
+    - name: mongodb
+      port: 27017
+    - name: keycloak
+      port: 80
+
+  # -- Enable ServiceMonitor to get metrics
+  # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
+  serviceMonitor:
+    # -- Enable or disable
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    metricRelabelings: []
+    relabelings: []
+
+  # -- Configure annotations on Pods
+  podAnnotations: {}
+
+  # -- Configure labels on Pods
+  podLabels: {}
+
+  # -- Defines privilege and access control settings for a Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  podSecurityContext:
+    fsGroup: 10001
+
+  # -- Defines privilege and access control settings for a Container
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  # -- Resources limits and requested
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # -- Pod Disruption Budget
+  # </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+    minAvailable:
+
+  # -- Autoscaling with CPU or memory utilization percentage
+  # </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  # -- Additional volumes on the output Deployment definition
+  # </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  # -- Additional volumeMounts on the output Deployment definition
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  # -- Node labels for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
   nodeSelector: {}
-  # -- Assign custom tolerations to the Keycloak pods
+
+  # -- Tolerations for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
   tolerations: []
-  # -- Assign custom affinity rules to the Keycloak pods
+
+  # -- Affinity for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
-  # -- Extra volumes
+
+  # -- Control how Pods are spread across your cluster
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: zone
+  #   whenUnsatisfiable: DoNotSchedule
+
+# -- K8S manager
+k8sManager:
+  # -- Image registry
+  # The image configuration for the base service
+  image:
+    # The repository of the image
+    repository: konstellation/kai-k8s-manager
+    # The pull policy for the image
+    pullPolicy: IfNotPresent
+    # The image tag
+    tag: "0.3.0-develop.17"
+
+  # -- Deployment strategy
+  # Specifies the strategy used to replace old Pods by new ones
+  deploymentStrategy: Recreate
+
+  # -- Specifies the secrets to use for pulling images from private registries
+  # Leave empty if no secrets are required
+  # E.g.
+  # imagePullSecrets:
+  #   - name: myRegistryKeySecretName
+  imagePullSecrets: []
+
+  # -- Enable creation of ServiceAccount
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Creation of resources RBAC
+  # </br> Ref: https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+  rbac:
+    # Specifies whether RBAC resources should be created
+    create: true
+
+  # -- Environment variables to configure application
+  # </br> Ref: https://github.com/konstellation-io/kdl-server/tree/main/app/api
+  env: {}
+    ## TRIGGERS
+    # KAI_TRIGGERS_BASE64_INGRESSES_ANNOTATIONS: ""
+    # KAI_TRIGGERS_INGRESS_CLASS_NAME: ""
+    # KAI_TRIGGERS_REQUEST_TIMEOUT: "30"
+    # KAI_TRIGGERS_TLS_CERT_SECRET_NAME: ""
+    # KAI_TRIGGERS_TLS_ENABLED: ""
+
+    ## NATS
+    # KAI_NATS_URL: ""
+
+    ## REGISTRY
+    # KAI_REGISTRY_AUTH_SECRET_NAME: ""
+    # KAI_REGISTRY_INSECURE: ""
+    # KAI_REGISTRY_URL: ""
+
+    ## MINIO
+    # KAI_MINIO_ENDPOINT_URL: ""
+    # KAI_MINIO_REGION: ""
+    # MINIO_ROOT_PASSWORD: ""
+    # MINIO_ROOT_USER: ""
+
+    ## KEYCLOAK
+    # KAI_KEYCLOAK_BASE_URL: ""
+    # KAI_KEYCLOAK_MINIO_CLIENT_ID: ""
+    # KAI_KEYCLOAK_REALM: ""
+    # KEYCLOAK_MINIO_CLIENT_SECRET: ""
+
+    ## FLUENTBIT
+    # KAI_FLUENTBIT_IMAGE_PULLPOLICY: "IfNotPresent"
+    # KAI_FLUENTBIT_IMAGE_REPOSITORY: "fluent/fluent-bit"
+    # KAI_FLUENTBIT_IMAGE_TAG: "2.2.0"
+
+    ## TELEGRAFT
+    # KAI_TELEGRAF_IMAGE_PULLPOLICY: "IfNotPresent"
+    # KAI_TELEGRAF_IMAGE_REPOSITORY: "telegraf"
+    # KAI_TELEGRAF_IMAGE_TAG: "1.28.5"
+    # KAI_TELEGRAF_METRICS_PORT: ""
+
+    ## LOKI
+    # KAI_LOKI_HOST: ""
+    # KAI_LOKI_PORT: ""
+
+    ## IMAGE BUILDER
+    # KAI_IMAGE_BUILDER_IMAGE_REPOSITORY: "gcr.io/kaniko-project/executor"
+    # KAI_IMAGE_BUILDER_IMAGE_TAG: "v1.18.0"
+    # KAI_IMAGE_BUILDER_IMAGE_PULLPOLICY: "IfNotPresent"
+    # KAI_IMAGE_BUILDER_LOGLEVEL: "info"
+    # KAI_IMAGE_BUILDER_NETRC_ENABLED: "false"
+    # KAI_IMAGE_BUILDER_NETRC_SECRET_NAME: ""
+
+    ## REDIS
+    # KAI_REDIS_MASTER_ADDRESS: ""
+
+  # WIP: registry. restore?
+  # registry:
+  #   netrc:
+  #     # -- .netrc file content. Ref: https://everything.curl.dev/usingcurl/netrc
+  #     content: ""
+  #     ## example:
+  #     # content: |
+  #     #   machine booster    login baxter  password swordfish
+  #     #   machine wooster    login francis password sw0rdf1sh
+
+  #   pullCredentials:
+  #     # -- Whether to add pull credentials to the image builder's jobs (needed to pull base images from private registries or proxies)
+  #     enabled: false
+  #     # -- The registry server
+  #     registry: "https://index.docker.io/v1/"
+  #     # -- The registry username
+  #     username: ""
+  #     # -- The registry password
+  #     password: ""
+  #     ## Example:
+  #     # enabled: true
+  #     # server: registry.github.com
+  #     # username: github-username
+  #     # password: github-password
+
+  # -- Variables from secrets
+  envFromSecrets: {}
+    # MY_VARIABLE:
+    #   name: <name-secret>
+    #   key: secret_key
+
+  # -- Variables from configMap
+  envFromConfigMap: {}
+    # MY_VARIABLE:
+    #   name: <name-configmap>
+    #   key: key
+
+  # -- Load all variables from files
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+  envFromFiles: []
+    # - secretRef:
+    #     name: <name-secret>
+    # - configMapRef:
+    #     name: <name-configmap>
+
+  # -- Secrets values to create credentials and reference by envFromSecrets
+  # Generate Secret with following name: <release-name>-<name>
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/
+  secrets: []
+    # - name: secret-name
+    #   data:
+    #     my.key: |-
+    #       my-content
+    #     my_var: my-value
+
+  # -- Configure extra containers
+  extraContainers: []
+    # - name: project-proxy
+    #   image: nginx:alpine
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure additional containers
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  initContainers: []
+    # - name: my-container
+    #   image: busybox
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure args
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  args: []
+    # - -c
+    # - echo "Hello, World!"
+
+  # -- Configure command
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  command: []
+    # - echo
+    # - "Hello, World!"
+
+  # -- Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service:
+    # -- Kubernetes Service port
+    port: 50051
+    # -- Kubernetes Service health check path
+    # healthPath: ""
+    # -- Pod expose port
+    # targetPort: 8080
+    # -- Pod extra ports
+    # extraPorts:
+    # - name: metrics
+    #   port: 9080
+    #   targetPort: 9080
+
+  # -- NetworkPolicy configuration
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  networkPolicy:
+    # -- Enable or disable NetworkPolicy
+    enabled: false
+    # -- Policy types
+    policyTypes: []
+      # - Ingress
+      # - Egress
+    ingress: []
+      # - from:
+      #   - ipBlock:
+      #       cidr: 172.17.0.0/16
+      #       except:
+      #       - 172.17.1.0/24
+      #   - namespaceSelector:
+      #       matchLabels:
+      #         project: myproject
+      #   - podSelector:
+      #       matchLabels:
+      #         role: frontend
+      #   ports:
+      #   - protocol: TCP
+      #     port: 6379
+    egress: []
+      # - to:
+      #   - ipBlock:
+      #       cidr: 10.0.0.0/24
+      #   ports:
+      #   - protocol: TCP
+      #     port: 5978
+
+  # -- Configure lifecycle hooks
+  # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+  # </br> Ref: https://learnk8s.io/graceful-shutdown
+  lifecycle: {}
+    # preStop:
+    #   exec:
+    #     command: ["sh", "-c", "sleep 10"]
+
+  # -- Configure Pod termination grace period
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination
+  terminationGracePeriodSeconds: 30
+
+  # -- Configure liveness checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  livenessProbe:
+    enabled: false
+    failureThreshold: 3
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom livenessProbe
+  livenessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure readinessProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  readinessProbe:
+    enabled: false
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+
+  # -- Custom readinessProbe
+  readinessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure startupProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  startupProbe:
+    enabled: false
+    failureThreshold: 30
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom startupProbe
+  startupProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Check if dependencies are ready
+  readyChecker:
+    # -- Enable or disable ready-checker
+    enabled: false
+    # -- Repository of the image
+    repository: busybox
+    # -- Pull policy for the image
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag
+    tag: "latest"
+    # -- Number of retries before giving up
+    retries: 30
+    # -- Timeout for each check
+    timeout: 5
+    # -- List services
+    services:
+    # - name: service_name
+    #   port: service_port
+    #   address: service_address  # (Optional) This parameter is optional. If
+    #   not specified, the address for the check will be automatically
+    #   determined assuming the service was installed using a subchart. It is
+    #   useful to specify it when the service is provisioned differently (e.g.,
+    #   an S3 bucket created in the Cloud or an Elasticsearch instance outside
+    #   the Kubernetes cluster). The address can be an IP address or a DNS name.
+    - name: mongodb
+      port: 27017
+    - name: keycloak
+      port: 80
+
+  # -- Enable ServiceMonitor to get metrics
+  # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
+  serviceMonitor:
+    # -- Enable or disable
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    metricRelabelings: []
+    relabelings: []
+
+  # -- Configure annotations on Pods
+  podAnnotations: {}
+
+  # -- Configure labels on Pods
+  podLabels: {}
+
+  # -- Defines privilege and access control settings for a Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  # -- Defines privilege and access control settings for a Container
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  # -- Resources limits and requested
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # -- Pod Disruption Budget
+  # </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+    minAvailable:
+
+  # -- Autoscaling with CPU or memory utilization percentage
+  # </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  # -- Additional volumes on the output Deployment definition
+  # </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  # -- Additional volumeMounts on the output Deployment definition
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  # -- Node labels for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  nodeSelector: {}
+
+  # -- Tolerations for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+
+  # -- Affinity for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  affinity: {}
+
+  # -- Control how Pods are spread across your cluster
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: zone
+  #   whenUnsatisfiable: DoNotSchedule
+
+# -- NATS manager
+natsManager:
+  # -- Image registry
+  # The image configuration for the base service
+  image:
+    # The repository of the image
+    repository: konstellation/kai-nats-manager
+    # The pull policy for the image
+    pullPolicy: IfNotPresent
+    # The image tag
+    tag: "0.3.0-develop.17"
+
+  # -- Deployment strategy
+  # Specifies the strategy used to replace old Pods by new ones
+  deploymentStrategy: Recreate
+
+  # -- Specifies the secrets to use for pulling images from private registries
+  # Leave empty if no secrets are required
+  # E.g.
+  # imagePullSecrets:
+  #   - name: myRegistryKeySecretName
+  imagePullSecrets: []
+
+  # -- Enable creation of ServiceAccount
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  # -- Environment variables to configure application
+  # </br> Ref: https://github.com/konstellation-io/kdl-server/tree/main/app/api
+  env: {}
+    # KAI_DEVELOPMENT_MODE: "{{ .Values.developmentMode }}"
+    # KAI_RELEASE_NAME: "{{ .Release.Name }}"
+    # # NATS Streaming
+    # KAI_NATS_URL: "{{ include "nats.url" . }}"
+    # KAI_NATS_MANAGER_PORT: 50051
+
+  # -- Variables from secrets
+  envFromSecrets: {}
+    # MY_VARIABLE:
+    #   name: <name-secret>
+    #   key: secret_key
+
+  # -- Variables from configMap
+  envFromConfigMap: {}
+    # MY_VARIABLE:
+    #   name: <name-configmap>
+    #   key: key
+
+  # -- Load all variables from files
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#configure-all-key-value-pairs-in-a-configmap-as-container-environment-variables
+  envFromFiles: []
+    # - secretRef:
+    #     name: <name-secret>
+    # - configMapRef:
+    #     name: <name-configmap>
+
+  # -- Secrets values to create credentials and reference by envFromSecrets
+  # Generate Secret with following name: <release-name>-<name>
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/secret/
+  secrets: []
+    # - name: secret-name
+    #   data:
+    #     my.key: |-
+    #       my-content
+    #     my_var: my-value
+
+  # -- Configure extra containers
+  extraContainers: []
+    # - name: project-proxy
+    #   image: nginx:alpine
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure additional containers
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  initContainers: []
+    # - name: my-container
+    #   image: busybox
+    #   command: ['sh', '-c', 'echo "Hello, World!"']
+
+  # -- Configure args
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  args: []
+    # - -c
+    # - echo "Hello, World!"
+
+  # -- Configure command
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  command: []
+    # - echo
+    # - "Hello, World!"
+
+  # -- Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service:
+    # -- Kubernetes Service port
+    port: 50051
+    # -- Kubernetes Service health check path
+    # healthPath: ""
+    # -- Pod expose port
+    # targetPort: 8080
+    # -- Pod extra ports
+    # extraPorts:
+    # - name: metrics
+    #   port: 9080
+    #   targetPort: 9080
+
+  # -- NetworkPolicy configuration
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  networkPolicy:
+    # -- Enable or disable NetworkPolicy
+    enabled: false
+    # -- Policy types
+    policyTypes: []
+      # - Ingress
+      # - Egress
+    ingress: []
+      # - from:
+      #   - ipBlock:
+      #       cidr: 172.17.0.0/16
+      #       except:
+      #       - 172.17.1.0/24
+      #   - namespaceSelector:
+      #       matchLabels:
+      #         project: myproject
+      #   - podSelector:
+      #       matchLabels:
+      #         role: frontend
+      #   ports:
+      #   - protocol: TCP
+      #     port: 6379
+    egress: []
+      # - to:
+      #   - ipBlock:
+      #       cidr: 10.0.0.0/24
+      #   ports:
+      #   - protocol: TCP
+      #     port: 5978
+
+  # -- Configure lifecycle hooks
+  # </br> Ref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+  # </br> Ref: https://learnk8s.io/graceful-shutdown
+  lifecycle: {}
+    # preStop:
+    #   exec:
+    #     command: ["sh", "-c", "sleep 10"]
+
+  # -- Configure Pod termination grace period
+  # </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination
+  terminationGracePeriodSeconds: 30
+
+  # -- Configure liveness checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  livenessProbe:
+    enabled: false
+    failureThreshold: 3
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom livenessProbe
+  livenessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure readinessProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  readinessProbe:
+    enabled: false
+    failureThreshold: 3
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 1
+
+  # -- Custom readinessProbe
+  readinessProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Configure startupProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  startupProbe:
+    enabled: false
+    failureThreshold: 30
+    initialDelaySeconds: 180
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+
+  # -- Custom startupProbe
+  startupProbeCustom: {}
+    # httpGet:
+    #   path: /dashboard
+    #   port: 4000
+    # failureThreshold: 3
+    # initialDelaySeconds: 200
+    # periodSeconds: 30
+    # successThreshold: 1
+    # timeoutSeconds: 5
+
+  # -- Check if dependencies are ready
+  readyChecker:
+    # -- Enable or disable ready-checker
+    enabled: false
+    # -- Repository of the image
+    repository: busybox
+    # -- Pull policy for the image
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag
+    tag: "latest"
+    # -- Number of retries before giving up
+    retries: 30
+    # -- Timeout for each check
+    timeout: 5
+    # -- List services
+    services:
+    # - name: service_name
+    #   port: service_port
+    #   address: service_address  # (Optional) This parameter is optional. If
+    #   not specified, the address for the check will be automatically
+    #   determined assuming the service was installed using a subchart. It is
+    #   useful to specify it when the service is provisioned differently (e.g.,
+    #   an S3 bucket created in the Cloud or an Elasticsearch instance outside
+    #   the Kubernetes cluster). The address can be an IP address or a DNS name.
+    - name: mongodb
+      port: 27017
+    - name: keycloak
+      port: 80
+
+  # -- Enable ServiceMonitor to get metrics
+  # </br> Ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#servicemonitor
+  serviceMonitor:
+    # -- Enable or disable
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    metricRelabelings: []
+    relabelings: []
+
+  # -- Configure annotations on Pods
+  podAnnotations: {}
+
+  # -- Configure labels on Pods
+  podLabels: {}
+
+  # -- Defines privilege and access control settings for a Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  # -- Defines privilege and access control settings for a Container
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  # -- Resources limits and requested
+  # </br> Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # -- Pod Disruption Budget
+  # </br> Ref: https://kubernetes.io/docs/reference/kubernetes-api/policy-resources/pod-disruption-budget-v1/
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
+    minAvailable:
+
+  # -- Autoscaling with CPU or memory utilization percentage
+  # </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  # -- Additional volumes on the output Deployment definition
+  # </br> Ref: https://kubernetes.io/docs/concepts/storage/volumes/
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/#create-a-pod-that-has-access-to-the-secret-data-through-a-volume
+  volumes: []
+  # - name: foo
+  #   secret:
+  #     secretName: mysecret
+  #     optional: false
+
+  # -- Additional volumeMounts on the output Deployment definition
+  volumeMounts: []
+  # - name: foo
+  #   mountPath: "/etc/foo"
+  #   readOnly: true
+
+  # -- Node labels for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+  nodeSelector: {}
+
+  # -- Tolerations for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+  tolerations: []
+
+  # -- Affinity for pod assignment
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+  affinity: {}
+
+  # -- Control how Pods are spread across your cluster
+  # </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#example-multiple-topologyspreadconstraints
+  topologySpreadConstraints: []
+  # - maxSkew: 1
+  #   topologyKey: zone
+  #   whenUnsatisfiable: DoNotSchedule
+
+# -- Keycloak subchart deployment
+# </br> Ref: https://github.com/konstellation-io/helm-charts/blob/konstellation-base-1.0.2/charts/konstellation-base/values.yaml
+keycloak:
+  # -- Enable or disable Keycloak subchart
+  enabled: false
+
+  # Image registry
+  # The image configuration for the base service
+  image:
+    repository: keycloak/keycloak
+    tag: "26.0"
+
+  # Kubernetes service to expose Pod
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  service:
+    healthPath: /realms/master
+    targetPort: 8080
+
+  # Ingress configuration to expose app
+  # </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ingress:
+    enabled: true
+    className: ""
+    annotations: {}
+      # nginx.org/proxy-buffer-size: "128k"
+      # nginx.org/proxy-buffers: "8 256k"
+    hosts:
+    - host: keycloak.kai.local
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+
+  # Enable creation of ServiceAccount
+  # </br> Ref: https://kubernetes.io/docs/concepts/security/service-accounts/
+  serviceAccount:
+    create: true
+
+  # Configure liveness checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  livenessProbe:
+    enabled: true
+
+  # Configure readinessProbe checker
+  # </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /realms/master
+
+  # Configure command
+  # </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+  command: []
+  # - "/opt/keycloak/bin/kc.sh"
+  # - "start-dev"
+
+  # Environment variables to configure application
+  # </br> Ref: https://www.keycloak.org/server/configuration
+  env: {}
+    # KC_DB_PASSWORD: keycloak
+    # KC_DB_URL: jdbc:postgresql://postgresql:5432/keycloak
+    # KC_DB_USERNAME: keycloak
+    # KC_DB: postgres
+    # KC_HEALTH_ENABLED: true
+    # KC_HOSTNAME: keycloak.kai.local
+    # KC_METRICS_ENABLED: true
+    # KC_PROXY: edge
+    # KEYCLOAK_ADMIN_PASSWORD: keycloak
+    # KEYCLOAK_ADMIN: keycloak
+
+# -- MinIO subchart deployment
+# </br> Ref: https://github.com/minio/minio/blob/RELEASE.2025-02-07T23-21-09Z/helm/minio/values.yaml
+minio:
+  # -- Enable or disable MinIO subchart
+  enabled: false
+
+  # minio mode, i.e. standalone or distributed
+  mode: standalone
+
+  # Internal port number for MinIO S3 API container
+  minioAPIPort: "9000"
+
+  # Internal port number for MinIO Browser Console container
+  minioConsolePort: "9001"
+
+  # Set default rootUser, rootPassword
+  # rootUser and rootPassword is generated when not set
+  rootUser: ""
+  rootPassword: ""
+
+  # Enable persistence using Persistent Volume Claims
+  # ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+  persistence:
+    enabled: false
+
+  # Configure Ingress based on the documentation here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ingress:
+    enabled: false
+
+  consoleIngress:
+    enabled: false
+    ingressClassName: ~
+    annotations: {}
+    path: /
+    hosts:
+      - minio-console.kai.local
+    tls: []
+      # - secretName: minio-console-tls
+      #   hosts:
+      #   - minio-console.kai.local
+
+  # Configure resource requests and limits
+  resources:
+    requests:
+      memory: 1Gi
+
+  # List of users to be created after minio install
+  users: []
+
+  # OpenID Identity Management
+  # The following section documents environment variables for enabling external identity management using an OpenID Connect (OIDC)-compatible provider.
+  # See https://min.io/docs/minio/linux/operations/external-iam/configure-openid-external-identity-management.html for a tutorial on using these variables.
+  oidc:
+    enabled: false
+    # configUrl: "https://keycloak.kai.local/realms/kdl/.well-known/openid-configuration"
+    # clientId: "minio"
+    # clientSecret: "minio123456"
+    # claimName: "policy"
+    # scopes: "openid email"
+    # redirectUri: "https://minio-console.kai.local/oauth_callback"
+    # displayName: "Your VASS Account"
+    # rolePolicy: "readwrite"
+
+  # Directory on the MinIO pof
+  certsPath: "/certs/"
+
+  # Additional volumes to minio container
   extraVolumes: []
-  # -- Extra volume mounts
+    # - name: cert
+    #   secret:
+    #     secretName: keycloak-kdl-tls
+    #     defaultMode: 420
+    #     items:
+    #     - key: ca.crt
+    #       path: ca.crt
+
+  # Additional volumeMounts to minio container
   extraVolumeMounts: []
-## The following values are only a small set of options. For a full list see
-## https://github.com/nats-io/k8s/tree/main/helm/charts/nats#nats-server
-##
+    # - name: cert
+    #   mountPath: /certs/CAs/ca.crt
+    #   readOnly: true
+    #   subPath: ca.crt
+
+# -- MongoDB subchart deployment
+# </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
+mongodb:
+  # -- Enable or disable MongoDB subchart
+  enabled: false
+
+  # mode MongoDB server mode (`standalone` or `replicaset`)
+  architecture: standalone
+
+  # MongoDB authentication parameters
+  auth:
+    # MongoDB root username
+    rootUser: ChangeMe
+    # Password for MongoDB root user
+    rootPassword: ChangeMe
+
+  # Enable persistence using Persistent Volume Claims
+  # </br> Ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+  persistence:
+    # Enable MongoDB data persistence using PVC. If false, use emptyDir
+    enabled: false
+
+# -- NATS subchart deployment
+# </br> Ref: https://github.com/nats-io/k8s/blob/nats-1.2.10/helm/charts/nats/values.yaml
 nats:
-  # -- The NATS config as described at https://github.com/nats-io/k8s/tree/main/helm/charts/nats#nats-server
+  # -- Enable or disable NATS subchart
+  enabled: false
+
+  # NATS config
   config:
-    # -- The NATS server configuration
-    cluster:
-      enabled: false
-      replicas: 3
-    # -- The NATS JetStream configuration
+    # NATS JetStream
     jetstream:
       enabled: true
-      # -- The NATS JetStream storage configuration
+
       fileStore:
         enabled: true
         pvc:
-          enabled: true
-          size: 10Gi
-          storageClassName:
-      # -- The NATS JetStream memory storage configuration
+          enabled: false
+
       memoryStore:
         enabled: true
         maxSize: 2Gi
-    # -- Merge the NATS server configuration
+
+    # merge or patch the jetstream config
+    # https://docs.nats.io/running-a-nats-service/configuration#jetstream
     merge:
       debug: false
       trace: false
       logtime: true
-    nats:
-      port: 4222
-  service:
-    # -- nats service name
-    name:
+
+  # service account
   serviceAccount:
-    # -- Whether to enable the service account
     enabled: true
+
   monitor:
-    # -- Whether to enable monitoring
     enabled: false
-    # -- Monitoring service port
-    port: 8222
+
+  # NATS Box Deployment and associated resources
   natsBox:
     # -- Whether to enable the NATS Box
     enabled: false
-  promExporter:
-    # -- Whether to enable the Prometheus Exporter
-    enabled: false
-    # -- Prometheus Exporter service port
-    port: 7777
-  podTemplate:
-    # -- Merge the pod template: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core
-    merge:
-      spec:
-        # -- Define which Nodes the Pods are scheduled on.
-        nodeSelector: {}
-        # -- Assign custom tolerations to the NATS pods
-        tolerations: []
-        # -- Assign custom affinity rules to the NATS pods
-        affinity: {}
-natsManager:
-  image:
-    # -- Image repository
-    repository: konstellation/kai-nats-manager
-    # -- Image tag
-    tag: 0.3.0-develop.17
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
-  # -- Image pull secrets
-  imagePullSecrets: []
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-  # -- Container resources
-  resources: {}
-  # -- Define which Nodes the Pods are scheduled on.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  # -- Assign custom affinity rules to the NATS pods
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
-  affinity: {}
-  # nodeAffinity:
-  #   requiredDuringSchedulingIgnoredDuringExecution:
-  #     nodeSelectorTerms:
-  #     - matchExpressions:
-  #       - key: kubernetes.io/e2e-az-name
-  #         operator: In
-  #         values:
-  #         - e2e-az1
-  #         - e2e-az2
-  # -- Tolerations for use with node taints
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  # - key: "key"
-  #   operator: "Equal"
-  #   value: "value"
-  #   effect: "NoSchedule"
-registry:
-  image:
-    # -- Image repository
-    repository: distribution/distribution
-    # -- Image tag
-    tag: 3.0.0-alpha.1
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
-  # -- Image pull secrets
-  imagePullSecrets: []
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
-  serviceAccount:
-    # -- Specifies whether a service account should be created
-    create: true
-    # -- Annotations to add to the service account
-    annotations: {}
-    # -- The name of the service account to use. If not set and create is true, a name is generated using the fullname template
-    name: ""
-  # -- Pod annotations
-  podAnnotations: {}
-  # -- Pod security context
-  podSecurityContext: {}
-  # fsGroup: 2000
 
-  # Container security Context
-  securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+# -- PostgreSQL subchart deployment
+# </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
+postgresql:
+    # -- Enable or disable PostgreSQL subchart
+  enabled: false
 
-  service:
-    # -- Service type
-    type: ClusterIP
-    ports:
-      # -- The http port the service will listen on. Only
-      http: 5000
-  # -- A string contaning the config for Docker Registry. Ref: https://docs.docker.com/registry/configuration/.
-  config: ""
-  configSecret:
-    # -- Takes precedence over 'registry.config'. The name of the secret that contains the registry config file.
-    name: ""
-    # -- The name of the secret key that contains the registry config file
-    key: ""
+  # Number of PostgreSQL replicas to deploy
+  replicaCount: 1
+
+  # PostgreSQL Authentication parameters
   auth:
-    # -- Registry username
-    # @default -- user
-    user: ""
-    # -- Registry password
-    # @default -- password
-    password: ""
-  storageDriver:
-    filesystem:
-      # -- Whether to enable the filesystem storage driver
-      enabled: true
-      config:
-        rootDirectory: /var/lib/registry
-    s3:
-      # -- Whether to enable the S3 storage driver
-      enabled: false
-      # -- S3 Storage driver config block as defined at https://distribution.github.io/distribution/storage-drivers/s3/
-      config: {}
-      # config:
-      #   region: us-east-1
-      #   bucket: docker.myregistry.com
-    azure:
-      # -- Whether to enable the Azure storage driver
-      enabled: false
-      # -- Azure Storage driver config block as defined at https://distribution.github.io/distribution/storage-drivers/azure/
-      config: {}
-    gcs:
-      # -- Whether to enable the GCS storage driver
-      enabled: false
-      # -- GCS Storage driver config block as defined at https://distribution.github.io/distribution/storage-drivers/gcs/
-      config: {}
-    inmemory:
-      # -- Whether to enable the in-memory storage driver. Development only
-      enabled: false
-  storage:
-    # -- Whether to enable persistence. This only is used when storageDriver is set to "filesystem"
-    enabled: true
-    # -- Storage class name
-    storageClass: ""
-    # -- Access mode for the volume
-    accessMode: ReadWriteOnce
-    # -- Storage size
-    size: 10Gi
-    # -- Persistent volume mount point. This will define Registry app workdir too.
-    path: /var/lib/registry
-  # -- Container resources
-  resources: {}
-  # -- The container port
-  containerPort: 5000
-  # -- Hostname. This will be used to create the ingress rule and must be a subdomain of `.config.baseDomainName`
-  host: registry.kai.local
-  ingress:
-    # -- The name of the ingress class to use
-    className: kong
-    # -- Ingress annotations
-    # @default -- See `adminApi.ingress.annotations` in [values.yaml](./values.yaml)
-    annotations: {}
-  # -- Define which Nodes the Pods are scheduled on.
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  # -- Assign custom affinity rules to the pods
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
-  affinity: {}
-  # nodeAffinity:
-  #   requiredDuringSchedulingIgnoredDuringExecution:
-  #     nodeSelectorTerms:
-  #     - matchExpressions:
-  #       - key: kubernetes.io/e2e-az-name
-  #         operator: In
-  #         values:
-  #         - e2e-az1
-  #         - e2e-az2
-  # -- Tolerations for use with node taints
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  # - key: "key"
-  #   operator: "Equal"
-  #   value: "value"
-  #   effect: "NoSchedule"
-  # -- Extra volumes for the registry deployment
-  extraVolumes: []
-  # -- Extra volume mounts for the registry deployment
-  extraVolumeMounts: []
-## The following values are only a small set of options. For a full list see
-## the official MinIO chart at https://github.com/minio/minio/tree/master/helm/minio
-##
-minio:
-  image:
-    # -- Image repository
-    repository: quay.io/minio/minio
-    # -- Image tag
-    tag: RELEASE.2023-09-30T07-02-29Z
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
-  mcImage:
-    # -- Image repository
-    repository: quay.io/minio/mc
-    # -- Image tag
-    tag: RELEASE.2023-09-29T16-41-22Z
-    # -- Image pull policy
-    pullPolicy: IfNotPresent
-  # -- Sets minio mode
-  mode: standalone
-  # -- Internal port number for MinIO S3 API container
-  minioAPIPort: "9000"
-  # -- Internal port number for MinIO Browser Console container
-  minioConsolePort: "9001"
-  # -- Sets Root user
-  # @default -- Randomly generated value
-  rootUser: ""
-  # -- Sets Root password
-  # @default -- Randomly generated value
-  rootPassword: ""
-  # -- Use an exising secret for root user and password
-  existingSecret: ""
-  # -- Sets pods resources
-  resources:
-    requests:
-      memory: 256Mi
-  persistence:
-    # -- Enables persistent storage using PVC
-    enabled: true
-    # -- Storage class name
-    storageClass: ""
-    # -- Access mode for the volume
-    accessMode: ReadWriteOnce
-    # -- Storage size
-    # @note: If Tier is enabled, ensure enough space to MinIO have time to transfer objects to external storage and free space in local persistence storage
-    size: 10Gi
-  service:
-    # -- Service type
-    type: ClusterIP
-    # -- Internal port number for MinIO S3 API service
-    port: "9000"
-  ingress:
-    # -- Enable ingress for MinIO API
-    enabled: true
-    # -- The name of the ingress class to use
-    ingressClassName: kong
-    # -- Ingress labels
-    labels: {}
-    # -- Ingress annotations
-    annotations: {}
-    # -- Ingress hostnames
-    hosts:
-      - storage.kai.local
-    # -- Ingress TLS configuration
-    tls: []
-  consoleIngress:
-    # -- Enable ingress for MinIO Web Console
-    enabled: true
-    # -- The name of the ingress class to use
-    ingressClassName: kong
-    # -- Ingress labels
-    labels: {}
-    # -- Ingress annotations
-    annotations: {}
-    # -- Ingress hostnames
-    hosts:
-      - storage-console.kai.local
-    # -- Ingress TLS configuration
-    tls: []
-## The following values are only a small set of options. For a full list see
-## the official Grafana chart at https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
-##
-grafana:
-  # -- Whether to enable Grafana
-  enabled: true
-  # -- Deployment Strategy
-  deploymentStrategy:
-    type: Recreate
-  image:
-    # -- Grafana version
-    tag: 10.2.0
-  ## Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
-  # -- sidecar config (required for datasource config section in loki and prometheus)
-  sidecar:
-    datasources:
-      enabled: true
-      label: grafana_datasource
-      labelValue: "1"
-      maxLines: 1000
-  # -- Admin user name
-  adminUser: admin
-  # -- Set admin password (ommited if existingSecret is set)
-  # @default -- Randomly generated value
-  adminPassword: ""
-  # -- Use an existing secret for the admin user
-  admin:
-    ## -- Name of the existing secret. (if existingSecret is blank it will not be used)
-    existingSecret: ""
-    # -- Name of the key in the secret that contains the admin user
-    userKey: admin-user
-    # -- Name of the key in the secret that contains the password
-    passwordKey: admin-password
-  plugins:
-    - redis-datasource
-  persistence:
-    # -- Enables persistent storage using PVC
-    enabled: false
-    # -- Storage class name
-    storageClass: ""
-    # -- Access mode for the volume
-    accessMode: ReadWriteOnce
-    # -- Storage size
-    size: 1Gi
-  service:
-    # -- Service type
-    type: ClusterIP
-    # -- Internal port number for Grafana service
-    port: 80
-  ingress:
-    # -- Enable ingress for MinIO Web Console
-    enabled: true
-    # -- The name of the ingress class to use
-    ingressClassName: kong
-    # -- Ingress labels
-    labels: {}
-    # -- Ingress annotations
-    annotations: {}
-    # -- Ingress hostnames
-    hosts:
-      - monitoring.kai.local
-    # -- Ingress TLS configuration
-    tls: []
-## The following values are only a small set of options. For a full list see
-## the official loki chart at https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml
-##
-loki:
-  # -- Whether to enable Loki
-  enabled: true
-  singleBinary:
-    replicas: 1
-  test:
-    enabled: false
-  monitoring:
-    # Self monitoring determines whether Loki should scrape its own logs.
-    # This feature currently relies on the Grafana Agent Operator being installed,
-    # -- scrape its own Loki logs
-    selfMonitoring:
-      enabled: false
-      grafanaAgent:
-        installOperator: false
-    ## The Loki canary pushes logs to and queries from this loki installation to test that it's working correctly
-    # -- Whether to enable lokiCanary
-    lokiCanary:
-      enabled: false
-  # Configuration for the gateway
-  gateway:
-    # -- Specifies whether the gateway should be enabled
-    enabled: false
-  loki:
-    image:
-      # -- Loki version
-      tag: 2.9.2
-    server:
-      http_listen_port: 3100
-    # -- Should authentication be enabled
-    auth_enabled: false
-    # -- monolithic loki
-    commonConfig:
-      replication_factor: 1
-    storage:
-      type: 'filesystem'
+    # PostgreSQL application username
+    # </br> Ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#environment-variables
+    username: user
+    # PostgreSQL application password
+    # </br> Ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#environment-variables
+    password: ChangeMe
+    # PostgreSQL application database
+    # </br> Ref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#environment-variables
+    database: "kai"
+
+  # Enable persistence using Persistent Volume Claims
+  primary:
+    # Persistence parameters
     persistence:
-      # -- Enables persistent storage using PVC
+      # Enable PostgreSQL data persistence using PVC
       enabled: false
-      # If defined, storageClassName: <storageClass>.
-      # If set to "-", storageClassName: "", which disables dynamic provisioning.
-      # If empty or set to null, no storageClassName spec is
-      # set, choosing the default provisioner (gp2 on AWS, standard on GKE, AWS, and OpenStack).
-      # -- Storage class name
-      storageClass: ""
-      # -- Access mode for the volume
-      accessMode: ReadWriteOnce
-      # -- Storage size
-      size: 2Gi
-    service:
-      # -- Service type
-      type: ClusterIP
-      # -- Internal port number for Grafana service
-      port: 3100
-## The following values are only a small set of options. For a full list see
-## the official Prometheus chart at https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/values.yaml
-##
-prometheus:
-  # -- Whether to enable Prometheus
-  enabled: true
-  ## server configuration
-  server:
-    # -- name of the prometheus server
-    name: server
-    image:
-      # -- prometheus server version
-      tag: v2.47.2
-    persistentVolume:
-      # -- Enables persistent storage using PVC
-      enabled: true
-      # -- Storage class name
-      storageClass: ""
-      # -- Access mode for the volume
-      accessModes:
-        - ReadWriteOnce
-      # -- Storage size
-      size: 2Gi
-    ## Additional scrape configs for KAI telegraf metrics
-    extraConfigmapMounts:
-      # -- name for volumes and volumeMount config
-      - name: additional-scrape-configs
-        mountPath: /etc/config/additional-scrape-configs/
-        subPath: ""
-        # -- name of the configmap. Must be the same name set in `config.prometheus.kaiScrapeConfigs.configmapName`
-        configMap: prometheus-additional-scrape-configs
-        readOnly: true
-    service:
-      # -- Service type
-      type: ClusterIP
-      # -- Internal port number for grafana service
-      servicePort: 80
-    ingress:
-      # -- Enable ingress for MinIO Web Console
-      enabled: true
-      # -- The name of the ingress class to use
-      ingressClassName: kong
-      # -- Ingress labels
-      extraLabels: {}
-      # -- Ingress annotations
-      annotations: {}
-      # -- Ingress hostnames
-      hosts:
-        - prometheus.kai.local
-      # -- Ingress TLS configuration
-      tls: []
-  # -- Files to get additional scrapeConfigs. This allows scrape configs defined in `prometheus.server.extraConfigmapMounts`
-  scrapeConfigFiles:
-    - /etc/config/additional-scrape-configs/*.yaml
-  ## Alertmanager complete values https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager
-  alertmanager:
-    # -- Whether to enable alertmanager
-    enabled: true
-    image:
-      # -- alertmanager server version
-      tag: v0.26.0
-    persistence:
-      enabled: true
-      # -- Storage class name
-      storageClass: ""
-      # -- Access mode for the volume
-      accessModes:
-        - ReadWriteOnce
-      # -- Storage size
-      size: 2Gi
-  ## Kube-state-metrics complete values  https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
-  kube-state-metrics:
-    enabled: false
-  ## Prometheus-node-exporter complete values  https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter
-  prometheus-node-exporter:
-    enabled: false
-  ## Prometheus-pushgateway complete values  https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway
-  prometheus-pushgateway:
-    enabled: false
-## The following values are only a small set of options. For a full list see
-## the official Redis chart at https://github.com/bitnami/charts/blob/main/bitnami/redis/values.yaml
-##
+
+# -- Redis subchart deployment
+# </br> Ref: https://github.com/bitnami/charts/blob/redis/20.7.0/bitnami/redis/values.yaml
 redis:
-  # -- Whether to enable redis
-  enabled: true
-  image:
-    # repository
-    repository: redis/redis-stack-server
-    # -- Redis server version
-    tag: 7.2.0-v6
-  # -- architecture. Allowed values: `standalone` or `replication`
+  # -- Enable or disable Redis subchart
+  enabled: false
+
+  # Redis architecture. Allowed values: `standalone` or `replication`
   architecture: standalone
+
+  #  Redis Authentication parameters
+  # </br> Ref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run
   auth:
-    # -- Whether to enable auth to redis
-    enabled: true
-    # @default -- random 10-character alphanumeric string if not set. Use this password method to autoconfigure grafana datasource.
-    password: ""
-    ## NOTE: When existingSecret is set, the previous `auth.password` parameter is ignored
-    # -- The name of an existing secret with redis credentials
-    existingSecret: ""
-    ## NOTE: existingSecretPasswordKey is ignored unless `auth.existingSecret` parameter is set
-    # -- Password key to be retrieved from existing secret
-    existingSecretPasswordKey: ""
-  # -- number of replicas
+    # Enable password authentication
+    enabled: false
+
+  # Redis master configuration parameters
   master:
-    # -- redis Container port to open on master nodes
-    containerPorts:
-      redis: 6379
+    # Number of Redis master instances to deploy (experimental, requires additional configuration)
+    count: 1
+    # Persistence parameters
+    # </br> Ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
     persistence:
-      enabled: true
-      ## If defined, storageClassName: <storageClass>
-      ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
-      # -- Storage class name
-      storageClass: ""
-      # -- Access mode for the volume
-      accessModes:
-        - ReadWriteOnce
-      # -- Storage size
-      size: 2Gi
-    service:
-      # -- Service type
-      type: ClusterIP
-      # -- Internal port number for master redis service
-      ports:
-        redis: 6379
-    ## Required config to enable redis stack
-    args:
-      - -c
-      - /opt/bitnami/scripts/start-script/start-master.sh
-    # -- Extra volumes for additional config
-    extraVolumes:
-      - name: redis-master-start-script
-        configMap:
-          name: redis-stack-master-config
-          defaultMode: 0755
-    # -- Extra volume mounts for additional config
-    extraVolumeMounts:
-      - name: redis-master-start-script
-        mountPath: /opt/bitnami/scripts/start-script
-  replica:
-    # -- Number of replicas
-    replicaCount: 1
-    persistence:
-      enabled: true
-      ## If defined, storageClassName: <storageClass>
-      ## If set to "-", storageClassName: "", which disables dynamic provisioning
-      ## If undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner
-      # -- Storage class name
-      storageClass: ""
-      # -- Access mode for the volume
-      accessModes:
-        - ReadWriteOnce
-      # -- Storage size
-      size: 2Gi
-    service:
-      # -- Service type
-      type: ClusterIP
-      # -- Internal port number for master redis service
-      ports:
-        redis: 6379
-    autoscaling:
+      # Enable persistence on Redis master nodes using Persistent Volume Claims
       enabled: false
-      # -- Min replicas for the pod autoscaling
-      minReplicas: 1
-      # -- Max replicas for the pod autoscaling
-      maxReplicas: 5
-    ## Required config to enable redis stack
-    args:
-      - -c
-      - /opt/bitnami/scripts/start-script/start-replicas.sh
-    # -- Extra volumes for additional config
-    extraVolumes:
-      - name: redis-replicas-start-script
-        configMap:
-          name: redis-stack-replicas-config
-          defaultMode: 0755
-    # -- Extra volume mounts for additional config
-    extraVolumeMounts:
-      - name: redis-replicas-start-script
-        mountPath: /opt/bitnami/scripts/start-script
-  tls:
-    # -- Enabled Enable TLS traffic
-    enabled: false
-    # -- Require clients to authenticate
-    authClients: false
-    # -- Enable autogenerated certificates
-    autoGenerated: false
-    # -- The name of the existing secret that contains the TLS certificates
-    existingSecret: ""
-  metrics:
-    # -- Start a sidecar prometheus exporter to expose redis metrics
-    enabled: false
+
+  # Redis replicas configuration parameters
+  replica:
+    # Number of Redis replicas to deploy
+    replicaCount: 1
+    # Persistence parameters
+    # </br> Ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+    persistence:
+      # Enable persistence on Redis master nodes using Persistent Volume Claims
+      enabled: false
+
+# -- Vault subchart deployment
+# </br> Ref: https://github.com/bitnami/charts/blob/redis/20.7.0/bitnami/redis/values.yaml
+vault:
+  # -- Enable or disable Vault subchart
+  enabled: false
+
+  server:
+    # Affinity Settings
+    affinity: ""
+
+    # Ingress allows ingress services to be created to allow external access
+    ingress:
+      enabled: false
+      ingressClassName: ""
+      pathType: ImplementationSpecific
+      hosts:
+      - host: vault.kai.local
+
+    # This configures the Vault Statefulset to create a PVC for data
+    dataStorage:
+      enabled: false
+
+  # Vault UI
+  ui:
+    enabled: true

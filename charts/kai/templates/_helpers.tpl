@@ -1,10 +1,9 @@
-{{/* vim: set filetype=mustache: */}}
 {{/*
 Expand the name of the chart.
 */}}
 {{- define "kai.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
 
 {{/*
 Create a default fully qualified app name.
@@ -12,457 +11,254 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "kai.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- if .Values.nameOverride }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
 
 {{/*
-Create chart name used by the chart label.
+Create chart name and version as used by the chart label.
 */}}
 {{- define "kai.chart" -}}
-{{- printf "%s" .Chart.Name | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
 
 {{/*
 Common labels
 */}}
 {{- define "kai.labels" -}}
 helm.sh/chart: {{ include "kai.chart" . }}
+{{ include "kai.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{/* Fullname suffixed with admin-api */}}
-{{- define "admin-api.fullname" -}}
-{{- printf "%s-admin-api" (include "kai.fullname" .) -}}
-{{- end }}
-
 {{/*
-Admin API labels
+Selector labels
 */}}
-{{- define "admin-api.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "admin-api.selectorLabels" . }}
-{{- end }}
-
-{{/*
-Admin API selector labels
-*/}}
-{{- define "admin-api.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-admin-api
+{{- define "kai.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "kai.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Admin API serviceaccount name
+#######################
+# ADMIN API SECTION
+#######################
 */}}
-{{- define "admin-api.serviceAccountName" -}}
+
+{{/*
+Create the name for the adminApi
+*/}}
+{{- define "kai.adminApi.name" -}}
+{{- printf "%s-admin-api" (include "kai.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kai.adminApiServiceAccountName" -}}
 {{- if .Values.adminApi.serviceAccount.create -}}
-    {{ default (include "admin-api.fullname" .) .Values.adminApi.serviceAccount.name }}
+{{- default (include "kai.fullname" .) .Values.adminApi.serviceAccount.name -}}
 {{- else -}}
-    {{ default "default" .Values.adminApi.serviceAccount.name }}
+{{- default "default" .Values.adminApi.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
-{{/* Fullname suffixed with k8s-manager */}}
-{{- define "k8s-manager.fullname" -}}
-{{- printf "%s-k8s-manager" (include "kai.fullname" .) -}}
+{{/*
+Default adminApi component
+*/}}
+{{- define "kai.adminApiComponentLabel" -}}
+kai/component: admin-api
+{{- end -}}
+
+{{/*
+Generate labels for adminApi component
+*/}}
+{{- define "kai.adminApiLabels" -}}
+{{- toYaml (merge ((include "kai.labels" .) | fromYaml) ((include "kai.adminApiComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-k8s manager labels
+Generate selectorLabels for adminApi component
 */}}
-{{- define "k8s-manager.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "k8s-manager.selectorLabels" . }}
+{{- define "kai.selectorKaiAdminApiLabels" -}}
+{{- toYaml (merge ((include "kai.selectorLabels" .) | fromYaml) ((include "kai.adminApiComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-k8s manager selector labels
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch the label selector on an object
+This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
+The matchLabels are created with the selectorLabels template.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
 */}}
-{{- define "k8s-manager.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-k8s-manager
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "kai.patchSelectorAdminApiLabels" -}}
+{{- if not (hasKey ._target "labelSelector") }}
+{{- $selectorLabels := (include "kai.selectorKaiAdminApiLabels" .) | fromYaml }}
+{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
+{{- end }}
 {{- end }}
 
-{{/* Create the name of k8s-manager service account to use */}}
-{{- define "k8s-manager.serviceAccountName" -}}
+{{/*
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch topology spread constraints
+This template uses the kai.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
+*/}}
+{{- define "kai.patchTopologySpreadConstraintsAdminApi" -}}
+{{- range $constraint := .Values.topologySpreadConstraints }}
+{{- include "kai.patchSelectorAdminApiLabels" (merge (dict "_target" $constraint (include "kai.selectorKaiAdminApiLabels" $)) $) }}
+{{- end }}
+{{- end }}
+
+{{/*
+#########################
+# K8S MANAGER SECTION
+#########################
+*/}}
+
+{{/*
+Create the name for the k8sManager
+*/}}
+{{- define "kai.k8sManager.name" -}}
+{{- printf "%s-k8s-manager" (include "kai.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "kai.k8sManagerServiceAccountName" -}}
 {{- if .Values.k8sManager.serviceAccount.create -}}
-    {{ default (include "k8s-manager.fullname" .) .Values.k8sManager.serviceAccount.name }}
+{{- default (printf "%s-k8s-manager" (include "kai.fullname" .)) .Values.k8sManager.serviceAccount.name | quote -}}
 {{- else -}}
-    {{ default "default" .Values.k8sManager.serviceAccount.name }}
+{{- default "default" .Values.k8sManager.serviceAccount.name }}
 {{- end -}}
-{{- end -}}
-
-{{/* Create the netrc file secret name for the image builder*/}}
-{{- define "k8s-manager.netrc.secretName" -}}
-{{- printf "%s-imagebuilder-netrc" (include "k8s-manager.fullname" . ) -}}
 {{- end -}}
 
 {{/*
-prometheus-additional-scrape-configs labels
+Default k8sManager component
 */}}
-{{- define "prometheus-additional-scrape-configs.labels" -}}
-{{ include "kai.labels" . }}
-app.kubernetes.io/name: {{ include "kai.name" . }}-scrape-configs
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "kai.k8sManagerComponentLabel" -}}
+kai/component: k8s-manager
 {{- end -}}
 
-{{/* Fullname suffixed with grafana-datasources */}}
-{{- define "grafana-datasources.fullname" -}}
-{{- printf "%s-grafana-datasources" (include "kai.fullname" .) -}}
+{{/*
+Generate labels for k8sManager component
+*/}}
+{{- define "kai.k8sManagerLabels" -}}
+{{- toYaml (merge ((include "kai.labels" .) | fromYaml) ((include "kai.k8sManagerComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-grafana-datasources labels
+Generate selectorLabels for k8sManager component
 */}}
-{{- define "grafana-datasources.labels" -}}
-{{ include "kai.labels" . }}
-app.kubernetes.io/name: {{ include "kai.name" . }}-grafana-datasources
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "kai.selectorK8sManagerLabels" -}}
+{{- toYaml (merge ((include "kai.selectorLabels" .) | fromYaml) ((include "kai.k8sManagerComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-redis-stack labels
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch the label selector on an object
+This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
+The matchLabels are created with the selectorLabels template.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
 */}}
-{{- define "redis-stack.labels" -}}
-{{ include "kai.labels" . }}
-app.kubernetes.io/name: {{ include "kai.name" . }}-redis-stack
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end -}}
-
-{{/*
-redis master URL
-*/}}
-{{- define "redis.master.url" -}}
-{{- if .Values.redis.enabled -}}
-    {{- tpl .Values.config.redis.master.url . }}
-{{- else -}}
-    {{- .Values.config.redis.master.url -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-redis replicas URL
-*/}}
-{{- define "redis.replicas.url" -}}
-{{- if .Values.redis.enabled -}}
-    {{- tpl .Values.config.redis.replicas.url . }}
-{{- else -}}
-    {{- .Values.config.redis.replicas.url -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-redis secret name
-*/}}
-{{- define "redis.auth.secretName" -}}
-{{- if .Values.redis.enabled }}
-    {{- include "redis.secretName" .Subcharts.redis }}
-{{- else -}}
-    {{- default (printf "%s-redis" (include "kai.fullname" .)) .Values.config.redis.auth.existingSecret }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-redis password key
-*/}}
-{{- define "redis.auth.secretPasswordKey" -}}
-{{- if .Values.redis.enabled }}
-    {{- include "redis.secretPasswordKey" .Subcharts.redis }}
-{{- else -}}
-    {{- default "redis-password" .Values.config.redis.auth.existingSecretPasswordKey }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-redis password
-*/}}
-{{- define "redis.auth.password" -}}
-{{- if .Values.redis.auth.enabled }}
-    {{- if not (empty .Values.redis.auth.password) }}
-        {{- .Values.redis.auth.password -}}
-    {{- else -}}
-        {{- include "getValueFromSecret" (dict "Namespace" .Release.Namespace "Name" (include "redis.secretName" .Subcharts.redis) "Length" 10 "Key" (include "redis.secretPasswordKey" .Subcharts.redis))  -}}
-    {{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/* Fullname suffixed with minio-config */}}
-{{- define "minio-config.fullname" -}}
-{{- printf "%s-minio-config" (include "kai.fullname" .) -}}
+{{- define "kai.patchSelectorK8sManagerLabels" -}}
+{{- if not (hasKey ._target "labelSelector") }}
+{{- $selectorLabels := (include "kai.selectorK8sManagerLabels" .) | fromYaml }}
+{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
+{{- end }}
 {{- end }}
 
 {{/*
-minio-config labels
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch topology spread constraints
+This template uses the kai.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
 */}}
-{{- define "minio-config.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "minio-config.selectorLabels" . }}
+{{- define "kai.patchTopologySpreadConstraintsK8sManager" -}}
+{{- range $constraint := .Values.k8sManager.topologySpreadConstraints }}
+{{- include "kai.patchSelectorK8sManagerLabels" (merge (dict "_target" $constraint (include "kai.selectorK8sManagerLabels" $)) $) }}
+{{- end }}
 {{- end }}
 
 {{/*
-minio-config selector labels
+###########################
+# NATS MANAGER SECTION
+###########################
 */}}
-{{- define "minio-config.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-minio-config
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
 
 {{/*
-minio-config secret name
+Create the name for the natsManager
 */}}
-{{- define "minio-config.tier.aws.secretName" -}}
-{{ default (include "minio-config.fullname" . ) .Values.config.minio.tier.aws.auth.secretName }}
+{{- define "kai.natsManager.name" -}}
+{{- printf "%s-nats-manager" (include "kai.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end -}}
 
 {{/*
-minio-config access key
+Create the name of the service account to use
 */}}
-{{- define "minio-config.tier.aws.accessKey" -}}
-{{ default "accessKey" .Values.config.minio.tier.aws.auth.secretKeyNames.accessKey }}
-{{- end -}}
-
-{{/*
-minio-config secret key
-*/}}
-{{- define "minio-config.tier.aws.secretKey" -}}
-{{ default "secretKey" .Values.config.minio.tier.aws.auth.secretKeyNames.secretKey }}
-{{- end -}}
-
-{{/*
-minio-config aws S3 endpoint URL
-*/}}
-{{- define "minio-config.tier.s3.endpointURL" -}}
-{{- default "https://s3.amazonaws.com" .Values.config.minio.tier.aws.endpointURL -}}
-{{- end }}
-
-{{/*
-minio-config remote bucket prefix (path in bucket to object transition)
-*/}}
-{{- define "minio-config.tier.s3.remotePrefix" -}}
-{{- default "DATA" .Values.config.minio.tier.remotePrefix -}}
-{{- end }}
-
-{{/*
-minio-config Tier name
-*/}}
-{{- define "minio-config.tier.name" -}}
-{{- default "KAI-REMOTE-STORAGE" .Values.config.minio.tier.name -}}
-{{- end }}
-
-{{/*
-minio-config AWS S3 remote bucket region for Tier
-*/}}
-{{- define "minio-config.tier.s3.region" -}}
-{{- default "us-east-1" .Values.config.minio.tier.aws.region -}}
-{{- end }}
-
-{{/*
-minio-config default buckets region
-*/}}
-{{- define "minio-config.region" -}}
-{{- default "us-east-1" .Values.config.minio.defaultRegion -}}
-{{- end }}
-
-{{/*
-nats host
-*/}}
-{{- define "nats.host" -}}
-{{ default (include "nats.fullname" .Subcharts.nats) .Values.nats.service.name -}}
-{{- end -}}
-
-{{/*
-nats url
-*/}}
-{{- define "nats.url" -}}
-{{- printf "%s:%d" (include "nats.host" .) (.Values.nats.config.nats.port | int) -}}
-{{- end -}}
-
-{{/* Fullname suffixed with nats-manager */}}
-{{- define "nats-manager.fullname" -}}
-{{- printf "%s-nats-manager" (include "kai.fullname" .) -}}
-{{- end }}
-
-{{/*
-nats manager labels
-*/}}
-{{- define "nats-manager.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "nats-manager.selectorLabels" . }}
-{{- end }}
-
-{{/*
-nats manager selector labels
-*/}}
-{{- define "nats-manager.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-nats-manager
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-nats manager serviceaccount name
-*/}}
-{{- define "nats-manager.serviceAccountName" -}}
+{{- define "kai.natsManagerServiceAccountName" -}}
 {{- if .Values.natsManager.serviceAccount.create -}}
-    {{ default (include "nats-manager.fullname" .) .Values.natsManager.serviceAccount.name }}
+{{- default (printf "%s-nats-manager" (include "kai.fullname" .)) .Values.natsManager.serviceAccount.name | quote -}}
 {{- else -}}
-    {{ default "default" .Values.natsManager.serviceAccount.name }}
+{{- default "default" .Values.natsManager.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
-{{/* Fullname suffixed with keycloak */}}
-{{- define "keycloak.fullname" -}}
-{{- printf "%s-keycloak" (include "kai.fullname" .) -}}
+{{/*
+Default natsManager component
+*/}}
+{{- define "kai.natsManagerComponentLabel" -}}
+kai/component: nats-manager
+{{- end -}}
+
+{{/*
+Generate labels for natsManager component
+*/}}
+{{- define "kai.natsManagerLabels" -}}
+{{- toYaml (merge ((include "kai.labels" .) | fromYaml) ((include "kai.natsManagerComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-kaycloak labels
+Generate selectorLabels for natsManager component
 */}}
-{{- define "keycloak.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "keycloak.selectorLabels" . }}
+{{- define "kai.selectorNatsManagerLabels" -}}
+{{- toYaml (merge ((include "kai.selectorLabels" .) | fromYaml) ((include "kai.natsManagerComponentLabel" .) | fromYaml)) }}
 {{- end }}
 
 {{/*
-kaycloak selector labels
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch the label selector on an object
+This template will add a labelSelector using matchLabels to the object referenced at _target if there is no labelSelector specified.
+The matchLabels are created with the selectorLabels template.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
 */}}
-{{- define "keycloak.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-keycloak
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "kai.patchSelectorNatsManagerLabels" -}}
+{{- if not (hasKey ._target "labelSelector") }}
+{{- $selectorLabels := (include "kai.selectorNatsManagerLabels" .) | fromYaml }}
+{{- $_ := set ._target "labelSelector" (dict "matchLabels" $selectorLabels) }}
+{{- end }}
 {{- end }}
 
 {{/*
-keycloak serviceaccount name
+Ref: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/templates/_helpers.tpl
+Patch topology spread constraints
+This template uses the kai.selectorLabels template to add a labelSelector to topologySpreadConstraints if one isn't specified.
+This works because Helm treats dictionaries as mutable objects and allows passing them by reference.
 */}}
-{{- define "keycloak.serviceAccountName" -}}
-{{- if .Values.keycloak.serviceAccount.create -}}
-    {{ default (include "keycloak.fullname" .) .Values.keycloak.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.keycloak.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-keycloak secret name
-*/}}
-{{- define "keycloak.secretName" -}}
-{{ default (include "keycloak.fullname" . ) .Values.keycloak.auth.existingSecret.name }}
-{{- end -}}
-
-{{/*
-keycloak secret user key
-*/}}
-{{- define "keycloak.secretUserKey" -}}
-{{ default "admin-user" .Values.keycloak.auth.existingSecret.userKey }}
-{{- end -}}
-
-{{/*
-keycloak secret password key
-*/}}
-{{- define "keycloak.secretPasswordKey" -}}
-{{ default "admin-password" .Values.keycloak.auth.existingSecret.passwordKey }}
-{{- end -}}
-
-{{/* Fullname suffixed with registry */}}
-{{- define "registry.fullname" -}}
-{{- printf "%s-registry" (include "kai.fullname" .) -}}
+{{- define "kai.patchTopologySpreadConstraintsNatsManager" -}}
+{{- range $constraint := .Values.natsManager.topologySpreadConstraints }}
+{{- include "kai.patchSelectorNatsManagerLabels" (merge (dict "_target" $constraint (include "kai.selectorNatsManagerLabels" $)) $) }}
 {{- end }}
-
-{{/*
-Registry labels
-*/}}
-{{- define "registry.labels" -}}
-{{ include "kai.labels" . }}
-{{ include "registry.selectorLabels" . }}
 {{- end }}
-
-{{/*
-Registru selector labels
-*/}}
-{{- define "registry.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kai.name" . }}-registry
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Registry serviceaccount name
-*/}}
-{{- define "registry.serviceAccountName" -}}
-{{- if .Values.registry.serviceAccount.create -}}
-    {{ default (include "registry.fullname" .) .Values.registry.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.registry.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Registry user
-*/}}
-{{- define "registry.auth.user" -}}
-    {{ default "user" .Values.registry.auth.user }}
-{{- end -}}
-
-{{/*
-Registry password
-*/}}
-{{- define "registry.auth.password" -}}
-    {{ default "password" .Values.registry.auth.password }}
-{{- end -}}
-
-{{/*
-Registry auth secret name
-*/}}
-{{- define "registry.auth.secretName" -}}
-{{- printf "%s-auth" (include "registry.fullname" . ) -}}
-{{- end -}}
-
-{{/*
-Loki Host
-*/}}
-{{- define "loki.host" -}}
-{{- if .Values.loki.enabled -}}
-    {{- tpl .Values.config.loki.host . -}}
-{{- else -}}
-    {{- .Values.config.loki.host -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Loki Port
-*/}}
-{{- define "loki.port" -}}
-{{- if .Values.loki.enabled -}}
-    {{- tpl .Values.config.loki.port . | quote -}}
-{{- else -}}
-    {{- .Values.config.loki.port | quote -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Loki URL
-*/}}
-{{- define "loki.url" -}}
-{{- printf "http://%s:%s" (include "loki.host" . ) (trimSuffix "\"" (include "loki.port" . ) | trimPrefix "\"") -}}
-{{- end -}}
-
-{{/*
-Prometheus URL
-*/}}
-{{- define "prometheus.url" -}}
-{{- if .Values.prometheus.enabled -}}
-    {{- tpl .Values.config.prometheus.url . | quote -}}
-{{- else -}}
-    {{- .Values.config.prometheus.url -}}
-{{- end -}}
-{{- end -}}

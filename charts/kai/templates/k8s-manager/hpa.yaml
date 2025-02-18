@@ -1,0 +1,32 @@
+{{- if .Values.k8sManager.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "kai.k8sManager.name" . }}
+  labels:
+    {{- include "kai.k8sManagerLabels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "kai.k8sManager.name" . }}
+  minReplicas: {{ .Values.k8sManager.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.k8sManager.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.k8sManager.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.k8sManager.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.k8sManager.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.k8sManager.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

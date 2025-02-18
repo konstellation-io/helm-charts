@@ -1,0 +1,18 @@
+{{- if .Values.natsManager.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "kai.natsManager.name" . }}
+  labels:
+    {{- include "kai.natsManagerLabels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kai.selectorNatsManagerLabels" . | nindent 6 }}
+  {{- if .Values.natsManager.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.natsManager.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.natsManager.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.natsManager.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+{{- end }}

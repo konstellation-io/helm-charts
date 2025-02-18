@@ -1,33 +1,61 @@
+{{- if .Values.adminApi.ingress.enabled -}}
+{{- $fullName := printf "%s" (include "kai.adminApi.name" .) -}}
+{{- $svcPort := .Values.adminApi.service.port -}}
+{{- if and .Values.adminApi.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
+  {{- if not (hasKey .Values.adminApi.ingress.annotations "kubernetes.io/ingress.class") }}
+  {{- $_ := set .Values.adminApi.ingress.annotations "kubernetes.io/ingress.class" .Values.adminApi.ingress.className}}
+  {{- end }}
+{{- end }}
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion -}}
 apiVersion: networking.k8s.io/v1
+{{- else if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: networking.k8s.io/v1beta1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
 kind: Ingress
 metadata:
-  name: {{ include "admin-api.fullname" . }}
-  annotations:
-    konghq.com/plugins: {{ include "kai.fullname" . }}-oidc
-    konghq.com/strip-path: "false"
-    {{- with .Values.adminApi.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+  name: {{ $fullName }}
   labels:
-    {{- include "admin-api.labels" . | nindent 4 }}
+    {{- include "kai.adminApiLabels" . | nindent 4 }}
+  {{- with .Values.adminApi.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  {{- if .Values.adminApi.ingress.className }}
+  {{- if and .Values.adminApi.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.adminApi.ingress.className }}
   {{- end }}
-  {{- if .Values.config.tls.enabled }}
+  {{- if .Values.adminApi.ingress.tls }}
   tls:
+    {{- range .Values.adminApi.ingress.tls }}
     - hosts:
-        - {{ .Values.adminApi.host }}
-      secretName: {{ .Values.config.tls.certSecretName }}
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
   {{- end }}
   rules:
-    - host: {{ .Values.adminApi.host }}
+    {{- range .Values.adminApi.ingress.hosts }}
+    - host: {{ .host | quote }}
       http:
         paths:
-          - path: "/"
-            pathType: Prefix
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
+            pathType: {{ .pathType }}
+            {{- end }}
             backend:
+              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
               service:
-                name: {{ include "admin-api.fullname" . }}
+                name: {{ $fullName }}
                 port:
-                  name: grpc
+                  number: {{ $svcPort }}
+              {{- else }}
+              serviceName: {{ $fullName }}
+              servicePort: {{ $svcPort }}
+              {{- end }}
+          {{- end }}
+    {{- end }}
+{{- end }}
