@@ -66,11 +66,11 @@ adminApi:
   # The image configuration for the base service
   image:
     # The repository of the image
-    repository: konstellation/kai
+    repository: registry.gitlab.intelygenz.com/konstellation-io/kai/kai/kai-admin-api
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: 0.3.0-develop.17
+    tag: "1.0.0"
 
   # -- Specifies the secrets to use for pulling images from private registries
   # Leave empty if no secrets are required
@@ -467,11 +467,11 @@ k8sManager:
   # The image configuration for the base service
   image:
     # The repository of the image
-    repository: konstellation/kai-k8s-manager
+    repository: registry.gitlab.intelygenz.com/konstellation-io/kai/kai/kai-k8s-manager
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: "0.3.0-develop.17"
+    tag: "1.0.0"
 
   # -- Deployment strategy
   # Specifies the strategy used to replace old Pods by new ones
@@ -890,11 +890,11 @@ natsManager:
   # The image configuration for the base service
   image:
     # The repository of the image
-    repository: konstellation/kai-nats-manager
+    repository: registry.gitlab.intelygenz.com/konstellation-io/kai/kai/kai-nats-manager
     # The pull policy for the image
     pullPolicy: IfNotPresent
     # The image tag
-    tag: "0.3.0-develop.17"
+    tag: "1.0.0"
 
   # -- Deployment strategy
   # Specifies the strategy used to replace old Pods by new ones
