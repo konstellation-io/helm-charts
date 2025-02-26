@@ -269,6 +269,7 @@ spec:
                       principle of least privilege.
                     type: object
                     additionalProperties: true
+                    x-kubernetes-preserve-unknown-fields: true
                     properties:
                       privileged:
                         description: |
@@ -1638,6 +1639,7 @@ spec:
                       principle of least privilege.
                     type: object
                     additionalProperties: true
+                    x-kubernetes-preserve-unknown-fields: true
                     properties:
                       privileged:
                         description: |

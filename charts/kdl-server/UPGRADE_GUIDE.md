@@ -1,17 +1,28 @@
 > [!IMPORTANT]
 > Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
 
-### From `6.2.0` to `6.2.1`
+### From `6.2.0` to `6.2.8`
 
-* Remove `PersistentVolumeClaim` values from KDL server. Don't need.
+> [!IMPORTANT]
+> Execute the following actions to update the CRDs before applying the upgrade.
+> ```bash
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.7/charts/kdl-server/crds/project-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.7/charts/kdl-server/crds/user-tools-operator-crd.yaml
+> ```
+
+* Remove `PersistentVolumeClaim` values from KDL server. Don't need
+* Default `MLFLOW_BACKEND_STORE_URI` and `MLFLOW_S3_ENDPOINT_URL`
+* Change printerColumns on CRDs
+* Add `x-kubernetes-preserve-unknown-fields` on `initContainers`, `securityContext` and `podSecurityContext` on CRDs
+* Bump `kdl-app` to `1.42.1`
 
 ### From `6.1.0` to `6.2.0`
 
 > [!IMPORTANT]
 > Execute the following actions to update the CRDs before applying the upgrade.
 > ```bash
-> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/project-operator-crd.yaml
-> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.0/charts/kdl-server/crds/project-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.0/charts/kdl-server/crds/user-tools-operator-crd.yaml
 > ```
 
 This release introduces several architectural improvements and updates to core components. The main changes include enhanced security configurations, streamlined HTTPS management, and updated component versions.

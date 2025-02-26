@@ -65,7 +65,7 @@ image:
   # The pull policy for the image
   pullPolicy: IfNotPresent
   # The image tag
-  tag: "1.41.0"
+  tag: "1.42.1"
 
 # -- Specifies the secrets to use for pulling images from private registries
 # Leave empty if no secrets are required
@@ -1242,9 +1242,9 @@ projectOperator:
 
         ingress:
           enabled: false
-          tls:
-            enabled: true
-          className: "replace-class-name"
+          tls: {}
+            # enabled: true
+          className: ""
           annotations: {}
             # cert-manager.io/cluster-issuer: selfsigned-clusterissuer
             # nginx.ingress.kubernetes.io/proxy-body-size: "4096m"
@@ -1267,9 +1267,6 @@ projectOperator:
           repository: konstellation/kdl-filebrowser
           pullPolicy: IfNotPresent
           tag: "1.0.0"
-
-        podSecurityContext:
-          fsGroup: 1000
 
         securityContext:
           privileged: true
@@ -1558,7 +1555,7 @@ userToolsOperator:
       username: replaced-by-kdl-api
       usernameSlug: replaced-by-kdl-api
 
-      # must be declared
+      # must be declared for kdl-server watcher
       podLabels: {}
 
       persistentVolume:
@@ -1582,7 +1579,7 @@ userToolsOperator:
         env: {}
           # KDL_SERVER_MONGODB_URI: "mongodb://kdl:123456@mongodb-svc.mongodb:27017/kdl?authSource=kdl&authMechanism=SCRAM-SHA-256"
 
-      # must be declared
+      # must be declared for kdl-server watcher
       vscodeRuntime:
         image:
           repository: konstellation/kdl-py
@@ -1594,7 +1591,7 @@ userToolsOperator:
           # MINIO_SECRET_KEY: ""
           # MINIO_ENDPOINT: "http://minio:9000"
 
-      # must be declared
+      # must be declared for kdl-server watcher
       nodeSelector: {}
       tolerations: []
       affinity: {}

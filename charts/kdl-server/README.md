@@ -19,21 +19,21 @@ A Helm chart to deploy KDL server
 
 | Release ↓ / Kubernetes → | 1.24 | 1.25 | 1.26 | 1.27 | 1.28 | 1.29 | 1.30 | 1.31 |
 |:------------------------:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-| 6.0.2                    | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
-| 6.1.0                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
-| 6.2.X                    | ❌   | ❌   | ✅   | ✅   | ✅   | ✅   | ✅   | ✅   |
+| 6.0.2                    | ✅   | ✅    | ✅   | ✅   | ✅    | ✅   | ✅   | ✅   |
+| 6.1.0                    | ❌   | ❌    | ✅   | ✅   | ✅    | ✅   | ✅   | ✅   |
+| 6.2.X                    | ❌   | ❌    | ✅   | ✅   | ✅    | ✅   | ✅   | ✅   |
 
-| Release ↓ / kdl-app → | 1.38.0 | 1.38.1 | 1.39.0 | 1.40.0 |
-|:---------------------:|:------:|:------:|:------:|:------:|
-| 6.0.2                 | ✅     | ✅     | ❌     | ❌     |
-| 6.1.0                 | ❌     | ❌     | ✅     | ❌     |
-| 6.2.X                 | ❌     | ❌     | ❌     | ✅     |
+| Release ↓ / kdl-app → | 1.38.X | 1.39.0 | 1.40.0 | 1.41.X | 1.42.X |
+|:---------------------:|:------:|:------:|:------:|:------:|:------:|
+| 6.0.2                 | ✅     | ❌      | ❌     | ❌     | ❌     |
+| 6.1.0                 | ❌     | ✅      | ❌     | ❌     | ❌     |
+| 6.2.X                 | ❌     | ❌      | ✅     | ✅     | ✅     |
 
 | Release ↓ / project-operator → | 0.19.0 | 0.20.0 | 0.21.X |
 |:------------------------------:|:------:|:------:|:------:|
-| 6.0.2                          | ✅     | ❌     | ❌     |
-| 6.1.0                          | ❌     | ✅     | ❌     |
-| 6.2.X                          | ❌     | ❌     | ✅     |
+| 6.0.2                          | ✅     | ❌      | ❌     |
+| 6.1.0                          | ❌     | ✅      | ❌     |
+| 6.2.X                          | ❌     | ❌      | ✅     |
 
 | Release ↓ / user-tools-operator → | 0.30.0 | 0.31.0 | 0.32.X |
 |:---------------------------------:|:------:|:------:|:------:|
@@ -98,17 +98,28 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 > [!IMPORTANT]
 > Upgrading an existing Release to a new major version (`v0.15.X` -> `v1.0.0`) indicates that there is an incompatible **BREAKING CHANGES** needing manual actions.
 
-### From `6.2.0` to `6.2.1`
+### From `6.2.0` to `6.2.8`
 
-* Remove `PersistentVolumeClaim` values from KDL server. Don't need.
+> [!IMPORTANT]
+> Execute the following actions to update the CRDs before applying the upgrade.
+> ```bash
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.7/charts/kdl-server/crds/project-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.7/charts/kdl-server/crds/user-tools-operator-crd.yaml
+> ```
+
+* Remove `PersistentVolumeClaim` values from KDL server. Don't need
+* Default `MLFLOW_BACKEND_STORE_URI` and `MLFLOW_S3_ENDPOINT_URL`
+* Change printerColumns on CRDs
+* Add `x-kubernetes-preserve-unknown-fields` on `initContainers`, `securityContext` and `podSecurityContext` on CRDs
+* Bump `kdl-app` to `1.42.1`
 
 ### From `6.1.0` to `6.2.0`
 
 > [!IMPORTANT]
 > Execute the following actions to update the CRDs before applying the upgrade.
 > ```bash
-> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/project-operator-crd.yaml
-> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/kdl-server/v6.2.0/helm/kdl-server/crds/user-tools-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.0/charts/kdl-server/crds/project-operator-crd.yaml
+> kubectl apply --server-side -f https://raw.githubusercontent.com/konstellation-io/helm-charts/refs/tags/kdl-server-6.2.0/charts/kdl-server/crds/user-tools-operator-crd.yaml
 > ```
 
 This release introduces several architectural improvements and updates to core components. The main changes include enhanced security configurations, streamlined HTTPS management, and updated component versions.
@@ -525,7 +536,7 @@ helm show values konstellation-io/kdl-server
 | global.imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | global.imageRegistry | string | `""` | Specifies the registry to pull images from. Leave empty for the default registry |
 | global.serverName | string | `"local-server"` | KDL Server instance name |
-| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.41.0"}` | Image registry The image configuration for the base service |
+| image | object | `{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-server","tag":"1.42.1"}` | Image registry The image configuration for the base service |
 | imagePullSecrets | list | `[]` | Specifies the secrets to use for pulling images from private registries Leave empty if no secrets are required E.g. imagePullSecrets:   - name: myRegistryKeySecretName |
 | ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"chart-example.local","paths":[{"path":"/","pathType":"ImplementationSpecific"}]}],"tls":[]}` | Ingress configuration to expose app </br> Ref: https://kubernetes.io/docs/concepts/services-networking/ingress/ |
 | initContainers | list | `[]` | Configure additional containers </br> Ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/ |
@@ -597,7 +608,7 @@ helm show values konstellation-io/kdl-server
 | podSecurityContext | object | `{}` | Defines privilege and access control settings for a Pod </br> Ref: https://kubernetes.io/docs/concepts/security/pod-security-standards/ </br> Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ |
 | postgresql | object | `{"auth":{"database":"kdl","password":"ChangeMe","username":"user"},"enabled":false,"primary":{"persistence":{"enabled":false}},"replicaCount":1}` | PostgreSQL subchart deployment </br> Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml |
 | postgresql.enabled | bool | `false` | Enable or disable PostgreSQL subchart |
-| projectOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.21.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":{"apiVersion":"kdl.konstellation.io/v1","kind":"KDLProject","metadata":{"name":"replaced-by-kdl-api","namespace":"replaced-by-kdl-api"},"spec":{"domain":"kdl.local","filebrowser":{"env":{"AWS_S3_ACCESS_KEY_ID":"replace-minio-access-key","AWS_S3_MOUNT":"/srv","AWS_S3_SECRET_ACCESS_KEY":"replace-minio-secret-access-key","AWS_S3_URL":"http://minio:9000","FB_ADDRESS":"0.0.0.0","FB_DATABASE":"/home/filebrowser/database.db","FB_LOG":"stdout","FB_ROOT":"/srv","S3FS_ARGS":"-o use_path_request_style -o use_cache=/cache -o ensure_diskfree=2048 -o max_stat_cache_size=100000 -o stat_cache_expire=300 -o enable_noobj_cache -o dbglevel=warn -o multipart_size=52 -o parallel_count=32 -o max_dirty_data=512 -o multireq_max=30 -o complement_stat -o notsup_compat_dir -o enable_content_md5 -o ro"},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-filebrowser","tag":"1.0.0"},"podSecurityContext":{"fsGroup":1000},"securityContext":{"capabilities":{"add":["SYS_ADMIN"]},"privileged":true},"volumeMounts":[{"mountPath":"/cache","name":"cache-volume"},{"mountPath":"/dev/fuse","name":"fuse-device"}],"volumes":[{"emptyDir":{},"name":"cache-volume"},{"hostPath":{"path":"/dev/fuse","type":"CharDevice"},"name":"fuse-device"}]},"mlflow":{"env":{"AWS_ACCESS_KEY_ID":"replace-minio-access-key","AWS_SECRET_ACCESS_KEY":"replace-minio-secret-access-key","MLFLOW_BACKEND_STORE_URI":"sqlite:////mlflow/tracking/mlflow.db","MLFLOW_S3_ENDPOINT_URL":"http://minio:9000"},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"0.15.0"},"ingress":{"annotations":{},"className":"replace-class-name","enabled":false,"tls":{"enabled":true}},"persistentVolume":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClass":"replace-storage-class-name"}},"projectId":"replaced-by-kdl-api"}},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
+| projectOperator | object | `{"affinity":{},"args":["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"],"autoscaling":{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80},"command":[],"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-project-operator","tag":"0.21.0"},"imagePullSecrets":[],"initContainers":[],"lifecycle":{},"nodeSelector":{},"podAnnotations":{},"podDisruptionBudget":{"enabled":false,"maxUnavailable":1,"minAvailable":null},"podLabels":{},"podSecurityContext":{},"resources":{},"securityContext":{"allowPrivilegeEscalation":false,"runAsNonRoot":true},"service":{"extraPorts":[{"name":"metrics","port":8080,"targetPort":8080}],"port":8081,"targetPort":8081,"type":"ClusterIP"},"serviceAccount":{"annotations":{},"automount":true,"create":true,"name":""},"serviceMonitor":{"enabled":false,"interval":"30s","metricRelabelings":[],"relabelings":[],"scrapeTimeout":"10s"},"templateCustomResource":{"apiVersion":"kdl.konstellation.io/v1","kind":"KDLProject","metadata":{"name":"replaced-by-kdl-api","namespace":"replaced-by-kdl-api"},"spec":{"domain":"kdl.local","filebrowser":{"env":{"AWS_S3_ACCESS_KEY_ID":"replace-minio-access-key","AWS_S3_MOUNT":"/srv","AWS_S3_SECRET_ACCESS_KEY":"replace-minio-secret-access-key","AWS_S3_URL":"http://minio:9000","FB_ADDRESS":"0.0.0.0","FB_DATABASE":"/home/filebrowser/database.db","FB_LOG":"stdout","FB_ROOT":"/srv","S3FS_ARGS":"-o use_path_request_style -o use_cache=/cache -o ensure_diskfree=2048 -o max_stat_cache_size=100000 -o stat_cache_expire=300 -o enable_noobj_cache -o dbglevel=warn -o multipart_size=52 -o parallel_count=32 -o max_dirty_data=512 -o multireq_max=30 -o complement_stat -o notsup_compat_dir -o enable_content_md5 -o ro"},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-filebrowser","tag":"1.0.0"},"securityContext":{"capabilities":{"add":["SYS_ADMIN"]},"privileged":true},"volumeMounts":[{"mountPath":"/cache","name":"cache-volume"},{"mountPath":"/dev/fuse","name":"fuse-device"}],"volumes":[{"emptyDir":{},"name":"cache-volume"},{"hostPath":{"path":"/dev/fuse","type":"CharDevice"},"name":"fuse-device"}]},"mlflow":{"env":{"AWS_ACCESS_KEY_ID":"replace-minio-access-key","AWS_SECRET_ACCESS_KEY":"replace-minio-secret-access-key","MLFLOW_BACKEND_STORE_URI":"sqlite:////mlflow/tracking/mlflow.db","MLFLOW_S3_ENDPOINT_URL":"http://minio:9000"},"image":{"pullPolicy":"IfNotPresent","repository":"konstellation/kdl-mlflow","tag":"0.15.0"},"ingress":{"annotations":{},"className":"","enabled":false,"tls":{}},"persistentVolume":{"accessModes":["ReadWriteOnce"],"enabled":true,"size":"1Gi","storageClass":"replace-storage-class-name"}},"projectId":"replaced-by-kdl-api"}},"terminationGracePeriodSeconds":30,"tolerations":[],"topologySpreadConstraints":[]}` | project-operator operator |
 | projectOperator.affinity | object | `{}` | Affinity for pod assignment </br> Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
 | projectOperator.args | list | `["--enable-http2","--health-probe-bind-address=:8081","--leader-elect","--leader-election-id=project-operator","--metrics-bind-address=:8080","--zap-log-level=error","--zap-stacktrace-level=error"]` | Configure args </br> Ref: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/ |
 | projectOperator.autoscaling | object | `{"enabled":false,"maxReplicas":100,"minReplicas":1,"targetCPUUtilizationPercentage":80}` | Autoscaling with CPU or memory utilization percentage </br> Ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/ |

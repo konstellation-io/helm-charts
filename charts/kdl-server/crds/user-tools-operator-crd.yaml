@@ -415,122 +415,11 @@ spec:
                   type: string
               podSecurityContext:
                 description: |
-                  Pod-level security context defines fundamental security settings
-                  that apply to all containers within the pod. These settings are
-                  crucial for maintaining a secure development environment while
-                  ensuring proper access to resources.
-
-                  The security context controls:
-                  - File system permissions
-                  - User and group IDs
-                  - Security policies
-                  - Volume ownership
-                  - Process privileges
-
-                  Security considerations include:
-                  - Principle of least privilege
-                  - Resource access control
-                  - Data protection
-                  - Process isolation
-                  - Compliance requirements
+                  Pod-level security context defines security settings that apply
+                  to all containers in the user-tools pod. These settings establish
+                  the base security posture for the user-tools statefulset.
                 type: object
-                additionalProperties: true
-                properties:
-                  fsGroup:
-                    description: |
-                      The GID that will own any mounted volumes. This setting ensures
-                      proper file system permissions for persistent and shared storage.
-
-                      fsGroup configuration:
-                      - Controls volume access permissions
-                      - Enables collaborative development
-                      - Maintains security boundaries
-                      - Facilitates proper backup operations
-                      - Supports audit requirements
-                    type: integer
-                  runAsUser:
-                    description: |
-                      The UID to run containers as. Specifies the user ID for
-                      processes within the containers.
-                    type: integer
-                  runAsGroup:
-                    description: |
-                      The GID to run containers as. Specifies the primary group ID
-                      for processes within the containers.
-                    type: integer
-                  supplementalGroups:
-                    description: |
-                      Additional group IDs that processes will run as. Provides
-                      access to additional resources and capabilities.
-                    type: array
-                    items:
-                      type: integer
-              securityContext:
-                description: |
-                  Container-level security context defines security settings that
-                  apply to individual containers. These settings provide granular
-                  control over container behavior and security posture.
-
-                  Security context manages:
-                  - Container privileges
-                  - Root access controls
-                  - Filesystem permissions
-                  - Capability management
-                  - Security compliance
-
-                  Important aspects include:
-                  - Container isolation
-                  - Resource protection
-                  - Attack surface reduction
-                  - Compliance enforcement
-                  - Vulnerability mitigation
-                type: object
-                additionalProperties: true
-                properties:
-                  privileged:
-                    description: |
-                      Controls whether the container runs in privileged mode.
-                      Running containers in privileged mode gives them almost the same
-                      access as processes running on the host. This should be avoided
-                      unless absolutely necessary for security reasons.
-                    type: boolean
-                  capabilities:
-                    description: |
-                      Linux capabilities configuration for fine-grained privilege
-                      control. Allows specific privileges while maintaining security.
-                    type: object
-                    properties:
-                      drop:
-                        description: |
-                          Capabilities to remove from the container. Follows the
-                          principle of least privilege by removing unnecessary
-                          capabilities.
-                        type: array
-                        items:
-                          type: string
-                      add:
-                        description: |
-                          Capabilities to add to the container. Only add capabilities
-                          that are strictly necessary for operation.
-                        type: array
-                        items:
-                          type: string
-                  readOnlyRootFilesystem:
-                    description: |
-                      Controls whether the container can write to its root filesystem.
-                      Enabling this provides additional security by preventing
-                      modifications to the container's base filesystem.
-                    type: boolean
-                  runAsNonRoot:
-                    description: |
-                      Requires the container to run as a non-root user. This is a
-                      crucial security measure that prevents privilege escalation.
-                    type: boolean
-                  runAsUser:
-                    description: |
-                      Specific UID to run the container processes as. Provides
-                      explicit control over process ownership.
-                    type: integer
+                x-kubernetes-preserve-unknown-fields: true
               podDisruptionBudget:
                 description: |
                   Pod Disruption Budget configuration ensures availability during
@@ -1298,6 +1187,68 @@ spec:
                     items:
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
+                  securityContext:
+                    description: |
+                      Container-level security context for vscode-runtime defines the privileges
+                      and access control settings for the vscode-runtime container. These settings
+                      are crucial for maintaining a secure deployment that follows the
+                      principle of least privilege.
+                    type: object
+                    additionalProperties: true
+                    x-kubernetes-preserve-unknown-fields: true
+                    properties:
+                      privileged:
+                        description: |
+                          Controls whether the container runs in privileged mode.
+                          Running containers in privileged mode gives them almost the same
+                          access as processes running on the host. This should be avoided
+                          unless absolutely necessary for security reasons.
+                        type: boolean
+                      runAsUser:
+                        description: |
+                          The UID to run the vscode-runtime process as. Using a non-root user
+                          is recommended for security. The UID must have necessary
+                          permissions to access required resources.
+                        type: integer
+                      runAsGroup:
+                        description: |
+                          The GID to run the vscode-runtime process as. This should be set
+                          in conjunction with runAsUser to ensure proper file
+                          permissions.
+                        type: integer
+                      fsGroup:
+                        description: |
+                          The GID that will own any mounted volumes. This ensures
+                          vscode-runtime can read/write to persistent storage with proper
+                          permissions.
+                        type: integer
+                      runAsNonRoot:
+                        description: |
+                          Forces the container to run as a non-root user. This is a
+                          security best practice to prevent potential privilege
+                          escalation.
+                        type: boolean
+                      readOnlyRootFilesystem:
+                        description: |
+                          Mounts the container's root filesystem as read-only.
+                          This prevents modifications to the container's filesystem
+                          at runtime, improving security.
+                        type: boolean
+                      capabilities:
+                        description: |
+                          Linux capabilities to add or drop for the container.
+                          Following the principle of least privilege, drop all
+                          capabilities and add only those specifically required.
+                        type: object
+                        properties:
+                          add:
+                            type: array
+                            items:
+                              type: string
+                          drop:
+                            type: array
+                            items:
+                              type: string
               # repoCloner configuration
               repoCloner:
                 description: |
@@ -1561,6 +1512,68 @@ spec:
                           This can be used for additional setup or verification steps
                           after container initialization.
                         x-kubernetes-preserve-unknown-fields: true
+                  securityContext:
+                    description: |
+                      Container-level security context for repo-cloner defines the privileges
+                      and access control settings for the repo-cloner container. These settings
+                      are crucial for maintaining a secure deployment that follows the
+                      principle of least privilege.
+                    type: object
+                    additionalProperties: true
+                    x-kubernetes-preserve-unknown-fields: true
+                    properties:
+                      privileged:
+                        description: |
+                          Controls whether the container runs in privileged mode.
+                          Running containers in privileged mode gives them almost the same
+                          access as processes running on the host. This should be avoided
+                          unless absolutely necessary for security reasons.
+                        type: boolean
+                      runAsUser:
+                        description: |
+                          The UID to run the repo-cloner process as. Using a non-root user
+                          is recommended for security. The UID must have necessary
+                          permissions to access required resources.
+                        type: integer
+                      runAsGroup:
+                        description: |
+                          The GID to run the repo-cloner process as. This should be set
+                          in conjunction with runAsUser to ensure proper file
+                          permissions.
+                        type: integer
+                      fsGroup:
+                        description: |
+                          The GID that will own any mounted volumes. This ensures
+                          repo-cloner can read/write to persistent storage with proper
+                          permissions.
+                        type: integer
+                      runAsNonRoot:
+                        description: |
+                          Forces the container to run as a non-root user. This is a
+                          security best practice to prevent potential privilege
+                          escalation.
+                        type: boolean
+                      readOnlyRootFilesystem:
+                        description: |
+                          Mounts the container's root filesystem as read-only.
+                          This prevents modifications to the container's filesystem
+                          at runtime, improving security.
+                        type: boolean
+                      capabilities:
+                        description: |
+                          Linux capabilities to add or drop for the container.
+                          Following the principle of least privilege, drop all
+                          capabilities and add only those specifically required.
+                        type: object
+                        properties:
+                          add:
+                            type: array
+                            items:
+                              type: string
+                          drop:
+                            type: array
+                            items:
+                              type: string
           status:
             description: |
               Status defines the observed state of UserTools. It provides real-time
