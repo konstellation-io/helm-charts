@@ -173,6 +173,25 @@ spec:
 
                   Example: if username is "John.Doe", the slug might be "john-doe"
                 type: string
+              runtimeClass:
+                description: |
+                  Specifies the container runtime environment to be used for GPU workloads.
+                  This ensures that GPU-accelerated applications utilize the appropriate
+                  runtime for optimal performance and compatibility.
+
+                  The runtime class:
+                  - Should match the name of the RuntimeClass configured in the cluster
+                    that supports NVIDIA GPUs.
+                  - Directs workloads to use a specific container runtime that is compatible
+                    with NVIDIA GPUs.
+                  - Aligns with Kubernetes' RuntimeClass feature, allowing selection of
+                    different runtimes for pods.
+                  - Ensures that GPU workloads are scheduled on nodes with the necessary
+                    runtime and GPU support.
+
+                  Example: If the RuntimeClass is named "nvidia", setting `runtimeClass: nvidia`
+                  in your pod specification will ensure the pod uses the NVIDIA-compatible runtime.
+                type: string
               sharedVolume:
                 description: |
                   SharedVolume configuration defines how the user tools environment
