@@ -51,6 +51,56 @@ entries:
   kdl-server:
   - apiVersion: v2
     appVersion: 1.42.1
+    created: "2025-03-03T14:44:23.883715982Z"
+    dependencies:
+    - alias: keycloak
+      condition: keycloak.enabled
+      name: konstellation-base
+      repository: oci://ghcr.io/konstellation-io/helm-charts
+      version: 1.1.2
+    - condition: minio.enabled
+      name: minio
+      repository: https://charts.min.io
+      version: 3.2.0
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 16.2.1
+    - alias: oauth2proxy
+      condition: oauth2proxy.enabled
+      name: oauth2-proxy
+      repository: oci://ghcr.io/oauth2-proxy/charts
+      version: 7.7.28
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: 15.5.38
+    description: A Helm chart to deploy KDL server
+    digest: 8ca968ad7473ca3b6558b6051e370f47fdbaf01e6a7247fdb8c9faacafa0e50b
+    home: https://www.konstellation.io
+    keywords:
+    - ai
+    - kdl
+    - kdl-server
+    - konstellation
+    - kubernetes
+    - machine learning
+    maintainers:
+    - email: ivan.alejandro@intelygenz.com
+      name: ialejandro
+    - email: angelluis.piquero@intelygenz.com
+      name: alpiquero
+    - email: daniel.chavero@intelygenz.com
+      name: danielchg
+    name: kdl-server
+    sources:
+    - https://github.com/konstellation-io/kdl-server
+    type: application
+    urls:
+    - https://github.com/konstellation-io/helm-charts/releases/download/kdl-server-6.2.10/kdl-server-6.2.10.tgz
+    version: 6.2.10
+  - apiVersion: v2
+    appVersion: 1.42.1
     created: "2025-02-27T15:56:08.865115307Z"
     dependencies:
     - alias: keycloak
@@ -2366,4 +2416,4 @@ entries:
     urls:
     - https://github.com/konstellation-io/helm-charts/releases/download/konstellation-base-1.0.0/konstellation-base-1.0.0.tgz
     version: 1.0.0
-generated: "2025-02-27T15:56:08.865371385Z"
+generated: "2025-03-03T14:44:23.883974107Z"
