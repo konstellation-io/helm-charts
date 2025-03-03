@@ -315,6 +315,14 @@ spec:
                       - Data durability
                       - Cost considerations
                     type: string
+                  keepPVC:
+                    description: |
+                      Controls whether the PersistentVolumeClaim should be retained
+                      when the UserTools environment is deleted. Retaining the PVC
+                      allows data to be preserved for future use.
+
+                      Enable this to keep data across environment deletions.
+                    type: boolean
               kubeconfig:
                 description: |
                   Kubeconfig configuration enables external tool integration with the
