@@ -14,14 +14,15 @@ rules:
     - secrets
     - serviceaccounts
     - pods
+    - persistentvolumeclaims
     verbs:
     - '*'
   # CRDs
   - apiGroups:
-    - "kdl.konstellation.io"
+    - kdl.konstellation.io
     resources:
-    - "kdlprojects"
-    - "kdlusertools"
+    - kdlprojects
+    - kdlusertools
     verbs:
     - '*'
 {{- end }}
